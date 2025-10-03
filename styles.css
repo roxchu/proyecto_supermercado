@@ -1,0 +1,265 @@
+/* =======================================
+    COLORES Y VARIABLES
+   ======================================= */
+   :root {
+    --color-rojo: #e62020; /* Rojo vibrante */
+    --color-verde: #4CAF50; /* Verde para descuentos (como en la imagen) */
+    --color-fondo-claro: #f4f4f4;
+    --color-texto-oscuro: #333;
+}
+
+/* =======================================
+    ESTILOS GENERALES
+   ======================================= */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-fondo-claro);
+    color: var(--color-texto-oscuro);
+}
+
+/* HEADER y NAV (Se mantienen con el azul original para contraste, pero puedes cambiarlos a rojo si quieres) */
+header {
+    background-color: #007bff; /* Azul */
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+/* ... (otros estilos de header/nav) ... */
+
+/* =======================================
+    BANNER SUPERIOR DEL CARRUSEL
+   ======================================= */
+#ofertas-carrusel {
+    padding: 20px 0; /* Padding solo arriba y abajo */
+    background-color: var(--color-fondo-claro);
+}
+
+.banner-rojo {
+    background-color: var(--color-rojo);
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* Alinear abajo para el subtítulo */
+}
+
+.title-main {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.title-subtitle {
+    margin: 0;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.ver-mas {
+    color: white;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: bold;
+    align-self: flex-start; /* Alinear "Ver Más" arriba */
+    padding: 5px 0;
+}
+
+
+/* =======================================
+    CARRUSEL CONTENEDOR Y SLIDES
+   ======================================= */
+.carrusel-container {
+    position: relative;
+    overflow: hidden; 
+    width: 100%;
+    padding: 0 20px; /* Padding a los lados para que se vean los botones */
+    box-sizing: border-box;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.5s ease-in-out; 
+    gap: 15px; /* Espacio entre las tarjetas */
+}
+
+
+/* =======================================
+    TARJETA DE PRODUCTO (LOOK DE LA IMAGEN)
+   ======================================= */
+.producto-card {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0; 
+    width: 250px; 
+    padding: 15px;
+    position: relative; 
+    text-align: left;
+    height: auto;
+}
+
+.producto-imagen {
+    width: 100%;
+    height: 160px;
+    object-fit: contain; 
+    display: block;
+    margin: 0 auto 10px;
+}
+
+/* Nombre del producto */
+.producto-nombre {
+    font-size: 0.9em;
+    height: 30px;
+    color: var(--color-texto-oscuro);
+    font-weight: normal;
+    margin: 5px 0 10px 0;
+}
+
+/* Precio tachado (el precio anterior) */
+.precio-tachado {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 0.85em;
+    margin: 0;
+}
+
+/* Precio Final (El más grande) */
+.precio-final {
+    font-size: 1.7em;
+    font-weight: bold;
+    color: var(--color-rojo);
+    margin: 5px 0 10px 0;
+    line-height: 1;
+}
+
+/* Botón "Agregar" (Rojo) */
+.boton-agregar {
+    width: 100%;
+    background-color: var(--color-rojo);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+/* --- Etiquetas --- */
+
+.etiqueta-exclusiva {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    background-color: var(--color-rojo);
+    color: white;
+    padding: 3px 8px;
+    font-size: 0.7em;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 0 3px 3px 0;
+    z-index: 2;
+}
+
+.btn-favorito {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 1em;
+    color: var(--color-rojo);
+    cursor: pointer;
+    z-index: 5;
+}
+
+.etiqueta-peso-negra {
+    position: absolute;
+    top: 100px; 
+    right: 0;
+    background-color: black;
+    color: white;
+    padding: 5px 8px;
+    font-size: 0.75em;
+    font-weight: bold;
+    border-radius: 4px 0 0 4px;
+    z-index: 2;
+}
+
+.etiqueta-caracteristica-negra {
+    position: absolute;
+    top: 100px;
+    right: 0;
+    background-color: black;
+    color: white;
+    padding: 5px 8px;
+    font-size: 0.75em;
+    font-weight: bold;
+    border-radius: 4px 0 0 4px;
+    z-index: 2;
+}
+
+.etiqueta-caracteristica-verde {
+    position: absolute;
+    top: 150px; 
+    right: 0;
+    background-color: #388e3c; 
+    color: white;
+    padding: 5px 8px;
+    font-size: 0.75em;
+    font-weight: bold;
+    border-radius: 4px 0 0 4px;
+    z-index: 2;
+}
+
+/* Descuentos (el recuadro verde) */
+.etiqueta-descuento {
+    display: inline-block;
+    background-color: var(--color-verde);
+    color: white;
+    padding: 3px 6px;
+    font-size: 0.8em;
+    font-weight: bold;
+    border-radius: 3px;
+    margin-right: 5px;
+}
+
+/* --- Botones de Navegación del Carrusel --- */
+
+.carrusel-btn {
+    position: absolute;
+    top: 55%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.4); 
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2em;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0.7;
+    transition: background 0.3s;
+}
+
+.carrusel-btn:hover {
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 1;
+}
+
+.prev { left: 5px; }
+.next { right: 5px; }
+
+/* ... (otros estilos de footer) ... */

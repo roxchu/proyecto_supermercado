@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Supermercado Online - ¡Ofertas Dinámicas!</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <h1><i class="fas fa-shopping-basket"></i> Mi Supermercado Online</h1>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Buscar productos, marcas...">
+            <button><i class="fas fa-search"></i> Buscar</button>
+        </div>
+        <div class="user-actions">
+            <a href="#login"><i class="fas fa-user"></i> Iniciar Sesión</a>
+            <a href="#carrito"><i class="fas fa-shopping-cart"></i> Cesta (3)</a>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#inicio">Inicio</a></li>
+            <li><a href="#ofertas">🔥 Ofertas</a></li>
+            <li><a href="#frutas">Frutas y Verduras</a></li>
+            <li><a href="#lacteos">Lácteos y Huevos</a></li>
+            <li><a href="#congelados">Congelados</a></li>
+            <li><a href="#limpieza">Hogar y Limpieza</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        
+        <section id="ofertas-carrusel">
+            <div class="section-title banner-rojo">
+                <h2 class="title-main">¡Especial Desayuno!</h2>
+                <p class="title-subtitle">Mirá la Selección de Ofertas que tenemos para vos</p>
+                <a href="#" class="ver-mas">Ver Más</a>
+            </div>
+
+            <div id="carrusel-dinamico-container">
+                <p style="text-align:center; padding: 50px;">Cargando productos...</p>
+            </div>
+            
+        </section>
+        
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <div class="columna">
+                <h4>Atención al Cliente</h4>
+                <ul>
+                    <li><a href="#ayuda">Centro de Ayuda</a></li>
+                    <li><a href="#envios">Política de Envíos</a></li>
+                </ul>
+            </div>
+            <div class="columna">
+                <h4>Sobre Nosotros</h4>
+                <ul>
+                    <li><a href="#empresa">Nuestra Empresa</a></li>
+                    <li><a href="#trabaja">Trabaja con Nosotros</a></li>
+                </ul>
+            </div>
+            <div class="columna">
+                <h4>Contacto</h4>
+                <p>Teléfono: 123-456-789</p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2023 Mi Supermercado Online. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script> 
+</body>
+</html>
