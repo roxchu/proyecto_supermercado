@@ -2,7 +2,7 @@
 // Asegura que solo se envíe HTML puro, sin headers de página
 header('Content-Type: text/html; charset=utf-8');
 
-// --- 1. CONFIGURACIÓN DE CONEXIÓN ---
+// --- 1. CONFIGURACIÓN DE CONEXIÓN --- 
 $host = 'localhost';
 $db   = 'Supermercado';
 $user = 'root'; // Usuario por defecto de XAMPP
