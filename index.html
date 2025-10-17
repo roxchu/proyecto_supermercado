@@ -28,73 +28,71 @@
             <input type="text" placeholder="Buscar productos, marcas...">
             <button><i class="fas fa-search"></i></button>
         </div>
+
         <div class="user-actions">
-            <a href="#login"><i class="fas fa-user"></i> Iniciar Sesión</a>
-            <a href="#carrito"><i class="fas fa-shopping-cart"></i> Cesta (3)</a>
+            
+            <a href="#" id="login-link"><i class="fas fa-user"></i> Iniciar Sesión</a>
+            
+            <div id="user-info">
+                <span id="user-greeting"><i class="fas fa-user"></i> Hola, [Nombre]</span>
+                
+                <a href="dashboard_empleado.php" id="link-gestion" class="employee-only"><i class="fas fa-cogs"></i> Gestión</a>
+                
+                <a href="dashboard_admin.php" id="link-admin" class="admin-only"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+
+                <a href="logout.php" id="logout-link"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+
+            <a href="#carrito"><i class="fas fa-shopping-cart"></i> Cesta (<span id="cart-count">0</span>)</a>
         </div>
     </header>
 
-    <!-- Menú lateral (off-canvas) -->
     <aside id="side-menu" class="side-menu" aria-hidden="true">
         <button id="btn-close-menu" class="close-menu" aria-label="Cerrar menú">&times;</button>
         <nav class="side-nav">
             <ul>
                 <li><a href="#inicio" class="side-link">Inicio</a></li>
                 <li><a href="#ofertas" class="side-link">🔥 Ofertas</a></li>
+                <li id="menu-gestion" class="employee-only"><a href="dashboard_empleado.php" class="side-link">📦 Gestión de Inventario</a></li>
+                <li id="menu-admin" class="admin-only"><a href="dashboard_admin.php" class="side-link">⚙️ Configuración Global</a></li>
                 <li><a href="#frutas" class="side-link">Frutas y Verduras</a></li>
-                <li><a href="#lacteos" class="side-link">Lácteos y Huevos</a></li>
-                <li><a href="#congelados" class="side-link">Congelados</a></li>
-                <li><a href="#limpieza" class="side-link">Hogar y Limpieza</a></li>
-            </ul>
+                </ul>
         </nav>
     </aside>
-    <!-- Overlay para cerrar al click fuera -->
     <div id="menu-overlay" class="menu-overlay" tabindex="-1" aria-hidden="true"></div>
 
     <main>
-        
         <section id="ofertas-carrusel">
             <div class="section-title banner-rojo">
-                <h2 class="title-main">¡Especial Desayuno!</h2>
-                <p class="title-subtitle">Mirá la Selección de Ofertas que tenemos para vos</p>
+                <h2 class="title-main">¡Bienvenido!</h2>
+                <p class="title-subtitle">Inicia sesión con tu DNI para acceder a tus beneficios.</p>
                 <a href="#" class="ver-mas">Ver Más</a>
             </div>
-
             <div id="carrusel-dinamico-container">
-                <p style="text-align:center; padding: 50px;">Cargando productos...</p>
+                <p style="text-align:center; padding: 50px;">Contenido del supermercado...</p>
             </div>
-            
         </section>
-        
     </main>
 
     <footer>
-        <div class="footer-links">
-            <div class="columna">
-                <h4>Atención al Cliente</h4>
-                <ul>
-                    <li><a href="#ayuda">Centro de Ayuda</a></li>
-                    <li><a href="#envios">Política de Envíos</a></li>
-                </ul>
-            </div>
-            <div class="columna">
-                <h4>Sobre Nosotros</h4>
-                <ul>
-                    <li><a href="#empresa">Nuestra Empresa</a></li>
-                    <li><a href="#trabaja">Trabaja con Nosotros</a></li>
-                </ul>
-            </div>
-            <div class="columna">
-                <h4>Contacto</h4>
-                <p>Teléfono: 123-456-789</p>
-            </div>
-        </div>
-        
         <div class="footer-bottom">
             <p>&copy; 2023 Mi Supermercado Online. Todos los derechos reservados.</p>
         </div>
     </footer>
 
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Ingresar con DNI</h2>
+            <form id="login-form-dni">
+                <label for="dni">DNI:</label>
+                <input type="text" id="dni" name="dni" required maxlength="15">
+                <button type="submit">Ingresar o Registrarse</button>
+                <p id="login-message" style="color:red; margin-top:10px;"></p>
+            </form>
+        </div>
+    </div>
+    
     <script src="script.js"></script> 
 </body>
 </html>
