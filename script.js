@@ -104,3 +104,48 @@ function cambiarSlideProductos(n) {
     slideIndexProductos += n;
     showSlideProductos(slideIndexProductos);
 }
+
+// --- MENU LATERAL DE CATEGORÍAS (Off-canvas) ---
+document.addEventListener('DOMContentLoaded', () => {
+    const btnCategorias = document.getElementById('btn-categorias');
+    const sideMenu = document.getElementById('side-menu');
+    const btnClose = document.getElementById('btn-close-menu');
+    const overlay = document.getElementById('menu-overlay');
+    const sideLinks = document.querySelectorAll('.side-link');
+
+    function openMenu() {
+        if (!sideMenu) return;
+        sideMenu.classList.add('open');
+        overlay.classList.add('active');
+        btnCategorias.setAttribute('aria-expanded', 'true');
+        sideMenu.setAttribute('aria-hidden', 'false');
+        // evitar scroll del body si quieres
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+        if (!sideMenu) return;
+        sideMenu.classList.remove('open');
+        overlay.classList.remove('active');
+        btnCategorias.setAttribute('aria-expanded', 'false');
+        sideMenu.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        btnCategorias.focus();
+    }
+
+    if (btnCategorias) btnCategorias.addEventListener('click', openMenu);
+    if (btnClose) btnClose.addEventListener('click', closeMenu);
+    if (overlay) overlay.addEventListener('click', closeMenu);
+
+    // Cerrar al pulsar Esc
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+    });
+
+    // Cuando se cliquea una categoría, cerramos el menú para navegación
+    sideLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            closeMenu();
+        });
+    });
+});

@@ -3,19 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Supermercado Online - ¡Ofertas Dinámicas!</title>
+    <title>Mi Supermercado Online</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
     <header>
-        <div class="logo">
-            <h1><i class="fas fa-shopping-basket"></i> Mi Supermercado Online</h1>
+        <div class="header-left">
+            <div class="logo">
+                <a href="#inicio" class="logo-link" title="Ir al inicio">
+                    <h1><i class="fas fa-shopping-basket"></i></h1>
+                </a>
+            </div>
+
+            <div class="nav-controls">
+                <button id="btn-categorias" class="menu-button" aria-controls="side-menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i> Categorías
+                </button>
+            </div>
         </div>
+
         <div class="search-bar">
             <input type="text" placeholder="Buscar productos, marcas...">
-            <button><i class="fas fa-search"></i> Buscar</button>
+            <button><i class="fas fa-search"></i></button>
         </div>
         <div class="user-actions">
             <a href="#login"><i class="fas fa-user"></i> Iniciar Sesión</a>
@@ -23,16 +34,22 @@
         </div>
     </header>
 
-    <nav>
-        <ul>
-            <li><a href="#inicio">Inicio</a></li>
-            <li><a href="#ofertas">🔥 Ofertas</a></li>
-            <li><a href="#frutas">Frutas y Verduras</a></li>
-            <li><a href="#lacteos">Lácteos y Huevos</a></li>
-            <li><a href="#congelados">Congelados</a></li>
-            <li><a href="#limpieza">Hogar y Limpieza</a></li>
-        </ul>
-    </nav>
+    <!-- Menú lateral (off-canvas) -->
+    <aside id="side-menu" class="side-menu" aria-hidden="true">
+        <button id="btn-close-menu" class="close-menu" aria-label="Cerrar menú">&times;</button>
+        <nav class="side-nav">
+            <ul>
+                <li><a href="#inicio" class="side-link">Inicio</a></li>
+                <li><a href="#ofertas" class="side-link">🔥 Ofertas</a></li>
+                <li><a href="#frutas" class="side-link">Frutas y Verduras</a></li>
+                <li><a href="#lacteos" class="side-link">Lácteos y Huevos</a></li>
+                <li><a href="#congelados" class="side-link">Congelados</a></li>
+                <li><a href="#limpieza" class="side-link">Hogar y Limpieza</a></li>
+            </ul>
+        </nav>
+    </aside>
+    <!-- Overlay para cerrar al click fuera -->
+    <div id="menu-overlay" class="menu-overlay" tabindex="-1" aria-hidden="true"></div>
 
     <main>
         
