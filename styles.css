@@ -1,78 +1,471 @@
-/* =================================================== */
-/* 🛑 LÓGICA DE LOGIN Y VISIBILIDAD POR ROL 🛑 */
-/* =================================================== */
-
-/* Ocultar el contenedor de información del usuario (saludo, cerrar sesión, etc.) por defecto */
-#user-info {
-    display: none; 
-    gap: 12px; 
-    align-items: center;
-}
-
-/* Ocultar todos los elementos con acceso restringido por defecto (enlaces de gestión) */
-.employee-only,
-.admin-only,
-#menu-gestion,
-#menu-admin {
-    /* ¡Importante! El JS anulará esto si el usuario tiene el rol */
-    display: none !important; 
-}
-
-
-/* =================================================== */
-/* CSS del Modal de Login */
-/* =================================================== */
-
-.modal { 
-    display: none; 
-    position: fixed; 
-    z-index: 1000; 
-    left: 0; 
-    top: 0; 
-    width: 100%; 
-    height: 100%; 
-    overflow: auto; 
-    background-color: rgba(0,0,0,0.4); 
-}
-
-.modal-content { 
-    background-color: #fefefe; 
-    margin: 15% auto; 
-    padding: 20px; 
-    border: 1px solid #888; 
-    width: 80%; 
-    max-width: 400px; 
-    border-radius: 8px; 
-    position: relative; 
-}
-
-.close-btn { 
-    color: #aaa; 
-    float: right; 
-    font-size: 1.8em; 
-    font-weight: bold; 
-    line-height: 1;
-}
-
-.close-btn:hover, .close-btn:focus { 
-    color: black; 
-    text-decoration: none; 
-    cursor: pointer; 
-}
-
-#login-form-dni input[type="text"], #login-form-dni button { 
-    width: 100%; 
-    padding: 10px; 
-    margin: 8px 0; 
-    border: 1px solid #ccc; 
-    border-radius: 4px; 
-    box-sizing: border-box; 
-}
-
-#login-form-dni button { 
-    background-color: var(--color-verde); 
-    color: white; 
-    border: none; 
-    cursor: pointer; 
-    font-weight: bold;
-}
+/* =======================================
+    COLORES Y VARIABLES
+    ======================================= */
+    :root {
+        --color-rojo: #e62020; /* Rojo vibrante */
+        --color-verde: #4CAF50; /* Verde para descuentos */
+        --color-fondo-claro: #f4f4f4;
+        --color-texto-oscuro: #333;
+    }
+    
+    /* =======================================
+        ESTILOS GENERALES
+        ======================================= */
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: var(--color-fondo-claro);
+        color: var(--color-texto-oscuro);
+    }
+    
+    /* HEADER y NAV */
+    header {
+        background-color: #007bff; /* Azul */
+        color: white;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Agrupar logo + botón de categorías */
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    /* Ajustes visuales del logo */
+    .logo h1 {
+        margin: 0;
+        font-size: 1.4em;
+    }
+    
+    /* Hacer que la barra de búsqueda ocupe el espacio central */
+    .search-bar {
+        flex: 1;
+        max-width: 640px;
+        margin: 0 20px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    /* Alinear acciones de usuario a la derecha */
+    .user-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    /* Botón de categorías en header */
+    .menu-button {
+        background: transparent;
+        color: white;
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* Controles del nav (sirve para posicionar el botón) */
+    .nav-controls {
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Menú lateral (off-canvas) */
+    .side-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        max-width: 80%;
+        height: 100%;
+        background: white;
+        box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+        transform: translateX(-110%);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+    
+    /* Estado abierto */
+    .side-menu.open {
+        transform: translateX(0);
+    }
+    
+    /* Overlay semitransparente que cubre el resto de la página */
+    .menu-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease;
+        z-index: 900;
+    }
+    
+    /* Cuando overlay activo */
+    .menu-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* Botón cerrar dentro del menú */
+    .close-menu {
+        background: transparent;
+        border: none;
+        font-size: 1.8em;
+        line-height: 1;
+        cursor: pointer;
+        color: #333;
+        position: absolute;
+        top: 10px;
+        right: 12px;
+    }
+    
+    /* Estilos de la lista de categorías */
+    .side-nav ul {
+        list-style: none;
+        padding: 40px 0 0 0;
+        margin: 0;
+    }
+    
+    .side-nav li {
+        margin-bottom: 12px;
+    }
+    
+    .side-nav a {
+        color: var(--color-texto-oscuro);
+        text-decoration: none;
+        font-weight: 600;
+        display: block;
+        padding: 8px 6px;
+        border-radius: 4px;
+    }
+    
+    .side-nav a:hover {
+        background: rgba(0,0,0,0.04);
+    }
+    
+    /* =======================================
+        BANNER SUPERIOR DEL CARRUSEL
+        ======================================= */
+    #ofertas-carrusel {
+        padding: 20px 0; /* Padding solo arriba y abajo */
+        background-color: var(--color-fondo-claro);
+    }
+    
+    .banner-rojo {
+        background-color: var(--color-rojo);
+        padding: 10px 20px;
+        margin-bottom: 20px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end; /* Alinear abajo para el subtítulo */
+    }
+    
+    .title-main {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 0;
+        line-height: 1.2;
+    }
+    
+    .title-subtitle {
+        margin: 0;
+        font-size: 0.9em;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .ver-mas {
+        color: white;
+        text-decoration: none;
+        font-size: 0.9em;
+        font-weight: bold;
+        align-self: flex-start; /* Alinear "Ver Más" arriba */
+        padding: 5px 0;
+    }
+    
+    
+    /* =======================================
+        CARRUSEL CONTENEDOR Y SLIDES
+        ======================================= */
+    .carrusel-container {
+        position: relative;
+        overflow: hidden; 
+        width: 100%;
+        padding: 0 20px; /* Padding a los lados para que se vean los botones */
+        box-sizing: border-box;
+    }
+    
+    .carousel-track {
+        display: flex;
+        transition: transform 0.5s ease-in-out; 
+        gap: 15px; /* Espacio entre las tarjetas */
+    }
+    
+    
+    /* =======================================
+        TARJETA DE PRODUCTO (LOOK DE LA IMAGEN)
+        ======================================= */
+    .producto-card {
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        flex-shrink: 0; 
+        width: 250px; 
+        padding: 15px;
+        position: relative; 
+        text-align: left;
+        height: auto;
+    }
+    
+    .producto-imagen {
+        width: 100%;
+        height: 160px;
+        object-fit: contain; 
+        display: block;
+        margin: 0 auto 10px;
+    }
+    
+    /* Nombre del producto */
+    .producto-nombre {
+        font-size: 0.9em;
+        height: 30px;
+        color: var(--color-texto-oscuro);
+        font-weight: normal;
+        margin: 5px 0 10px 0;
+    }
+    
+    /* Precio tachado (el precio anterior) */
+    .precio-tachado {
+        text-decoration: line-through;
+        color: #999;
+        font-size: 0.85em;
+        margin: 0;
+    }
+    
+    /* Precio Final (El más grande) */
+    .precio-final {
+        font-size: 1.7em;
+        font-weight: bold;
+        color: var(--color-rojo);
+        margin: 5px 0 10px 0;
+        line-height: 1;
+    }
+    
+    /* Botón "Agregar" (Rojo) */
+    .boton-agregar {
+        width: 100%;
+        background-color: var(--color-rojo);
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 1em;
+        cursor: pointer;
+    }
+    
+    /* --- Etiquetas --- */
+    
+    .etiqueta-exclusiva {
+        position: absolute;
+        top: 10px;
+        left: 0;
+        background-color: var(--color-rojo);
+        color: white;
+        padding: 3px 8px;
+        font-size: 0.7em;
+        font-weight: bold;
+        text-transform: uppercase;
+        border-radius: 0 3px 3px 0;
+        z-index: 2;
+    }
+    
+    .btn-favorito {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        font-size: 1em;
+        color: var(--color-rojo);
+        cursor: pointer;
+        z-index: 5;
+    }
+    
+    .etiqueta-peso-negra {
+        position: absolute;
+        top: 100px; 
+        right: 0;
+        background-color: black;
+        color: white;
+        padding: 5px 8px;
+        font-size: 0.75em;
+        font-weight: bold;
+        border-radius: 4px 0 0 4px;
+        z-index: 2;
+    }
+    
+    .etiqueta-caracteristica-negra {
+        position: absolute;
+        top: 100px;
+        right: 0;
+        background-color: black;
+        color: white;
+        padding: 5px 8px;
+        font-size: 0.75em;
+        font-weight: bold;
+        border-radius: 4px 0 0 4px;
+        z-index: 2;
+    }
+    
+    .etiqueta-caracteristica-verde {
+        position: absolute;
+        top: 150px; 
+        right: 0;
+        background-color: #388e3c; 
+        color: white;
+        padding: 5px 8px;
+        font-size: 0.75em;
+        font-weight: bold;
+        border-radius: 4px 0 0 4px;
+        z-index: 2;
+    }
+    
+    /* Descuentos (el recuadro verde) */
+    .etiqueta-descuento {
+        display: inline-block;
+        background-color: var(--color-verde);
+        color: white;
+        padding: 3px 6px;
+        font-size: 0.8em;
+        font-weight: bold;
+        border-radius: 3px;
+        margin-right: 5px;
+    }
+    
+    /* --- Botones de Navegación del Carrusel --- */
+    
+    .carrusel-btn {
+        position: absolute;
+        top: 55%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.4); 
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 1.2em;
+        cursor: pointer;
+        z-index: 10;
+        opacity: 0.7;
+        transition: background 0.3s;
+    }
+    
+    .carrusel-btn:hover {
+        background: rgba(0, 0, 0, 0.6);
+        opacity: 1;
+    }
+    
+    .prev { left: 5px; }
+    .next { right: 5px; }
+    
+    /* ... (otros estilos de footer) ... */
+    
+    
+    /* =================================================== */
+    /* 🛑 LÓGICA DE LOGIN Y VISIBILIDAD POR ROL 🛑 */
+    /* =================================================== */
+    
+    /* Ocultar el contenedor de información del usuario (saludo, cerrar sesión, etc.) por defecto */
+    #user-info {
+        display: none; 
+        gap: 12px; 
+        align-items: center;
+    }
+    
+    /* Ocultar todos los elementos con acceso restringido por defecto (enlaces de gestión) */
+    .employee-only,
+    .admin-only,
+    #menu-gestion,
+    #menu-admin {
+        /* ¡Importante! El JS anulará esto si el usuario tiene el rol */
+        display: none !important; 
+    }
+    
+    
+    /* =================================================== */
+    /* CSS del Modal de Login */
+    /* =================================================== */
+    
+    .modal { 
+        display: none; 
+        position: fixed; 
+        z-index: 1000; 
+        left: 0; 
+        top: 0; 
+        width: 100%; 
+        height: 100%; 
+        overflow: auto; 
+        background-color: rgba(0,0,0,0.4); 
+    }
+    
+    .modal-content { 
+        background-color: #fefefe; 
+        margin: 15% auto; 
+        padding: 20px; 
+        border: 1px solid #888; 
+        width: 80%; 
+        max-width: 400px; 
+        border-radius: 8px; 
+        position: relative; 
+    }
+    
+    .close-btn { 
+        color: #aaa; 
+        float: right; 
+        font-size: 1.8em; 
+        font-weight: bold; 
+        line-height: 1;
+    }
+    
+    .close-btn:hover, .close-btn:focus { 
+        color: black; 
+        text-decoration: none; 
+        cursor: pointer; 
+    }
+    
+    #login-form-dni input[type="text"], #login-form-dni button { 
+        width: 100%; 
+        padding: 10px; 
+        margin: 8px 0; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-sizing: border-box; 
+    }
+    
+    #login-form-dni button { 
+        background-color: var(--color-verde); 
+        color: white; 
+        border: none; 
+        cursor: pointer; 
+        font-weight: bold;
+    }
