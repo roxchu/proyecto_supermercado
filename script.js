@@ -1,151 +1,96 @@
-// --- Lógica de Conexión AJAX para Cargar el Carrusel ---
+// script.js
 
-// 4. Inicia la carga de datos al cargar el documento (Punto de entrada)
-document.addEventListener('DOMContentLoaded', cargarCarruselDinamico);
-
-function cargarCarruselDinamico() {
-    const contenedor = document.getElementById('carrusel-dinamico-container');
+document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. Solicitamos el contenido de productos.php
-    fetch('productos.php')
-        .then(response => {
-            if (!response.ok) {
-                // Si el servidor responde con error (ej. 404), mostramos mensaje
-                throw new Error('Error de servidor al cargar productos: ' + response.statusText);
-            }
-            return response.text(); // Leemos el HTML generado
-        })
-        .then(html => {
-            // 2. Inyectamos el HTML recibido
-            contenedor.innerHTML = html;
+    // --- Referencias del DOM ---
+    const modal = document.getElementById('loginModal');
+    const loginLink = document.getElementById('login-link');
+    const closeBtn = document.querySelector('.close-btn');
+    const userInfoDiv = document.getElementById('user-info');
+    const userGreeting = document.getElementById('user-greeting');
+    const gestionLink = document.getElementById('link-gestion');
+    const adminLink = document.getElementById('link-admin');
+    const menuGestion = document.getElementById('menu-gestion');
+    const menuAdmin = document.getElementById('menu-admin');
 
-            // 3. Inicializamos la lógica del carrusel solo si se inyectó correctamente
-            const carruselInyectado = document.getElementById('carruselProductos');
-            if (carruselInyectado) {
-                initializeCarouselProductos();
+
+    // --- Lógica del Modal ---
+    loginLink.onclick = function() { modal.style.display = "block"; }
+    closeBtn.onclick = function() { modal.style.display = "none"; }
+    window.onclick = function(event) {
+        if (event.target == modal) { modal.style.display = "none"; }
+    }
+    
+    /**
+     * Función que actualiza la interfaz después de un login exitoso.
+     * @param {string} rol - El rol del usuario ('client', 'employee', 'admin').
+     * @param {string} nombre - El nombre del usuario.
+     */
+    function updateUI(rol, nombre) {
+        // Ocultar Iniciar Sesión y mostrar el saludo
+        loginLink.style.display = 'none';
+        userInfoDiv.style.display = 'flex'; 
+        userGreeting.innerHTML = `<i class="fas fa-user"></i> Hola, ${nombre}`;
+
+        // Resetear la visibilidad de los enlaces de gestión
+        gestionLink.style.display = 'none';
+        adminLink.style.display = 'none';
+        menuGestion.style.display = 'none';
+        menuAdmin.style.display = 'none';
+        
+        // Mostrar elementos según el rol
+        if (rol === 'admin') {
+            gestionLink.style.display = 'inline-block';
+            adminLink.style.display = 'inline-block';
+            menuGestion.style.display = 'list-item';
+            menuAdmin.style.display = 'list-item';
+        } else if (rol === 'employee') {
+            gestionLink.style.display = 'inline-block';
+            menuGestion.style.display = 'list-item';
+        }
+    }
+    
+    // --- Lógica de Envío del Formulario ---
+    document.getElementById('login-form-dni').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const dni = document.getElementById('dni').value.trim();
+        const messageElement = document.getElementById('login-message');
+        messageElement.textContent = 'Verificando...';
+        
+        fetch('login.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', },
+            body: `dni=${encodeURIComponent(dni)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                messageElement.textContent = `¡Bienvenido! Rol: ${data.rol}.`;
+                
+                // Actualizar UI con el rol y nombre devuelto por PHP
+                updateUI(data.rol, data.nombre); 
+                
+                // Cierra el modal y redirige si es empleado/admin
+                setTimeout(() => {
+                    modal.style.display = "none";
+                    if (data.rol === 'admin') {
+                         window.location.href = 'dashboard_admin.php';
+                    } else if (data.rol === 'employee') {
+                         window.location.href = 'dashboard_empleado.php';
+                    }
+                    // Si es 'client', se queda en el index
+                }, 1000); 
+
             } else {
-                 // Si el PHP devolvió un error de BD, el HTML será el mensaje de error
-                 console.error("No se pudo inicializar el carrusel. Verifique productos.php");
+                messageElement.textContent = data.message || 'Error desconocido al iniciar sesión.';
             }
         })
         .catch(error => {
-            console.error('Error AJAX:', error);
-            contenedor.innerHTML = '<p style="color:red; text-align:center; padding: 50px;">Falló la conexión con el servidor: ' + error.message + '</p>';
-        });
-}
-
-
-// --- LÓGICA DEL CARRUSEL (Manipulación del Deslizamiento) ---
-
-let slideIndexProductos = 0;
-let slidesProductos;
-let trackProductos;
-// Número aproximado de tarjetas visibles (ajustar en CSS o media queries si es necesario)
-const CARDS_VISIBLE_THRESHOLD = 4; 
-
-function initializeCarouselProductos() {
-    // Buscamos los elementos inyectados dinámicamente
-    slidesProductos = document.querySelectorAll('#carruselProductos .producto-card');
-    trackProductos = document.querySelector('#carruselProductos .carousel-track');
-    let prevBtn = document.querySelector('.carrusel-btn.prev'); 
-    let nextBtn = document.querySelector('.carrusel-btn.next'); 
-
-    if (slidesProductos.length > 0 && trackProductos) {
-        showSlideProductos(slideIndexProductos);
-
-        if (prevBtn) prevBtn.addEventListener('click', () => cambiarSlideProductos(-1));
-        if (nextBtn) nextBtn.addEventListener('click', () => cambiarSlideProductos(1));
-        
-        checkCarouselVisibility();
-        window.addEventListener('resize', checkCarouselVisibility); // Revisa en cambio de tamaño
-    }
-}
-
-function checkCarouselVisibility() {
-    let prevBtn = document.querySelector('.carrusel-btn.prev'); 
-    let nextBtn = document.querySelector('.carrusel-btn.next');
-    
-    // Ocultar/Mostrar botones basado en el umbral visible
-    if (slidesProductos.length <= CARDS_VISIBLE_THRESHOLD) {
-        if (prevBtn) prevBtn.style.display = 'none';
-        if (nextBtn) nextBtn.style.display = 'none';
-    } else {
-        if (prevBtn) prevBtn.style.display = 'block';
-        if (nextBtn) nextBtn.style.display = 'block';
-        showSlideProductos(slideIndexProductos); 
-    }
-}
-
-function showSlideProductos(n) {
-    const totalSlides = slidesProductos.length;
-    
-    // Cálculo del ancho dinámico para mover el track (más robusto)
-    const cardWidth = slidesProductos[0].offsetWidth;
-    // El 'gap' del CSS se extrae y se suma al ancho
-    const trackGap = parseFloat(getComputedStyle(trackProductos).gap) || 0; 
-    const CARD_WIDTH_WITH_GAP = cardWidth + trackGap;
-
-    const maxIndex = totalSlides - CARDS_VISIBLE_THRESHOLD; 
-
-    // Manejo de límites del índice
-    if (n > maxIndex) { slideIndexProductos = maxIndex; } 
-    if (n < 0) { slideIndexProductos = 0; } 
-    
-    // Aplicar la traslación (desplazamiento) horizontal
-    let offset = slideIndexProductos * CARD_WIDTH_WITH_GAP;
-    trackProductos.style.transform = `translateX(-${offset}px)`;
-
-    // Deshabilitar flechas en los extremos
-    document.querySelector('.carrusel-btn.prev').disabled = (slideIndexProductos === 0);
-    document.querySelector('.carrusel-btn.next').disabled = (slideIndexProductos >= maxIndex);
-}
-
-function cambiarSlideProductos(n) {
-    slideIndexProductos += n;
-    showSlideProductos(slideIndexProductos);
-}
-
-// --- MENU LATERAL DE CATEGORÍAS (Off-canvas) ---
-document.addEventListener('DOMContentLoaded', () => {
-    const btnCategorias = document.getElementById('btn-categorias');
-    const sideMenu = document.getElementById('side-menu');
-    const btnClose = document.getElementById('btn-close-menu');
-    const overlay = document.getElementById('menu-overlay');
-    const sideLinks = document.querySelectorAll('.side-link');
-
-    function openMenu() {
-        if (!sideMenu) return;
-        sideMenu.classList.add('open');
-        overlay.classList.add('active');
-        btnCategorias.setAttribute('aria-expanded', 'true');
-        sideMenu.setAttribute('aria-hidden', 'false');
-        // evitar scroll del body si quieres
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeMenu() {
-        if (!sideMenu) return;
-        sideMenu.classList.remove('open');
-        overlay.classList.remove('active');
-        btnCategorias.setAttribute('aria-expanded', 'false');
-        sideMenu.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-        btnCategorias.focus();
-    }
-
-    if (btnCategorias) btnCategorias.addEventListener('click', openMenu);
-    if (btnClose) btnClose.addEventListener('click', closeMenu);
-    if (overlay) overlay.addEventListener('click', closeMenu);
-
-    // Cerrar al pulsar Esc
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeMenu();
-    });
-
-    // Cuando se cliquea una categoría, cerramos el menú para navegación
-    sideLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            closeMenu();
+            messageElement.textContent = 'Error de conexión con el servidor.';
+            console.error('Error:', error);
         });
     });
+
+    // NOTA: Aquí iría una función para chequear la sesión al cargar la página (ej: usando fetch a un script de chequeo de sesión).
 });

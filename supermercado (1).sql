@@ -2,8 +2,8 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: 127.0.0.1
--- Tiempo de generación: 17-10-2025 a las 22:37:49
+-- Servidor: localhost
+-- Tiempo de generación: 18-10-2025 a las 00:08:45
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -55,9 +55,7 @@ CREATE TABLE `categoria` (
 --
 
 CREATE TABLE `cliente` (
-  `id_cliente` int(11) NOT NULL,
-  `id_rol` int(11) NOT NULL,
-  `DNI` int(11) NOT NULL
+  `id_cliente` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
 
 -- --------------------------------------------------------
@@ -113,10 +111,9 @@ CREATE TABLE `direcciones` (
 --
 
 CREATE TABLE `empleado` (
-  `id_rol` int(11) NOT NULL,
-  `DNI` int(11) NOT NULL,
+  `id_empleado` int(11) NOT NULL,
   `Fecha_contratacion` date NOT NULL,
-  `Cargo` varchar(11) NOT NULL
+  `Cargo` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
 
 -- --------------------------------------------------------
@@ -155,9 +152,18 @@ CREATE TABLE `producto` (
 
 CREATE TABLE `rol` (
   `id_rol` int(11) NOT NULL,
-  `rol` int(11) NOT NULL,
-  `rol_descripcion` int(11) NOT NULL
+  `nombre_rol` varchar(50) NOT NULL,
+  `descripcion` varchar(200) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
+
+--
+-- Volcado de datos para la tabla `rol`
+--
+
+INSERT INTO `rol` (`id_rol`, `nombre_rol`, `descripcion`) VALUES
+(1, 'admin', 'Superusuario con acceso total.'),
+(2, 'employee', 'Empleado de caja o reposición.'),
+(3, 'client', 'Cliente final de la tienda.');
 
 -- --------------------------------------------------------
 
@@ -166,7 +172,8 @@ CREATE TABLE `rol` (
 --
 
 CREATE TABLE `usuario` (
-  `DNI` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `DNI` varchar(15) NOT NULL,
   `id_rol` int(11) NOT NULL,
   `nombre_usuario` varchar(200) NOT NULL,
   `correo` varchar(200) NOT NULL,
@@ -208,8 +215,7 @@ ALTER TABLE `categoria`
 -- Indices de la tabla `cliente`
 --
 ALTER TABLE `cliente`
-  ADD PRIMARY KEY (`id_cliente`),
-  ADD KEY `id_rol` (`id_rol`);
+  ADD PRIMARY KEY (`id_cliente`);
 
 --
 -- Indices de la tabla `detalle_carrito`
@@ -238,7 +244,7 @@ ALTER TABLE `direcciones`
 -- Indices de la tabla `empleado`
 --
 ALTER TABLE `empleado`
-  ADD UNIQUE KEY `id_rol` (`id_rol`);
+  ADD PRIMARY KEY (`id_empleado`);
 
 --
 -- Indices de la tabla `opcion_producto`
@@ -258,13 +264,15 @@ ALTER TABLE `producto`
 -- Indices de la tabla `rol`
 --
 ALTER TABLE `rol`
-  ADD PRIMARY KEY (`id_rol`);
+  ADD PRIMARY KEY (`id_rol`),
+  ADD UNIQUE KEY `nombre_rol` (`nombre_rol`);
 
 --
 -- Indices de la tabla `usuario`
 --
 ALTER TABLE `usuario`
-  ADD PRIMARY KEY (`DNI`),
+  ADD PRIMARY KEY (`id_usuario`),
+  ADD UNIQUE KEY `DNI` (`DNI`),
   ADD KEY `id_rol` (`id_rol`);
 
 --
@@ -276,14 +284,30 @@ ALTER TABLE `venta`
   ADD KEY `id_empleado` (`id_empleado`);
 
 --
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `usuario`
+--
+ALTER TABLE `usuario`
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- Restricciones para tablas volcadas
 --
+
+--
+-- Filtros para la tabla `cliente`
+--
+ALTER TABLE `cliente`
+  ADD CONSTRAINT `cliente_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `usuario` (`id_usuario`);
 
 --
 -- Filtros para la tabla `empleado`
 --
 ALTER TABLE `empleado`
-  ADD CONSTRAINT `empleado_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `cliente` (`id_rol`);
+  ADD CONSTRAINT `empleado_ibfk_1` FOREIGN KEY (`id_empleado`) REFERENCES `usuario` (`id_usuario`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
