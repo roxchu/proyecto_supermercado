@@ -110,13 +110,35 @@
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
-            <h2>Ingresar con DNI</h2>
-            <form id="login-form-dni">
+            <h2 id="modal-title">Iniciar Sesión</h2>
+            
+            <!-- Formulario de Login -->
+            <form id="login-form-dni" style="display:block;">
                 <label for="dni">DNI:</label>
                 <input type="text" id="dni" name="dni" required maxlength="15" placeholder="Ingresa tu DNI">
-                <button type="submit">Ingresar o Registrarse</button>
-                <p id="login-message" style="color:red; margin-top:10px;"></p>
+                <button type="submit">Ingresar</button>
+                <p id="login-message" style="margin-top:10px;"></p>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="#" id="show-register" style="color: #007bff; text-decoration: none; font-size: 0.9em;">
+                        ¿No tienes una cuenta? Regístrate aquí
+                    </a>
+                </div>
             </form>
+
+            <!-- Formulario de Registro -->
+            <form id="register-form" style="display:none;">
+                <label for="reg-dni">DNI:</label>
+                <input type="text" id="reg-dni" name="dni" required maxlength="15" placeholder="Tu DNI"> <label for="reg-nombre">Nombre Completo:</label>
+                <input type="text" id="reg-nombre" name="nombre" required placeholder="Tu nombre completo"> <label for="reg-correo">Correo Electrónico:</label>
+                <input type="email" id="reg-correo" name="correo" required placeholder="tu@email.com"> <button type="submit">Registrarse como Cliente</button>
+                <p id="register-message" style="margin-top:10px;"></p>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="#" id="show-login" style="color: #007bff; text-decoration: none; font-size: 0.9em;">
+                        ¿Ya tienes cuenta? Inicia sesión
+                    </a>
+                </div>
+            </form>
+
             <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 0.85em;">
                 <strong>Usuarios de prueba:</strong><br>
                 Cliente: 12345678<br>

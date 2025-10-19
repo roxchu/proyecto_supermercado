@@ -1,4 +1,4 @@
-// script.js - Gestión del supermercado online
+// script.js - Gestión del supermercado online 
 
 // ========================================
 // VARIABLES GLOBALES
@@ -36,236 +36,280 @@ document.querySelectorAll('.side-link').forEach(link => {
     link.addEventListener('click', cerrarMenu);
 });
 
+
 // ========================================
-// MODAL DE LOGIN
+// MODAL DE LOGIN Y REGISTRO (Coordinación con index.html)
 // ========================================
 const loginModal = document.getElementById('loginModal');
 const loginLink = document.getElementById('login-link');
-const closeBtn = document.querySelector('.close-btn');
-const loginForm = document.getElementById('login-form-dni');
-const loginMessage = document.getElementById('login-message');
+const logoutLink = document.getElementById('logout-link');
+const closeModal = loginModal.querySelector('.close-btn');
 
+// Formularios
+const loginForm = document.getElementById('login-form-dni');
+const registerForm = document.getElementById('register-form');
+const loginMessage = document.getElementById('login-message');
+const registerMessage = document.getElementById('register-message');
+
+// Botones de cambio de vista
+const showRegisterLink = document.getElementById('show-register');
+const showLoginLink = document.getElementById('show-login');
+
+// Mostrar modal
 loginLink.addEventListener('click', (e) => {
     e.preventDefault();
     loginModal.style.display = 'block';
+    // Asegurar que volvemos al login por defecto
+    loginForm.style.display = 'block';
+    registerForm.style.display = 'none';
+    document.getElementById('modal-title').textContent = 'Iniciar Sesión';
+    loginMessage.textContent = '';
+    registerMessage.textContent = '';
 });
 
-closeBtn.addEventListener('click', () => {
+// Cerrar modal
+closeModal.addEventListener('click', () => {
     loginModal.style.display = 'none';
+});
+window.addEventListener('click', (event) => {
+    if (event.target === loginModal) {
+        loginModal.style.display = 'none';
+    }
+});
+
+
+// ----------------------------------------
+// LÓGICA DE CAMBIO DE FORMULARIO
+// ----------------------------------------
+
+// Cambiar a Registro
+showRegisterLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+    document.getElementById('modal-title').textContent = 'Crear Cuenta';
     loginMessage.textContent = '';
 });
 
-window.addEventListener('click', (e) => {
-    if (e.target === loginModal) {
-        loginModal.style.display = 'none';
-        loginMessage.textContent = '';
-    }
+// Cambiar a Login
+showLoginLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    registerForm.style.display = 'none';
+    loginForm.style.display = 'block';
+    document.getElementById('modal-title').textContent = 'Iniciar Sesión';
+    registerMessage.textContent = '';
 });
 
-// ========================================
-// PROCESAR LOGIN (Con tu login.php existente)
-// ========================================
-loginForm.addEventListener('submit', async (e) => {
+
+// ----------------------------------------
+// FUNCIÓN NUEVA: Sugerir Registro
+// ----------------------------------------
+/**
+ * Cambia el modal de login a registro y precarga el DNI.
+ * @param {string} dni - El DNI que el usuario intentó usar.
+ * @param {HTMLElement} messageEl - El elemento <p> del mensaje del login.
+ */
+function suggestRegistration(dni, messageEl) {
+    // 1. Cambia de formulario
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+    document.getElementById('modal-title').textContent = 'Crear Cuenta';
+    
+    // 2. Precarga el DNI en el nuevo formulario de registro
+    // Asegúrate de que el name del input de registro sea 'dni'
+    document.getElementById('reg-dni').value = dni; 
+    
+    // 3. Muestra un mensaje útil
+    messageEl.textContent = '¡Regístrate! Tu DNI no fue encontrado.';
+    messageEl.style.color = '#FFA500'; // Naranja
+}
+
+
+// ----------------------------------------
+// A. LÓGICA DE LOGIN (fetch a login.php)
+// ----------------------------------------
+loginForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const dni = document.getElementById('dni').value.trim();
+    const dniInput = document.getElementById('dni');
+    const dni = dniInput.value;
     
-    if (!dni) {
-        loginMessage.textContent = 'Por favor ingresa tu DNI';
-        return;
-    }
-    
-    try {
-        const formData = new FormData();
-        formData.append('dni', dni);
-        
-        const response = await fetch('login.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
+    const formData = new FormData(this); 
+
+    loginMessage.textContent = 'Verificando...';
+    loginMessage.style.color = '#333';
+
+    fetch('login.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.success) {
-            // Guardar datos del usuario
-            usuarioActual = {
-                nombre: data.nombre,
-                rol: data.rol
-            };
-            
-            actualizarInterfazUsuario();
-            loginModal.style.display = 'none';
-            loginMessage.textContent = '';
-            document.getElementById('dni').value = '';
-            
-            // Mostrar mensaje de bienvenida
+            loginMessage.textContent = data.message;
+            loginMessage.style.color = 'green';
             mostrarNotificacion(`¡Bienvenido, ${data.nombre}!`, 'success');
+            
+            setTimeout(() => {
+                loginModal.style.display = 'none';
+                updateUI(data.nombre, data.rol);
+            }, 500);
+            
         } else {
-            loginMessage.textContent = data.message || 'Error al iniciar sesión';
+            // Manejo de error: Si el código es 'USER_NOT_FOUND', sugerimos el registro
+            if (data.code === 'USER_NOT_FOUND') {
+                suggestRegistration(dni, loginMessage); // Llama a la nueva función
+            } else {
+                // Error general 
+                loginMessage.textContent = data.message || 'Error desconocido al iniciar sesión.';
+                loginMessage.style.color = 'red';
+                console.error("Error de login:", data); 
+            }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        loginMessage.textContent = 'Error de conexión. Intenta nuevamente.';
-    }
+    })
+    .catch(error => {
+        loginMessage.textContent = 'Error de conexión con el servidor.';
+        loginMessage.style.color = 'red';
+        console.error('Error de fetch:', error);
+    });
 });
 
-// ========================================
-// ACTUALIZAR INTERFAZ SEGÚN USUARIO
-// ========================================
-function actualizarInterfazUsuario() {
-    const loginLink = document.getElementById('login-link');
-    const userInfo = document.getElementById('user-info');
-    const userGreeting = document.getElementById('user-greeting');
-    
-    if (usuarioActual) {
-        // Ocultar link de login y mostrar info de usuario
-        loginLink.style.display = 'none';
-        userInfo.style.display = 'flex';
-        userGreeting.innerHTML = `<i class="fas fa-user"></i> Hola, ${usuarioActual.nombre}`;
-        
-        // Mostrar/ocultar elementos según rol
-        const employeeElements = document.querySelectorAll('.employee-only');
-        const adminElements = document.querySelectorAll('.admin-only');
-        
-        if (usuarioActual.rol === 'admin') {
-            // Admin ve todo
-            employeeElements.forEach(el => el.style.display = 'block');
-            adminElements.forEach(el => el.style.display = 'block');
-        } else if (usuarioActual.rol === 'employee') {
-            // Employee ve solo sus opciones
-            employeeElements.forEach(el => el.style.display = 'block');
-            adminElements.forEach(el => el.style.display = 'none');
-        } else {
-            // Client (o cualquier otro rol) no ve opciones de gestión
-            employeeElements.forEach(el => el.style.display = 'none');
-            adminElements.forEach(el => el.style.display = 'none');
-        }
-    } else {
-        // No hay sesión: mostrar link de login
-        loginLink.style.display = 'inline';
-        userInfo.style.display = 'none';
-        
-        // Ocultar todos los elementos restringidos
-        document.querySelectorAll('.employee-only, .admin-only').forEach(el => {
-            el.style.display = 'none';
-        });
-    }
-}
 
-// ========================================
-// CERRAR SESIÓN (Redirige a tu logout.php)
-// ========================================
-document.getElementById('logout-link').addEventListener('click', (e) => {
+// ----------------------------------------
+// B. LÓGICA DE REGISTRO (fetch a registro.php)
+// ----------------------------------------
+registerForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Tu logout.php hace redirect automático a index.html
-    window.location.href = 'logout.php';
+    // FormData envía los campos 'dni', 'nombre', 'correo' (asumiendo que los name="" están correctos en el HTML)
+    const formData = new FormData(this); 
+
+    registerMessage.textContent = 'Registrando...';
+    registerMessage.style.color = '#333';
+
+    fetch('registro.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            registerMessage.textContent = data.message;
+            registerMessage.style.color = 'green';
+            mostrarNotificacion(`¡Registro exitoso! Hola, ${data.nombre}.`, 'success');
+            
+            // Cierra el modal y actualiza la UI
+            setTimeout(() => {
+                loginModal.style.display = 'none';
+                updateUI(data.nombre, data.rol);
+            }, 1000);
+            
+        } else {
+            // Muestra el error que viene de registro.php
+            registerMessage.textContent = data.message;
+            registerMessage.style.color = 'red';
+            // Muestra el error de la DB en la consola si el registro falla (campo 'debug')
+            console.error("Error de registro (DEBUG):", data.debug); 
+        }
+    })
+    .catch(error => {
+        registerMessage.textContent = 'Error de conexión con el servidor.';
+        registerMessage.style.color = 'red';
+        console.error('Error de fetch:', error);
+    });
 });
 
-// ========================================
-// VERIFICAR SESIÓN AL CARGAR (AJAX)
-// ========================================
-async function verificarSesion() {
-    try {
-        const response = await fetch('check_session.php');
-        const data = await response.json();
-        
-        if (data.logged_in) {
-            usuarioActual = {
-                nombre: data.nombre,
-                rol: data.rol
-            };
-            actualizarInterfazUsuario();
-        } else {
-            usuarioActual = null;
-            actualizarInterfazUsuario();
-        }
-    } catch (error) {
-        console.error('Error al verificar sesión:', error);
-        usuarioActual = null;
-        actualizarInterfazUsuario();
+
+// ----------------------------------------
+// C. CIERRE DE SESIÓN (fetch a logout.php)
+// ----------------------------------------
+logoutLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    fetch('logout.php') // Debes tener un archivo logout.php que destruya la sesión
+        .then(() => {
+            mostrarNotificacion('Sesión cerrada correctamente.', 'info');
+            // Recarga la página para restaurar la UI
+            location.reload(); 
+        })
+        .catch(error => {
+            console.error('Error al cerrar sesión:', error);
+        });
+});
+
+
+// ----------------------------------------
+// D. FUNCIONES DE UI Y SESIÓN (Compartidas)
+// ----------------------------------------
+
+/**
+ * Actualiza los elementos de la interfaz de usuario (UI) según el rol.
+ * @param {string} nombre - Nombre del usuario.
+ * @param {string} rol - Rol del usuario ('admin', 'employee', 'client').
+ */
+function updateUI(nombre, rol) {
+    const userInfo = document.getElementById('user-info');
+    const loginLink = document.getElementById('login-link');
+    const userGreeting = document.getElementById('user-greeting');
+    // Elementos del menú y header que se ocultan/muestran
+    const employeeElements = document.querySelectorAll('.employee-only');
+    const adminElements = document.querySelectorAll('.admin-only');
+
+    loginLink.style.display = 'none';
+    userInfo.style.display = 'flex'; // Mostrar el contenedor de usuario
+    userGreeting.innerHTML = `<i class="fas fa-user"></i> Hola, ${nombre}`;
+
+    // Lógica de visibilidad por rol
+    const isEmployee = rol === 'empleado' || rol === 'admin';
+    const isAdmin = rol === 'admin';
+    
+    // Ocultar todos los elementos de acceso restringido
+    document.querySelectorAll('.employee-only, .admin-only').forEach(el => el.style.display = 'none');
+
+    // Mostrar lo que corresponda en el header
+    if (isEmployee) {
+        // Enlaces de gestión en el header
+        document.getElementById('link-gestion').style.display = 'flex';
     }
-}
-
-// ========================================
-// CARGAR PRODUCTOS DESTACADOS
-// ========================================
-async function cargarProductos() {
-    const container = document.getElementById('carrusel-dinamico-container');
-    
-    try {
-        const response = await fetch('productos.php');
-        const html = await response.text();
-        container.innerHTML = html;
-        
-        // Agregar event listeners a los botones de agregar
-        agregarEventListenersProductos();
-        
-    } catch (error) {
-        console.error('Error al cargar productos:', error);
-        container.innerHTML = `
-            <div style="padding:40px;text-align:center;color:#d32f2f;">
-                <i class="fas fa-exclamation-circle" style="font-size:3em;margin-bottom:10px;"></i>
-                <p>Error al cargar los productos</p>
-                <p style="font-size:0.9em;">${error.message}</p>
-            </div>
-        `;
-    }
-}
-
-// ========================================
-// GESTIÓN DEL CARRITO
-// ========================================
-function agregarEventListenersProductos() {
-    document.querySelectorAll('.boton-agregar').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const nombre = this.dataset.nombre;
-            const precio = parseFloat(this.dataset.precio);
-            
-            agregarAlCarrito(id, nombre, precio);
-        });
-    });
-    
-    // Event listener para favoritos
-    document.querySelectorAll('.btn-favorito').forEach(btn => {
-        btn.addEventListener('click', function() {
-            this.querySelector('i').classList.toggle('far');
-            this.querySelector('i').classList.toggle('fas');
-            mostrarNotificacion('Producto agregado a favoritos', 'info');
-        });
-    });
-}
-
-function agregarAlCarrito(id, nombre, precio) {
-    const itemExistente = carritoItems.find(item => item.id === id);
-    
-    if (itemExistente) {
-        itemExistente.cantidad++;
-    } else {
-        carritoItems.push({
-            id: id,
-            nombre: nombre,
-            precio: precio,
-            cantidad: 1
-        });
+    if (isAdmin) {
+        // Enlaces de administración en el header
+        document.getElementById('link-admin').style.display = 'flex';
     }
     
-    actualizarContadorCarrito();
-    mostrarNotificacion(`${nombre} agregado al carrito`, 'success');
+    // Mostrar lo que corresponda en el menú lateral (SIDE MENU)
+    document.querySelectorAll('#side-menu .employee-only').forEach(el => el.style.display = isEmployee ? 'list-item' : 'none');
+    document.querySelectorAll('#side-menu .admin-only').forEach(el => el.style.display = isAdmin ? 'list-item' : 'none');
 }
 
-function actualizarContadorCarrito() {
-    const contador = document.getElementById('cart-count');
-    const total = carritoItems.reduce((sum, item) => sum + item.cantidad, 0);
-    contador.textContent = total;
+/**
+ * Verifica la sesión al cargar la página (fetch a check_session.php).
+ */
+function checkSession() {
+    fetch('check_session.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.logged_in) {
+                // Si hay sesión, actualiza la UI
+                updateUI(data.nombre, data.rol);
+            } else {
+                // Si no hay sesión, asegura que la UI esté en estado de no logueado
+                document.getElementById('login-link').style.display = 'block';
+                document.getElementById('user-info').style.display = 'none';
+                document.querySelectorAll('.employee-only, .admin-only').forEach(el => el.style.display = 'none');
+            }
+        })
+        .catch(error => {
+            console.error('Error al verificar la sesión:', error);
+            // Fallback en caso de error de conexión
+            document.getElementById('login-link').style.display = 'block';
+            document.getElementById('user-info').style.display = 'none';
+        });
 }
 
-// ========================================
-// NOTIFICACIONES
-// ========================================
+
+// ----------------------------------------
+// E. NOTIFICACIONES
+// ----------------------------------------
 function mostrarNotificacion(mensaje, tipo = 'info') {
-    // Crear elemento de notificación
     const notif = document.createElement('div');
     notif.style.cssText = `
         position: fixed;
@@ -277,36 +321,111 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
         border-radius: 4px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         z-index: 10000;
-        animation: slideIn 0.3s ease;
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        transform: translateX(100%);
+        opacity: 0;
     `;
     notif.textContent = mensaje;
     
     document.body.appendChild(notif);
-    
+
+    // Animación de entrada
     setTimeout(() => {
-        notif.style.animation = 'slideOut 0.3s ease';
+        notif.style.transform = 'translateX(0)';
+        notif.style.opacity = '1';
+    }, 10); // Pequeño retraso para asegurar el inicio de la transición
+
+    // Animación de salida y eliminación
+    setTimeout(() => {
+        notif.style.transform = 'translateX(100%)';
+        notif.style.opacity = '0';
         setTimeout(() => notif.remove(), 300);
     }, 3000);
 }
 
-// Agregar estilos para las animaciones
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(400px); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+
+// ----------------------------------------
+// F. LÓGICA DE CARGA DE PRODUCTOS (¡NUEVA FUNCIÓN AÑADIDA!)
+// ----------------------------------------
+
+function cargarProductos() {
+    const contenedor = document.getElementById('carrusel-dinamico-container');
+
+    // El fetch llama al PHP que genera el HTML de los productos.
+    fetch('productos.php') 
+        .then(response => {
+            if (!response.ok) {
+                // Si hay un error HTTP (ej. 404 Not Found), lo indicamos
+                throw new Error(`Error al obtener productos: ${response.statusText}`);
+            }
+            // productos.php devuelve HTML, por lo tanto, usamos .text()
+            return response.text(); 
+        })
+        .then(html => {
+            // Reemplazamos el contenido de "Cargando productos..." por el HTML real.
+            contenedor.innerHTML = html;
+        })
+        .catch(error => {
+            // Muestra un mensaje de error si la comunicación falla
+            contenedor.innerHTML = 
+                `<div style="text-align:center; color: red; padding: 30px;">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Fallo de conexión al cargar productos. Por favor, revise la consola.
+                </div>`;
+            console.error('Error al cargar productos:', error);
+        });
+}
+// script.js (Añadir esta nueva sección antes de INICIALIZACIÓN)
+
+// script.js (CORRECCIÓN PARA EL CARRITO)
+
+// ----------------------------------------
+// G. LÓGICA DE CARRITO (Delegación de Eventos CORREGIDA)
+// ----------------------------------------
+
+/**
+ * Función que maneja el clic en cualquier botón de agregar al carrito.
+ * Ahora busca la clase .btn-add usada en productos.php
+ */
+function manejarClickCarrito(event) {
+    // 1. Verificar si el elemento clickeado o su padre es el botón con la clase 'btn-add'
+    const boton = event.target.closest('.btn-add'); // ⬅️ CAMBIO CRÍTICO: Buscar '.btn-add'
+    
+    if (boton) {
+        event.preventDefault(); 
+        
+        // 2. Obtener la información del producto
+        // ASUMIMOS que el ID del producto está en el atributo 'id' del botón (o 'data-id')
+        const productoId = boton.getAttribute('id') || boton.getAttribute('data-id');
+        
+        // 3. Lógica de agregar producto
+        if (!productoId) {
+            mostrarNotificacion("Error: ID de producto no encontrado en el botón.", 'error');
+            console.error("Botón sin ID. Revise productos.php");
+            return;
+        }
+
+        // --- SIMULACIÓN DE ÉXITO ---
+        // Si llegamos aquí, el botón funcionó y el ID se capturó.
+        mostrarNotificacion(`Agregando Producto ID: ${productoId} al carrito.`, 'success');
+        
+        // Aquí iría tu lógica real de fetch a la API:
+        // fetch('agregar_carrito.php', {
+        //     method: 'POST',
+        //     body: JSON.stringify({ product_id: productoId, cantidad: 1 }),
+        //     headers: { 'Content-Type': 'application/json' }
+        // })
+        // .then(...)
     }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(400px); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
+}
+
+// 4. Asegúrate de que el listener esté activo (debe ir una sola vez)
+document.addEventListener('click', manejarClickCarrito);
 
 // ========================================
 // INICIALIZACIÓN
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
-    verificarSesion();
-    cargarProductos();
+    checkSession();
+    cargarProductos(); 
 });
