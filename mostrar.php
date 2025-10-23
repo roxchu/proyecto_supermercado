@@ -109,8 +109,9 @@ if ($producto_id !== null) {
             z-index: 10;
         }
         .producto-imagen img {
-            max-width: 100%;
-            height: auto;
+            object-fit: contain;
+            max-width: 370px;
+            height: 370px;
             border: 1px solid #eee;
             border-radius: 4px;
         }
