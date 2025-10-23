@@ -210,9 +210,16 @@
     
     .carousel-track {
         display: flex;
-        transition: transform 0.5s ease-in-out; 
-        gap: 15px; /* Espacio entre las tarjetas */
+        gap: 15px;
+        overflow-x: auto;         /* permite el scroll horizontal */
+        scroll-behavior: smooth;  /* hace el movimiento suave */
+        scrollbar-width: none;    /* oculta la barra de desplazamiento (Firefox) */
+        -ms-overflow-style: none; /* oculta la barra (Edge antiguo) */
     }
+    .carousel-track::-webkit-scrollbar {
+        display: none;            /* oculta la barra (Chrome/Safari) */
+    }
+    
     
     
     /* =======================================
