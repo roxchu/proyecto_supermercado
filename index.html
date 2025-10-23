@@ -1,153 +1,107 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Supermercado Online</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supermercado Online</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
-
-    <header>
-        <div class="header-left">
-            <div class="logo">
-                <a href="index.html" class="logo-link" title="Ir al inicio">
-                    <h1><i class="fas fa-shopping-basket"></i> SuperMarket</h1>
-                </a>
-            </div>
-
-            <div class="nav-controls">
-                <button id="btn-categorias" class="menu-button" aria-controls="side-menu" aria-expanded="false">
-                    <i class="fas fa-bars"></i> Categorías
-                </button>
-            </div>
+    <!-- ===========================
+         ENCABEZADO PRINCIPAL
+    ============================ -->
+    <header class="header">
+        <div class="logo">
+            🛒 Supermercado Online
         </div>
 
-        <div class="search-bar">
-            <input type="text" placeholder="Buscar productos, marcas...">
-            <button><i class="fas fa-search"></i></button>
-        </div>
+        <nav class="nav">
+            <a href="#" id="btn-categorias" aria-expanded="false">Categorías</a>
+            <a href="#" id="link-gestion" class="employee-only" style="display:none;">Gestión</a>
+            <a href="#" id="link-admin" class="admin-only" style="display:none;">Administración</a>
+        </nav>
 
-        <div class="user-actions">
-            <!-- Link de login (se oculta cuando hay sesión activa) -->
-            <a href="#" id="login-link"><i class="fas fa-user"></i> Iniciar Sesión</a>
-            
-            <!-- Info de usuario (se muestra cuando hay sesión activa) -->
-            <div id="user-info">
-                <span id="user-greeting"><i class="fas fa-user"></i> Hola, [Nombre]</span>
-                
-                <!-- Solo visible para empleados y admin -->
-                <a href="dashboard_empleado.php" id="link-gestion" class="employee-only">
-                    <i class="fas fa-cogs"></i> Gestión
-                </a>
-                
-                <!-- Solo visible para admin -->
-                <a href="dashboard_admin.php" id="link-admin" class="admin-only">
-                    <i class="fas fa-shield-alt"></i> Admin
-                </a>
+        <div class="user-area">
+            <!-- link visible si NO hay sesión -->
+            <a href="#" id="login-link">Iniciar sesión</a>
 
-                <a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            <!-- contenedor visible si hay sesión -->
+            <div id="user-info" style="display:none;">
+                <span id="user-greeting"></span>
+                <a href="#" id="logout-link">Cerrar sesión</a>
             </div>
 
-            <a href="#carrito"><i class="fas fa-shopping-cart"></i> Cesta (<span id="cart-count">0</span>)</a>
+            <!-- carrito -->
+            <div class="cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </div>
         </div>
     </header>
 
-    <!-- Menú lateral de categorías -->
+    <!-- ===========================
+         MENÚ LATERAL
+    ============================ -->
     <aside id="side-menu" class="side-menu" aria-hidden="true">
-        <button id="btn-close-menu" class="close-menu" aria-label="Cerrar menú">&times;</button>
-        <nav class="side-nav">
-            <ul>
-                <li><a href="index.html" class="side-link">🏠 Inicio</a></li>
-                <li><a href="#ofertas" class="side-link">🔥 Ofertas</a></li>
-                
-                <!-- Solo visible para empleados y admin -->
-                <li class="employee-only">
-                    <a href="dashboard_empleado.php" class="side-link">📦 Gestión de Inventario</a>
-                </li>
-                
-                <!-- Solo visible para admin -->
-                <li class="admin-only">
-                    <a href="dashboard_admin.php" class="side-link">⚙️ Configuración Global</a>
-                </li>
-                
-                <li><a href="#frutas" class="side-link">🍎 Frutas y Verduras</a></li>
-                <li><a href="#carnes" class="side-link">🥩 Carnes y Pescados</a></li>
-                <li><a href="#lacteos" class="side-link">🥛 Lácteos</a></li>
-                <li><a href="#bebidas" class="side-link">🥤 Bebidas</a></li>
-                <li><a href="#despensa" class="side-link">🍝 Despensa</a></li>
-            </ul>
-        </nav>
+        <button id="btn-close-menu" class="close-menu">&times;</button>
+        <ul>
+            <li><a href="#" class="side-link">Inicio</a></li>
+            <li><a href="#" class="side-link">Ofertas</a></li>
+            <li><a href="#" class="side-link">Bebidas</a></li>
+            <li><a href="#" class="side-link">Limpieza</a></li>
+            <li><a href="#" class="side-link employee-only" style="display:none;">Gestión de stock</a></li>
+            <li><a href="#" class="side-link admin-only" style="display:none;">Panel de admin</a></li>
+        </ul>
     </aside>
-    <div id="menu-overlay" class="menu-overlay" tabindex="-1" aria-hidden="true"></div>
+    <div id="menu-overlay" class="overlay"></div>
 
-    <main>
-        <section id="ofertas-carrusel">
-            <div class="section-title banner-rojo">
-                <h2 class="title-main">¡Productos Destacados!</h2>
-                <p class="title-subtitle">Las mejores ofertas de la semana</p>
-                <a href="#" class="ver-mas">Ver Más</a>
+    <!-- ===========================
+         CARRUSEL DE PRODUCTOS
+    ============================ -->
+    <main class="main-content">
+        <h2>Productos destacados</h2>
+
+        <div class="carrusel-container">
+            <button class="carrusel-btn prev">‹</button>
+
+            <div class="carousel-track" id="carrusel-dinamico-container">
+                <p style="text-align:center; color: #555;">Cargando productos...</p>
             </div>
-            
-            <!-- Contenedor donde se cargarán los productos dinámicamente -->
-            <div id="carrusel-dinamico-container">
-                <div style="text-align:center; padding: 50px;">
-                    <i class="fas fa-spinner fa-spin" style="font-size:2em;color:#007bff;"></i>
-                    <p>Cargando productos...</p>
-                </div>
-            </div>
-        </section>
+
+            <button class="carrusel-btn next">›</button>
+        </div>
     </main>
 
-    <footer>
-        <div class="footer-bottom">
-            <p>&copy; 2025 Mi Supermercado Online. Todos los derechos reservados.</p>
-        </div>
-    </footer>
-
-    <!-- Modal de Login -->
+    <!-- ===========================
+         MODAL DE LOGIN / REGISTRO
+    ============================ -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
             <h2 id="modal-title">Iniciar Sesión</h2>
-            
-            <!-- Formulario de Login -->
-            <form id="login-form-dni" style="display:block;">
-                <label for="dni">DNI:</label>
-                <input type="text" id="dni" name="dni" required maxlength="15" placeholder="Ingresa tu DNI">
+
+            <!-- Formulario de LOGIN -->
+            <form id="login-form-dni">
+                <input type="text" id="dni" name="dni" placeholder="DNI" required />
                 <button type="submit">Ingresar</button>
-                <p id="login-message" style="margin-top:10px;"></p>
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="#" id="show-register" style="color: #007bff; text-decoration: none; font-size: 0.9em;">
-                        ¿No tienes una cuenta? Regístrate aquí
-                    </a>
-                </div>
+                <p id="login-message"></p>
+                <p>¿No tienes cuenta? <a href="#" id="show-register">Registrate</a></p>
             </form>
 
-            <!-- Formulario de Registro -->
+            <!-- Formulario de REGISTRO -->
             <form id="register-form" style="display:none;">
-                <label for="reg-dni">DNI:</label>
-                <input type="text" id="reg-dni" name="dni" required maxlength="15" placeholder="Tu DNI"> <label for="reg-nombre">Nombre Completo:</label>
-                <input type="text" id="reg-nombre" name="nombre" required placeholder="Tu nombre completo"> <label for="reg-correo">Correo Electrónico:</label>
-                <input type="email" id="reg-correo" name="correo" required placeholder="tu@email.com"> <button type="submit">Registrarse como Cliente</button>
-                <p id="register-message" style="margin-top:10px;"></p>
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="#" id="show-login" style="color: #007bff; text-decoration: none; font-size: 0.9em;">
-                        ¿Ya tienes cuenta? Inicia sesión
-                    </a>
-                </div>
+                <input type="text" id="reg-dni" name="dni" placeholder="DNI" required />
+                <input type="text" id="nombre" name="nombre" placeholder="Nombre completo" required />
+                <input type="email" id="correo" name="correo" placeholder="Correo electrónico" required />
+                <button type="submit">Crear cuenta</button>
+                <p id="register-message"></p>
+                <p>¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
             </form>
-
-            <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 0.85em;">
-                <strong>Usuarios de prueba:</strong><br>
-                Cliente: 12345678<br>
-                Empleado: 87654321<br>
-                Admin: 11111111
-            </div>
         </div>
     </div>
-    
-    <script src="script.js"></script> 
+
+    <script src="script.js"></script>
 </body>
 </html>
