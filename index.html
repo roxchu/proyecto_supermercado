@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Supermercado Online</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
 <body>
-    <!-- ===========================
-         ENCABEZADO PRINCIPAL
-    ============================ -->
     <header class="header">
         <div class="logo">
             🛒 Supermercado Online
@@ -24,16 +21,13 @@
         </nav>
 
         <div class="user-area">
-            <!-- link visible si NO hay sesión -->
             <a href="#" id="login-link">Iniciar sesión</a>
 
-            <!-- contenedor visible si hay sesión -->
             <div id="user-info" style="display:none;">
                 <span id="user-greeting"></span>
                 <a href="#" id="logout-link">Cerrar sesión</a>
             </div>
 
-            <!-- carrito -->
             <div class="cart">
                 <i class="fas fa-shopping-cart"></i>
                 <span id="cart-count">0</span>
@@ -41,9 +35,6 @@
         </div>
     </header>
 
-    <!-- ===========================
-         MENÚ LATERAL
-    ============================ -->
     <aside id="side-menu" class="side-menu" aria-hidden="true">
         <button id="btn-close-menu" class="close-menu">&times;</button>
         <ul>
@@ -57,14 +48,11 @@
     </aside>
     <div id="menu-overlay" class="overlay"></div>
 
-    <!-- ===========================
-         CARRUSEL DE PRODUCTOS
-    ============================ -->
     <main class="main-content">
         <h2>Productos destacados</h2>
 
         <div class="carrusel-container">
-            <button class="carrusel-btn prev">‹</button>
+            <button class="carrusel-btn prev">‹</button> 
 
             <div class="carousel-track" id="carrusel-dinamico-container">
                 <p style="text-align:center; color: #555;">Cargando productos...</p>
@@ -74,15 +62,11 @@
         </div>
     </main>
 
-    <!-- ===========================
-         MODAL DE LOGIN / REGISTRO
-    ============================ -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
             <h2 id="modal-title">Iniciar Sesión</h2>
 
-            <!-- Formulario de LOGIN -->
             <form id="login-form-dni">
                 <input type="text" id="dni" name="dni" placeholder="DNI" required />
                 <button type="submit">Ingresar</button>
@@ -90,7 +74,6 @@
                 <p>¿No tienes cuenta? <a href="#" id="show-register">Registrate</a></p>
             </form>
 
-            <!-- Formulario de REGISTRO -->
             <form id="register-form" style="display:none;">
                 <input type="text" id="reg-dni" name="dni" placeholder="DNI" required />
                 <input type="text" id="nombre" name="nombre" placeholder="Nombre completo" required />
@@ -102,6 +85,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js"></script> 
 </body>
 </html>

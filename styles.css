@@ -1,480 +1,55 @@
 /* =======================================
-    COLORES Y VARIABLES
-    ======================================= */
-    :root {
-        --color-rojo: #e62020; /* Rojo vibrante */
-        --color-verde: #4CAF50; /* Verde para descuentos */
-        --color-fondo-claro: #f4f4f4;
-        --color-texto-oscuro: #333;
-    }
-    
-    /* =======================================
-        ESTILOS GENERALES
-        ======================================= */
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: var(--color-fondo-claro);
-        color: var(--color-texto-oscuro);
-    }
-    
-    /* HEADER y NAV */
-    header {
-        background-color: #007bff; /* Azul */
-        color: white;
-        padding: 15px 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    /* Agrupar logo + botón de categorías */
-    .header-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    /* Ajustes visuales del logo */
-    .logo h1 {
-        margin: 0;
-        font-size: 1.4em;
-    }
-    
-    /* Hacer que la barra de búsqueda ocupe el espacio central */
-    .search-bar {
-        flex: 1;
-        max-width: 640px;
-        margin: 0 20px;
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
-    
-    /* Alinear acciones de usuario a la derecha */
-    .user-actions {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-    }
-    
-    /* Botón de categorías en header */
-    .menu-button {
-        background: transparent;
-        color: white;
-        border: 1px solid rgba(255,255,255,0.2);
-        padding: 8px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    /* Controles del nav (sirve para posicionar el botón) */
-    .nav-controls {
-        display: flex;
-        align-items: center;
-    }
-    
-    /* Menú lateral (off-canvas) */
-    .side-menu {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 280px;
-        max-width: 80%;
-        height: 100%;
-        background: white;
-        box-shadow: 2px 0 12px rgba(0,0,0,0.2);
-        transform: translateX(-110%);
-        transition: transform 0.3s ease;
-        z-index: 1000;
-        padding: 20px;
-        box-sizing: border-box;
-        overflow-y: auto;
-    }
-    
-    /* Estado abierto */
-    .side-menu.open {
-        transform: translateX(0);
-    }
-    
-    /* Overlay semitransparente que cubre el resto de la página */
-    .menu-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.4);
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.25s ease;
-        z-index: 900;
-    }
-    
-    /* Cuando overlay activo */
-    .menu-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-    
-    /* Botón cerrar dentro del menú */
-    .close-menu {
-        background: transparent;
-        border: none;
-        font-size: 1.8em;
-        line-height: 1;
-        cursor: pointer;
-        color: #333;
-        position: absolute;
-        top: 10px;
-        right: 12px;
-    }
-    
-    /* Estilos de la lista de categorías */
-    .side-nav ul {
-        list-style: none;
-        padding: 40px 0 0 0;
-        margin: 0;
-    }
-    
-    .side-nav li {
-        margin-bottom: 12px;
-    }
-    
-    .side-nav a {
-        color: var(--color-texto-oscuro);
-        text-decoration: none;
-        font-weight: 600;
-        display: block;
-        padding: 8px 6px;
-        border-radius: 4px;
-    }
-    
-    .side-nav a:hover {
-        background: rgba(0,0,0,0.04);
-    }
-    
-    /* =======================================
-        BANNER SUPERIOR DEL CARRUSEL
-        ======================================= */
-    #ofertas-carrusel {
-        padding: 20px 0; /* Padding solo arriba y abajo */
-        background-color: var(--color-fondo-claro);
-    }
-    
-    .banner-rojo {
-        background-color: var(--color-rojo);
-        padding: 10px 20px;
-        margin-bottom: 20px;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end; /* Alinear abajo para el subtítulo */
-    }
-    
-    .title-main {
-        font-size: 1.5em;
-        font-weight: bold;
-        margin: 0;
-        line-height: 1.2;
-    }
-    
-    .title-subtitle {
-        margin: 0;
-        font-size: 0.9em;
-        color: rgba(255, 255, 255, 0.9);
-    }
-    
-    .ver-mas {
-        color: white;
-        text-decoration: none;
-        font-size: 0.9em;
-        font-weight: bold;
-        align-self: flex-start; /* Alinear "Ver Más" arriba */
-        padding: 5px 0;
-    }
-    
-    
-    /* =======================================
-        CARRUSEL CONTENEDOR Y SLIDES
-        ======================================= */
-    .carrusel-container {
-        position: relative;
-        overflow: hidden; 
-        width: 100%;
-        padding: 0 20px; /* Padding a los lados para que se vean los botones */
-        box-sizing: border-box;
-    }
-    
-    .carousel-track {
-        display: flex;
-        transition: transform 0.5s ease-in-out; 
-        gap: 15px; /* Espacio entre las tarjetas */
-    }
-    
-    
-    /* =======================================
-        TARJETA DE PRODUCTO (LOOK DE LA IMAGEN)
-        ======================================= */
-    .producto-card {
-        background-color: white;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        flex-shrink: 0; 
-        width: 250px; 
-        padding: 15px;
-        position: relative; 
-        text-align: left;
-        height: auto;
-    }
-    
-    .producto-imagen {
-        width: 100%;
-        height: 160px;
-        object-fit: contain; 
-        display: block;
-        margin: 0 auto 10px;
-    }
-    
-    /* Nombre del producto */
-    .producto-nombre {
-        font-size: 0.9em;
-        height: 30px;
-        color: var(--color-texto-oscuro);
-        font-weight: normal;
-        margin: 5px 0 10px 0;
-    }
-    
-    /* Precio tachado (el precio anterior) */
-    .precio-tachado {
-        text-decoration: line-through;
-        color: #999;
-        font-size: 0.85em;
-        margin: 0;
-    }
-    
-    /* Precio Final (El más grande) */
-    .precio-final {
-        font-size: 1.7em;
-        font-weight: bold;
-        color: var(--color-rojo);
-        margin: 5px 0 10px 0;
-        line-height: 1;
-    }
-    
-    /* Botón "Agregar" (Rojo) */
-    .boton-agregar {
-        width: 100%;
-        background-color: var(--color-rojo);
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 4px;
-        font-weight: bold;
-        font-size: 1em;
-        cursor: pointer;
-    }
-    
-    /* --- Etiquetas --- */
-    
-    .etiqueta-exclusiva {
-        position: absolute;
-        top: 10px;
-        left: 0;
-        background-color: var(--color-rojo);
-        color: white;
-        padding: 3px 8px;
-        font-size: 0.7em;
-        font-weight: bold;
-        text-transform: uppercase;
-        border-radius: 0 3px 3px 0;
-        z-index: 2;
-    }
-    
-    .btn-favorito {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
-        font-size: 1em;
-        color: var(--color-rojo);
-        cursor: pointer;
-        z-index: 5;
-    }
-    
-    .etiqueta-peso-negra {
-        position: absolute;
-        top: 100px; 
-        right: 0;
-        background-color: black;
-        color: white;
-        padding: 5px 8px;
-        font-size: 0.75em;
-        font-weight: bold;
-        border-radius: 4px 0 0 4px;
-        z-index: 2;
-    }
-    
-    .etiqueta-caracteristica-negra {
-        position: absolute;
-        top: 100px;
-        right: 0;
-        background-color: black;
-        color: white;
-        padding: 5px 8px;
-        font-size: 0.75em;
-        font-weight: bold;
-        border-radius: 4px 0 0 4px;
-        z-index: 2;
-    }
-    
-    .etiqueta-caracteristica-verde {
-        position: absolute;
-        top: 150px; 
-        right: 0;
-        background-color: #388e3c; 
-        color: white;
-        padding: 5px 8px;
-        font-size: 0.75em;
-        font-weight: bold;
-        border-radius: 4px 0 0 4px;
-        z-index: 2;
-    }
-    
-    /* Descuentos (el recuadro verde) */
-    .etiqueta-descuento {
-        display: inline-block;
-        background-color: var(--color-verde);
-        color: white;
-        padding: 3px 6px;
-        font-size: 0.8em;
-        font-weight: bold;
-        border-radius: 3px;
-        margin-right: 5px;
-    }
-    
-    /* --- Botones de Navegación del Carrusel --- */
-    
-    .carrusel-btn {
-        position: absolute;
-        top: 55%;
-        transform: translateY(-50%);
-        background: rgba(0, 0, 0, 0.4); 
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        font-size: 1.2em;
-        cursor: pointer;
-        z-index: 10;
-        opacity: 0.7;
-        transition: background 0.3s;
-    }
-    
-    .carrusel-btn:hover {
-        background: rgba(0, 0, 0, 0.6);
-        opacity: 1;
-    }
-    
-    .prev { left: 5px; }
-    .next { right: 5px; }
-    
-    /* ... (otros estilos de footer) ... */
-    
-    
-    /* =================================================== */
-    /* 🛑 LÓGICA DE LOGIN Y VISIBILIDAD POR ROL 🛑 */
-    /* =================================================== */
-    
-    /* Ocultar el contenedor de información del usuario (saludo, cerrar sesión, etc.) por defecto */
-    #user-info {
-        display: none; 
-        gap: 12px; 
-        align-items: center;
-    }
-    
-    /* Ocultar todos los elementos con acceso restringido por defecto (enlaces de gestión) */
-    .employee-only,
-    .admin-only,
-    #menu-gestion,
-    #menu-admin {
-        /* ¡Importante! El JS anulará esto si el usuario tiene el rol */
-        display: none !important; 
-    }
-    
-    
-    /* =================================================== */
-    /* CSS del Modal de Login */
-    /* =================================================== */
-    
-    .modal { 
-        display: none; 
-        position: fixed; 
-        z-index: 1000; 
-        left: 0; 
-        top: 0; 
-        width: 100%; 
-        height: 100%; 
-        overflow: auto; 
-        background-color: rgba(0,0,0,0.4); 
-    }
-    
-    .modal-content { 
-        background-color: #fefefe; 
-        margin: 15% auto; 
-        padding: 20px; 
-        border: 1px solid #888; 
-        width: 80%; 
-        max-width: 400px; 
-        border-radius: 8px; 
-        position: relative; 
-    }
-    
-    .close-btn { 
-        color: #aaa; 
-        float: right; 
-        font-size: 1.8em; 
-        font-weight: bold; 
-        line-height: 1;
-    }
-    
-    .close-btn:hover, .close-btn:focus { 
-        color: black; 
-        text-decoration: none; 
-        cursor: pointer; 
-    }
-    
-    #login-form-dni input[type="text"], #login-form-dni button { 
-        width: 100%; 
-        padding: 10px; 
-        margin: 8px 0; 
-        border: 1px solid #ccc; 
-        border-radius: 4px; 
-        box-sizing: border-box; 
-    }
-    
-    #login-form-dni button { 
-        background-color: var(--color-verde); 
-        color: white; 
-        border: none; 
-        cursor: pointer; 
-        font-weight: bold;
-    }
+   COLORES Y VARIABLES
+   ======================================= */
+:root {
+    --color-rojo: #e62020; /* Rojo vibrante */
+    --color-verde: #4CAF50; /* Verde para descuentos / éxito */
+    --color-fondo-claro: #f4f4f4;
+    --color-texto-oscuro: #333;
+    --color-azul-principal: #007bff; /* Azul para header y enlaces */
+    --color-naranja-precio: #d9534f; /* Rojo/Naranja para el precio actual */
+    --color-advertencia: #f0ad4e; /* Amarillo/Naranja para etiquetas especiales */
+}
 
+/* =======================================
+   ESTILOS GENERALES
+   ======================================= */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-fondo-claro);
+    color: var(--color-texto-oscuro);
+}
 
-/* Ajustes para el logo */
+/* Contenedor principal para centrar el contenido (útil en mostrar.php) */
+.container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* HEADER y NAV */
+header {
+    background-color: var(--color-azul-principal);
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Agrupar logo + botón de categorías */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Ajustes visuales del logo */
 .logo h1 {
     margin: 0;
-    font-size: 1.2em;
+    font-size: 1.4em;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -485,46 +60,41 @@
     text-decoration: none;
 }
 
-/* Mejorar la apariencia de los enlaces del menú lateral */
-.side-nav li {
-    margin-bottom: 8px;
+/* Hacer que la barra de búsqueda ocupe el espacio central */
+.search-bar {
+    flex: 1;
+    max-width: 640px;
+    margin: 0 20px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
-.side-nav a {
-    color: var(--color-texto-oscuro);
-    text-decoration: none;
-    font-weight: 500;
-    display: block;
-    padding: 12px 10px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+/* Alinear acciones de usuario a la derecha */
+.user-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
 }
 
-.side-nav a:hover {
-    background: rgba(0, 123, 255, 0.1);
-    color: #007bff;
-    transform: translateX(4px);
+/* Botón de categorías en header */
+.menu-button {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Ajustes para el modal de login */
-#login-form-dni input[type="text"] {
-    font-size: 1em;
-}
-
-#login-form-dni button {
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-}
-
-#login-form-dni button:hover {
-    background-color: #45a049;
-}
-
-/* Estilo para botones deshabilitados en productos */
-.boton-agregar:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    opacity: 0.6;
+/* Controles del nav (sirve para posicionar el botón) */
+.nav-controls {
+    display: flex;
+    align-items: center;
 }
 
 /* Mejorar user-actions spacing */
@@ -541,6 +111,12 @@
 }
 
 /* Estilo para el contador del carrito */
+.cart {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 #cart-count {
     background: var(--color-rojo);
     padding: 2px 6px;
@@ -549,39 +125,70 @@
     font-size: 0.85em;
 }
 
-/* Footer styling */
-footer {
-    background-color: #333;
-    color: white;
+/* =======================================
+   MENÚ LATERAL (SIDE NAV)
+   ======================================= */
+
+/* Menú lateral (off-canvas) */
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    max-width: 80%;
+    height: 100%;
+    background: white;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+    transform: translateX(-110%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
     padding: 20px;
-    margin-top: 40px;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
-.footer-bottom {
-    text-align: center;
+/* Estado abierto */
+.side-menu.open {
+    transform: translateX(0);
 }
 
-.footer-bottom p {
+/* Overlay semitransparente que cubre el resto de la página */
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease;
+    z-index: 900;
+}
+
+/* Cuando overlay activo */
+.menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Botón cerrar dentro del menú */
+.close-menu {
+    background: transparent;
+    border: none;
+    font-size: 1.8em;
+    line-height: 1;
+    cursor: pointer;
+    color: #333;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+}
+
+/* Estilos de la lista de categorías */
+.side-nav ul {
+    list-style: none;
+    padding: 40px 0 0 0;
     margin: 0;
-    font-size: 0.9em;
 }
 
-
-/* Ajustes para el logo */
-.logo h1 {
-    margin: 0;
-    font-size: 1.2em;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.logo-link {
-    color: white;
-    text-decoration: none;
-}
-
-/* Mejorar la apariencia de los enlaces del menú lateral */
 .side-nav li {
     margin-bottom: 8px;
 }
@@ -598,19 +205,289 @@ footer {
 
 .side-nav a:hover {
     background: rgba(0, 123, 255, 0.1);
-    color: #007bff;
+    color: var(--color-azul-principal);
     transform: translateX(4px);
 }
 
-/* Ajustes para el modal de login */
-#login-form-dni input[type="text"],
+
+/* =======================================
+   BANNER SUPERIOR DEL CARRUSEL
+   ======================================= */
+#ofertas-carrusel {
+    padding: 20px 0; /* Padding solo arriba y abajo */
+    background-color: var(--color-fondo-claro);
+}
+
+.banner-rojo {
+    background-color: var(--color-rojo);
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* Alinear abajo para el subtítulo */
+}
+
+.title-main {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.title-subtitle {
+    margin: 0;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.ver-mas {
+    color: white;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: bold;
+    align-self: flex-start; /* Alinear "Ver Más" arriba */
+    padding: 5px 0;
+}
+
+
+/* =======================================
+   CARRUSEL CONTENEDOR Y SLIDES
+   ======================================= */
+.carrusel-container {
+    position: relative;
+    overflow: hidden; 
+    width: 100%;
+    padding: 0 20px; /* Padding a los lados para que se vean los botones */
+    box-sizing: border-box;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.5s ease-in-out; 
+    gap: 15px; /* Espacio entre las tarjetas */
+}
+
+
+/* =======================================
+   TARJETA DE PRODUCTO (CARRUSEL)
+   ======================================= */
+.producto-card {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0; 
+    width: 250px; 
+    padding: 15px;
+    position: relative; 
+    text-align: left;
+    height: auto;
+}
+
+.producto-imagen {
+    width: 100%;
+    height: 160px;
+    object-fit: contain; 
+    display: block;
+    margin: 0 auto 10px;
+}
+
+/* Nombre del producto */
+.producto-nombre h3 {
+    font-size: 0.9em;
+    height: 30px;
+    color: var(--color-texto-oscuro);
+    font-weight: normal;
+    margin: 5px 0 10px 0;
+}
+
+/* Precio tachado (el precio anterior) */
+.precio-tachado {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 0.85em;
+    margin: 0;
+}
+
+/* Precio Final (El más grande) */
+.precio-final {
+    font-size: 1.7em;
+    font-weight: bold;
+    color: var(--color-rojo);
+    margin: 5px 0 10px 0;
+    line-height: 1;
+}
+
+/* Botón "Agregar" (Rojo) */
+.boton-agregar {
+    width: 100%;
+    background-color: var(--color-rojo);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.boton-agregar:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* --- Etiquetas del Carrusel --- */
+
+.etiqueta-exclusiva {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    background-color: var(--color-rojo);
+    color: white;
+    padding: 3px 8px;
+    font-size: 0.7em;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 0 3px 3px 0;
+    z-index: 2;
+}
+
+.btn-favorito {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 1em;
+    color: var(--color-rojo);
+    cursor: pointer;
+    z-index: 5;
+    text-align: center;
+}
+
+.etiqueta-caracteristica-verde {
+    position: absolute;
+    top: 150px; 
+    right: 0;
+    background-color: #388e3c; 
+    color: white;
+    padding: 5px 8px;
+    font-size: 0.75em;
+    font-weight: bold;
+    border-radius: 4px 0 0 4px;
+    z-index: 2;
+}
+
+/* Descuentos (el recuadro verde) */
+.etiqueta-descuento {
+    display: inline-block;
+    background-color: var(--color-verde);
+    color: white;
+    padding: 3px 6px;
+    font-size: 0.8em;
+    font-weight: bold;
+    border-radius: 3px;
+    margin-right: 5px;
+}
+
+/* --- Botones de Navegación del Carrusel --- */
+
+.carrusel-btn {
+    position: absolute;
+    top: 55%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.4); 
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2em;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0.7;
+    transition: background 0.3s;
+}
+
+.carrusel-btn:hover {
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 1;
+}
+
+.prev { left: 5px; }
+.next { right: 5px; }
+
+
+/* ===================================================
+   CSS del Modal de Login y Mensajes
+   =================================================== */
+
+.modal { 
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; 
+    top: 0; 
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.4); 
+}
+
+.modal-content { 
+    background-color: #fefefe; 
+    margin: 15% auto; 
+    padding: 20px; 
+    border: 1px solid #888; 
+    width: 80%; 
+    max-width: 400px; 
+    border-radius: 8px; 
+    position: relative; 
+}
+
+.close-btn { 
+    color: #aaa; 
+    float: right; 
+    font-size: 1.8em; 
+    font-weight: bold; 
+    line-height: 1;
+}
+
+.close-btn:hover, .close-btn:focus { 
+    color: black; 
+    text-decoration: none; 
+    cursor: pointer; 
+}
+
+#login-form-dni input[type="text"], 
 #register-form input[type="text"],
-#register-form input[type="email"] {
+#register-form input[type="email"] { 
+    width: 100%; 
+    padding: 10px; 
+    margin: 8px 0; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    box-sizing: border-box; 
     font-size: 1em;
 }
 
 #login-form-dni button,
-#register-form button {
+#register-form button { 
+    width: 100%; 
+    background-color: var(--color-verde); 
+    color: white; 
+    border: none; 
+    padding: 10px; 
+    margin: 8px 0; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-weight: bold;
     font-size: 1em;
     transition: background-color 0.3s ease;
 }
@@ -620,14 +497,11 @@ footer {
     background-color: #45a049;
 }
 
-#register-form label {
-    display: block;
-    margin-top: 8px;
-    font-weight: 600;
-    color: #333;
+/* Mensajes de error y éxito */
+#login-message, #register-message {
+    margin-top: 10px;
 }
 
-/* Mensajes de error y éxito */
 .message-error {
     color: #d32f2f !important;
     background-color: #ffebee;
@@ -652,36 +526,247 @@ footer {
     border-left: 3px solid #1976d2;
 }
 
-/* Estilo para botones deshabilitados en productos */
-.boton-agregar:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    opacity: 0.6;
+
+/* ===================================================
+   ESTILOS DE MOSTRAR.PHP (DETALLE DE PRODUCTO) 🌟
+   =================================================== */
+
+/* Contenedor principal del detalle */
+.producto-principal { 
+    display: flex; 
+    gap: 40px; 
+    margin-bottom: 30px; 
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Mejorar user-actions spacing */
-.user-actions a {
-    color: white;
-    text-decoration: none;
-    padding: 8px 12px;
+.producto-imagen { 
+    flex-shrink: 0; 
+    max-width: 40%;
+}
+
+.producto-imagen img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #eee;
     border-radius: 4px;
-    transition: background-color 0.3s ease;
 }
 
-.user-actions a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+.producto-detalles { 
+    flex-grow: 1; 
 }
 
-/* Estilo para el contador del carrito */
-#cart-count {
-    background: var(--color-rojo);
-    padding: 2px 6px;
-    border-radius: 10px;
+.producto-categoria {
+    font-size: 0.9em;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.producto-detalles h1 {
+    margin: 0 0 15px 0;
+    font-size: 2em;
+    color: var(--color-texto-oscuro);
+}
+
+/* Precios */
+.producto-precio { 
+    margin: 15px 0 20px 0; 
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.precio-anterior { 
+    text-decoration: line-through; 
+    color: #999; 
+    margin-right: 15px; 
+    font-size: 1em;
+}
+
+.precio-actual { 
+    font-size: 2.2em; 
+    color: var(--color-naranja-precio); 
+    font-weight: bold; 
+    display: inline-block;
+}
+
+.descuento { 
+    background: var(--color-naranja-precio); 
+    color: white; 
+    padding: 5px 10px; 
+    border-radius: 4px; 
+    font-size: 1em; 
+    margin-left: 15px;
+    font-weight: normal;
+}
+
+/* Etiquetas (Destacado, Especial) */
+.etiqueta { 
+    padding: 5px 10px; 
+    border-radius: 4px; 
+    font-size: 0.9em; 
+    font-weight: bold; 
+    margin-right: 8px; 
+    color: white; 
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.destacado { background-color: var(--color-verde); }
+.especial { background-color: var(--color-advertencia); }
+
+.producto-stock {
     font-weight: bold;
-    font-size: 0.85em;
+    margin-bottom: 10px;
+    color: var(--color-verde);
 }
 
-/* Footer styling */
+.producto-stock .agotado {
+    color: var(--color-rojo);
+}
+
+/* Cantidad y Acciones */
+.producto-cantidad {
+    margin-bottom: 20px;
+}
+
+.producto-cantidad label {
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.producto-cantidad select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.producto-acciones button { 
+    padding: 12px 25px; 
+    margin-right: 15px; 
+    cursor: pointer; 
+    font-size: 1.1em;
+    border-radius: 6px;
+    font-weight: bold;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.boton-carrito { 
+    background-color: var(--color-azul-principal); 
+    color: white; 
+}
+
+.boton-carrito:hover { background-color: #0056b3; }
+
+.boton-comprar { 
+    background-color: var(--color-verde); 
+    color: white; 
+}
+
+.boton-comprar:hover { background-color: #45a049; }
+
+.boton-sin-stock {
+    background-color: #ccc !important;
+    cursor: not-allowed;
+    color: #666;
+}
+
+/* Descripción */
+.producto-descripcion {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 40px;
+}
+
+.producto-descripcion h2 {
+    color: var(--color-azul-principal);
+    border-bottom: 2px solid #eee;
+    padding-bottom: 5px;
+}
+
+/* Opiniones */
+.producto-opiniones h2 {
+    color: var(--color-azul-principal);
+    border-bottom: 2px solid #eee;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+}
+
+.opinion { 
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 15px; 
+    margin-bottom: 15px; 
+    background-color: white;
+    padding: 15px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.opinion-header {
+    margin-bottom: 5px;
+}
+
+.opinion-rating { 
+    color: gold; 
+    font-size: 1.2em; 
+    letter-spacing: 2px;
+}
+
+.opinion-meta { 
+    font-size: 0.9em; 
+    color: #555; 
+    margin-left: 10px; 
+}
+
+.opinion-cuerpo {
+    margin-top: 5px;
+    line-height: 1.4;
+    color: #555;
+}
+
+.error { 
+    color: var(--color-rojo); 
+    font-weight: bold; 
+    text-align: center;
+    padding: 20px;
+    background-color: #fff0f0;
+    border-radius: 8px;
+}
+
+/* ===================================================
+   CSS del Lupa (Zoom en imagen)
+   =================================================== */
+
+.imagen-lupa-contenedor {
+    position: relative;
+    overflow: hidden; 
+    cursor: crosshair;
+    display: inline-block;
+}
+
+.lupa-zoom-area {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 20px); /* Mueve el área de zoom a la derecha */
+    width: 250px; /* Tamaño del área de la lupa */
+    height: 250px;
+    border: 2px solid var(--color-azul-principal);
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    background-repeat: no-repeat;
+    pointer-events: none; 
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+/* ===================================================
+   FOOTER
+   =================================================== */
+
 footer {
     background-color: #333;
     color: white;

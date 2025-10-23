@@ -7,7 +7,6 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Aseguramos la ruta del archivo de conexión db.php (debe estar en la subcarpeta carrito)
-// Aquí se crea la conexión $pdo
 require __DIR__ . '/carrito/db.php'; 
 
 $producto = null;
@@ -32,16 +31,12 @@ if ($producto_id !== null) {
                      LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
                      WHERE p.Id_Producto = ?";
                      
-    // *** CAMBIO: Usar $pdo->prepare() ***
     $stmt_producto = $pdo->prepare($sql_producto);
 
     if ($stmt_producto) {
-        // Vinculamos el ID y ejecutamos la consulta
-        // Utilizamos PDO::PARAM_INT para asegurar el tipo de dato
         $stmt_producto->bindParam(1, $producto_id, PDO::PARAM_INT);
         $stmt_producto->execute();
         
-        // Obtenemos el único resultado (fetch)
         $producto = $stmt_producto->fetch();
 
         if ($producto) {
@@ -59,19 +54,15 @@ if ($producto_id !== null) {
                               WHERE Id_Producto = ?
                               ORDER BY Fecha_Opinion DESC"; 
             
-            // *** CAMBIO: Usar $pdo->prepare() ***
             $stmt_opiniones = $pdo->prepare($sql_opiniones);
             
             if ($stmt_opiniones) {
-                // Vinculamos el ID y ejecutamos la consulta
                 $stmt_opiniones->bindParam(1, $producto_id, PDO::PARAM_INT);
                 $stmt_opiniones->execute();
                 
-                // Obtenemos todos los resultados (fetchAll)
                 $opiniones = $stmt_opiniones->fetchAll();
                 
             } else {
-                // error_log es para escribir en el log de PHP, útil para errores silenciosos
                 error_log("Error al preparar consulta de opiniones: " . $pdo->errorInfo()[2]);
             }
 
@@ -83,72 +74,105 @@ if ($producto_id !== null) {
         $error = "Ocurrió un error al buscar el producto.";
     }
 }
-
-// Nota: Con PDO, no es necesario cerrar la conexión ($pdo->close()) al final del script.
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $producto ? htmlspecialchars($producto['Nombre_Producto']) : 'Producto no encontrado' ?> - Mi Supermercado</title>
-    <link rel="stylesheet" href="style.css"> 
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><?= $producto ? htmlspecialchars($producto['Nombre_Producto']) : 'Producto no encontrado' ?> - Supermercado Online</title>
+    <link rel="stylesheet" href="styles.css" /> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
     <style>
-        /* Estilos básicos para la lupa, asumiendo que no están en style.css */
+        /* Estilos específicos de la lupa y del layout del producto */
         .imagen-lupa-contenedor {
             position: relative;
-            overflow: hidden; /* Oculta el zoom fuera del contenedor */
+            overflow: hidden; 
             cursor: crosshair;
             display: inline-block;
         }
         .lupa-zoom-area {
             position: absolute;
             top: 0;
-            left: 100%; /* Inicia fuera de la imagen */
-            width: 250px; /* Tamaño del área de la lupa */
+            left: 100%; 
+            width: 250px; 
             height: 250px;
-            border: 1px solid #ccc;
+            border: 2px solid var(--color-azul-principal, #007bff); 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             background-repeat: no-repeat;
-            pointer-events: none; /* Asegura que no interfiera con eventos del ratón */
+            pointer-events: none; 
             opacity: 0;
             transition: opacity 0.2s;
-            transform: translate(20px, 0); /* Mueve el área de zoom a la derecha */
+            transform: translate(20px, 0); 
             z-index: 10;
         }
-        /* Estilos para el contenido de producto y opiniones */
+        .producto-imagen img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        /* Estilos base de la página de producto */
         .producto-principal { display: flex; gap: 30px; margin-bottom: 30px; }
         .producto-imagen { flex-shrink: 0; }
         .producto-detalles { flex-grow: 1; }
-        .producto-precio { margin: 10px 0; }
-        .precio-anterior { text-decoration: line-through; color: #888; margin-right: 10px; }
-        .precio-actual { font-size: 1.5em; color: #d9534f; font-weight: bold; }
-        .descuento { background: #d9534f; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.9em; margin-left: 10px; }
-        .etiqueta { padding: 3px 6px; border-radius: 3px; font-size: 0.8em; font-weight: bold; margin-right: 5px; color: white; }
-        .destacado { background-color: #5cb85c; }
-        .especial { background-color: #f0ad4e; }
-        .producto-acciones button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
-        .boton-carrito { background-color: #337ab7; color: white; border: none; }
-        .boton-comprar { background-color: #5cb85c; color: white; border: none; }
-        .opinion { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
         .opinion-rating { color: gold; font-size: 1.2em; }
-        .opinion-meta { font-size: 0.9em; color: #555; margin-left: 10px; }
-        .error { color: red; font-weight: bold; }
+        .opinion { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
     </style>
 </head>
-<body>
 
-    <div class="container">
-        <?php if ($error): ?>
+<body>
+    <header class="header">
+        <div class="logo">
+            🛒 Supermercado Online
+        </div>
+
+        <nav class="nav">
+            <a href="#" id="btn-categorias" aria-expanded="false">Categorías</a>
+            <a href="#" id="link-gestion" class="employee-only" style="display:none;">Gestión</a>
+            <a href="#" id="link-admin" class="admin-only" style="display:none;">Administración</a>
+        </nav>
+
+        <div class="user-area">
+            <a href="#" id="login-link">Iniciar sesión</a>
+
+            <div id="user-info" style="display:none;">
+                <span id="user-greeting"></span>
+                <a href="#" id="logout-link">Cerrar sesión</a>
+            </div>
+
+            <div class="cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <aside id="side-menu" class="side-menu" aria-hidden="true">
+        <button id="btn-close-menu" class="close-menu">&times;</button>
+        <ul>
+            <li><a href="#" class="side-link">Inicio</a></li>
+            <li><a href="#" class="side-link">Ofertas</a></li>
+            <li><a href="#" class="side-link">Bebidas</a></li>
+            <li><a href="#" class="side-link">Limpieza</a></li>
+            <li><a href="#" class="side-link employee-only" style="display:none;">Gestión de stock</a></li>
+            <li><a href="#" class="side-link admin-only" style="display:none;">Panel de admin</a></li>
+        </ul>
+    </aside>
+    <div id="menu-overlay" class="overlay"></div>
+    <main class="main-content container"> <?php if ($error): ?>
             <p class="error"><?= htmlspecialchars($error) ?></p>
         <?php elseif ($producto): ?>
+            
             <div class="producto-principal">
                 <div class="producto-imagen">
                     <div class="imagen-lupa-contenedor">
                         <img id="imagen-principal"
                              src="<?= htmlspecialchars($producto['imagen_url'] ?: 'https://via.placeholder.com/400x400') ?>"
                              alt="<?= htmlspecialchars($producto['Nombre_Producto']) ?>"
-                             data-zoom-src="<?= htmlspecialchars($producto['imagen_url'] ?: 'https://via.placeholder.com/800x800') /* URL para el zoom */ ?>">
+                             data-zoom-src="<?= htmlspecialchars($producto['imagen_url'] ?: 'https://via.placeholder.com/800x800') ?>">
                         <div id="lupa-zoom" class="lupa-zoom-area"></div>
                     </div>
                 </div>
@@ -182,7 +206,9 @@ if ($producto_id !== null) {
                     <?php endif; ?>
 
                      <div class="producto-stock">
-                         <?= ($producto['Stock'] > 0) ? 'Stock disponible' : 'Sin stock' ?>
+                         <span class="<?= ($producto['Stock'] > 0) ? '' : 'agotado' ?>">
+                             <?= ($producto['Stock'] > 0) ? 'Stock disponible' : 'Sin stock' ?>
+                         </span>
                      </div>
 
                     <div class="producto-envio">
@@ -195,9 +221,7 @@ if ($producto_id !== null) {
                         <select name="cantidad" id="cantidad" <?= ($producto['Stock'] <= 0) ? 'disabled' : '' ?> >
                             <option value="1">1 unidad</option>
                             <?php if ($producto['Stock'] > 1): ?>
-                                <?php
-                                $max_cantidad = min(10, $producto['Stock']);
-                                ?>
+                                <?php $max_cantidad = min(10, $producto['Stock']); ?>
                                 <?php for ($i = 2; $i <= $max_cantidad; $i++): ?>
                                     <option value="<?= $i ?>"><?= $i ?> unidades</option>
                                 <?php endfor; ?>
@@ -226,38 +250,63 @@ if ($producto_id !== null) {
             </div>
 
             <div class="producto-opiniones">
-                 <h2>Opiniones del producto</h2>
-                 <?php if (!empty($opiniones)): ?>
-                     <?php foreach ($opiniones as $opinion): ?>
-                         <div class="opinion">
-                             <div class="opinion-header">
-                                 <span class="opinion-rating">
-                                     <?php // Asegurarse que Calificacion sea un número entre 0 y 5
-                                     $calif = max(0, min(5, $opinion['Calificacion']));
-                                     ?>
-                                     <?php for($i = 1; $i <= 5; $i++): ?>
-                                         <?= ($i <= $calif) ? '★' : '☆' // ★ ☆ Estrellas llenas y vacías ?>
-                                     <?php endfor; ?>
-                                 </span>
-                                 <span class="opinion-meta">
-                                     Por <?= htmlspecialchars($opinion['Nombre_Usuario']) ?> -
-                                     <?= date('d/m/Y', strtotime($opinion['Fecha_Opinion'])) // Formatea la fecha ?>
-                                 </span>
-                             </div>
-                             <?php if (!empty($opinion['Comentario'])): // Mostrar solo si hay comentario ?>
-                                 <p class="opinion-cuerpo"><?= nl2br(htmlspecialchars($opinion['Comentario'])) ?></p>
-                             <?php endif; ?>
-                         </div>
-                     <?php endforeach; ?>
-                 <?php else: ?>
-                     <p>Este producto todavía no tiene opiniones.</p>
-                 <?php endif; ?>
-             </div>
+                <h2>Opiniones del producto</h2>
+                <?php if (!empty($opiniones)): ?>
+                    <?php foreach ($opiniones as $opinion): ?>
+                        <div class="opinion">
+                            <div class="opinion-header">
+                                <span class="opinion-rating">
+                                    <?php 
+                                    $calif = max(0, min(5, $opinion['Calificacion']));
+                                    ?>
+                                    <?php for($i = 1; $i <= 5; $i++): ?>
+                                        <?= ($i <= $calif) ? '★' : '☆' ?>
+                                    <?php endfor; ?>
+                                </span>
+                                <span class="opinion-meta">
+                                    Por <?= htmlspecialchars($opinion['Nombre_Usuario']) ?> -
+                                    <?= date('d/m/Y', strtotime($opinion['Fecha_Opinion'])) ?>
+                                </span>
+                            </div>
+                            <?php if (!empty($opinion['Comentario'])): ?>
+                                <p class="opinion-cuerpo"><?= nl2br(htmlspecialchars($opinion['Comentario'])) ?></p>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p>Este producto todavía no tiene opiniones.</p>
+                <?php endif; ?>
+            </div>
         <?php else: ?>
            <p class="error">El producto solicitado no existe o no está disponible.</p>
         <?php endif; ?>
-    </div><script>
-        // --- Script de la Lupa (sin cambios) ---
+    </main>
+    
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="modal-title">Iniciar Sesión</h2>
+
+            <form id="login-form-dni">
+                <input type="text" id="dni" name="dni" placeholder="DNI" required />
+                <button type="submit">Ingresar</button>
+                <p id="login-message"></p>
+                <p>¿No tienes cuenta? <a href="#" id="show-register">Registrate</a></p>
+            </form>
+
+            <form id="register-form" style="display:none;">
+                <input type="text" id="reg-dni" name="dni" placeholder="DNI" required />
+                <input type="text" id="nombre" name="nombre" placeholder="Nombre completo" required />
+                <input type="email" id="correo" name="correo" placeholder="Correo electrónico" required />
+                <button type="submit">Crear cuenta</button>
+                <p id="register-message"></p>
+                <p>¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // --- Script de la Lupa (mantenido) ---
         const contenedor = document.querySelector('.imagen-lupa-contenedor');
         const imgPrincipal = document.getElementById('imagen-principal');
         const lupa = document.getElementById('lupa-zoom');
@@ -265,7 +314,7 @@ if ($producto_id !== null) {
         if (contenedor && imgPrincipal && lupa) {
             const zoomSrc = imgPrincipal.getAttribute('data-zoom-src');
             lupa.style.backgroundImage = `url('${zoomSrc}')`;
-            const factorZoom = 2; // Puedes ajustar esto (ej: 1.5, 2.5)
+            const factorZoom = 2; 
 
             const actualizarTamanioFondo = () => {
                 if (imgPrincipal.naturalWidth > 0 && imgPrincipal.naturalHeight > 0) {
@@ -282,7 +331,6 @@ if ($producto_id !== null) {
                 x = Math.max(0, Math.min(x, rect.width));
                 y = Math.max(0, Math.min(y, rect.height));
 
-                 // Corregido el cálculo para centrar el zoom en el cursor
                  const bgPosX = -(x * factorZoom - lupa.offsetWidth / 2);
                  const bgPosY = -(y * factorZoom - lupa.offsetHeight / 2);
 
@@ -290,14 +338,14 @@ if ($producto_id !== null) {
             };
 
             const mostrarLupa = () => {
-                actualizarTamanioFondo(); // Asegura tamaño correcto al mostrar
+                actualizarTamanioFondo(); 
                 lupa.style.opacity = '1';
-                contenedor.addEventListener('mousemove', moverLupa); // Activar movimiento solo cuando está visible
+                contenedor.addEventListener('mousemove', moverLupa); 
             };
 
             const ocultarLupa = () => {
                 lupa.style.opacity = '0';
-                contenedor.removeEventListener('mousemove', moverLupa); // Desactivar para optimizar
+                contenedor.removeEventListener('mousemove', moverLupa); 
             };
 
             // Event Listeners
@@ -312,6 +360,6 @@ if ($producto_id !== null) {
             }
         }
     </script>
-
+    <script src="script.js"></script> 
 </body>
 </html>
