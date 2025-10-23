@@ -1,6 +1,5 @@
 // ========================================
 // script.js — Gestión del supermercado online
-// Versión corregida y unificada (octubre 2025)
 // ========================================
 
 // 🔹 VARIABLES GLOBALES
@@ -77,7 +76,7 @@ showLoginLink?.addEventListener('click', (e) => {
 loginForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(loginForm);
-    fetch('login.php', { method: 'POST', body: formData })
+    fetch('login/login.php', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
@@ -96,7 +95,7 @@ loginForm?.addEventListener('submit', (e) => {
 registerForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(registerForm);
-    fetch('registro.php', { method: 'POST', body: formData })
+    fetch('login/registro.php', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
@@ -114,7 +113,7 @@ registerForm?.addEventListener('submit', (e) => {
 
 logoutLink?.addEventListener('click', (e) => {
     e.preventDefault();
-    fetch('logout.php').then(() => {
+    fetch('login/logout.php').then(() => {
         usuarioActual = null;
         mostrarNotificacion('Sesión cerrada correctamente.', 'info');
         resetUI();
@@ -125,7 +124,7 @@ logoutLink?.addEventListener('click', (e) => {
 // 🔹 SESIÓN
 // ========================================
 function checkSession() {
-    fetch('check_session.php')
+    fetch('login/check_session.php')
         .then(r => r.json())
         .then(data => {
             if (data.logged_in) {
@@ -149,24 +148,12 @@ function resetUI() {
     document.getElementById('user-info').style.display = 'none';
 }
 
-// ========================================
-// 🔹 CARGAR PRODUCTOS DINÁMICAMENTE
-// ========================================
-function cargarProductos() {
-    const cont = document.getElementById('carrusel-dinamico-container');
-    fetch('productos.php')
-        .then(r => r.text())
-        .then(html => (cont.innerHTML = html))
-        .catch(() => {
-            cont.innerHTML = '<p style="color:red;text-align:center">Error al cargar productos</p>';
-        });
-}
 
 // ========================================
 // 🔹 CARRITO
 // ========================================
 function actualizarContadorCarrito() {
-    fetch('obtener_carrito.php')
+    fetch('carrito/obtener_carrito.php')
         .then(r => r.json())
         .then(d => {
             document.getElementById('cart-count').textContent = d.total_items || 0;
@@ -191,7 +178,7 @@ document.addEventListener('click', (e) => {
     const id = btn.dataset.id;
     const nombre = btn.dataset.nombre;
 
-    fetch('agregar_carrito.php', {
+    fetch('carrito/agregar_carrito.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_producto: id, cantidad: 1 })
@@ -209,16 +196,123 @@ document.addEventListener('click', (e) => {
 });
 
 // ========================================
-// 🔹 CARRUSEL DE PRODUCTOS
+// 🔹 CARRUSEL + CARGA DE PRODUCTOS
 // ========================================
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('next')) {
-        document.querySelector('.carousel-track')?.scrollBy({ left: 270, behavior: 'smooth' });
+
+function inicializarCarrusel() {
+    const track = document.querySelector('.carousel-track');
+    const btnPrev = document.querySelector('.prev');
+    const btnNext = document.querySelector('.next');
+
+    if (!track) {
+        console.warn('Carousel: .carousel-track no encontrado.');
+        return;
     }
-    if (e.target.classList.contains('prev')) {
-        document.querySelector('.carousel-track')?.scrollBy({ left: -270, behavior: 'smooth' });
+
+    // Asegurarse de que el track permita scroll horizontal
+    track.style.overflowX = track.style.overflowX || 'auto';
+    track.style.scrollBehavior = track.style.scrollBehavior || 'smooth';
+
+    // Obtener ancho de paso (primera tarjeta) — fallback a 270
+    const firstCard = track.querySelector('.producto-card') || track.firstElementChild;
+    const cardWidth = firstCard ? Math.ceil(firstCard.getBoundingClientRect().width + parseFloat(getComputedStyle(track).gap || 0)) : 270;
+    const step = cardWidth || 270;
+
+    // Helper para quitar listeners previos (evita duplicados)
+    function clearHandler(el, propName) {
+        if (!el) return;
+        const prev = el.__carouselHandler;
+        if (prev && typeof prev === 'function') {
+            el.removeEventListener('click', prev);
+        }
     }
-});
+
+    // Attach handlers using named functions saved on the element
+    if (btnNext) {
+        clearHandler(btnNext, '__carouselNext');
+        const handlerNext = () => {
+            track.scrollBy({ left: step, behavior: 'smooth' });
+        };
+        btnNext.addEventListener('click', handlerNext);
+        btnNext.__carouselHandler = handlerNext;
+    } else {
+        console.warn('Carousel: botón .next no encontrado.');
+    }
+
+    if (btnPrev) {
+        clearHandler(btnPrev, '__carouselPrev');
+        const handlerPrev = () => {
+            track.scrollBy({ left: -step, behavior: 'smooth' });
+        };
+        btnPrev.addEventListener('click', handlerPrev);
+        btnPrev.__carouselHandler = handlerPrev;
+    } else {
+        console.warn('Carousel: botón .prev no encontrado.');
+    }
+
+    // Accessibility: permitir teclado en los botones
+    [btnPrev, btnNext].forEach(btn => {
+        if (!btn) return;
+        btn.setAttribute('tabindex', '0');
+        btn.style.cursor = 'pointer';
+        btn.style.zIndex = btn.style.zIndex || '20'; // asegúrate no tapar con overlay
+        btn.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') btn.click();
+        });
+    });
+
+    // Opcional: si se llega al final, deshabilitar el botón next, y similar para prev.
+    function actualizarEstadoBotones() {
+        if (!track) return;
+        if (btnNext) btnNext.disabled = (track.scrollLeft + track.clientWidth >= track.scrollWidth - 1);
+        if (btnPrev) btnPrev.disabled = (track.scrollLeft <= 1);
+    }
+    track.addEventListener('scroll', () => {
+        // Debounce mínimo
+        window.requestAnimationFrame(actualizarEstadoBotones);
+    });
+    actualizarEstadoBotones();
+}
+
+/**
+ * Carga productos desde productos.php y asegura inicializar el carrusel.
+ * Además usa MutationObserver en caso de que productos.php inyecte nodos asíncronamente.
+ */
+function cargarProductos() {
+    const cont = document.getElementById('carrusel-dinamico-container');
+    if (!cont) {
+        console.error('No se encontró #carrusel-dinamico-container');
+        return;
+    }
+
+    fetch('productos.php')
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+        })
+        .then(html => {
+            cont.innerHTML = html;
+
+            // Pequeño timeout para asegurar render; además se usa MutationObserver abajo
+            setTimeout(() => inicializarCarrusel(), 80);
+
+            // Si el contenido se sigue modificando (imágenes que cargan o script interno), observamos cambios
+            const observer = new MutationObserver((mutations, obs) => {
+                // si ya contiene al menos una tarjeta, inicializamos y desconectamos
+                if (cont.querySelector('.producto-card') || cont.children.length > 0) {
+                    inicializarCarrusel();
+                    // esperamos un frame extra para seguridad visual y luego desconectamos
+                    setTimeout(() => obs.disconnect(), 150);
+                }
+            });
+            observer.observe(cont, { childList: true, subtree: true });
+        })
+        .catch(err => {
+            console.error('Error al cargar productos:', err);
+            cont.innerHTML = '<p style="color:red;text-align:center">Error al cargar productos</p>';
+        });
+}
+
 
 // ========================================
 // 🔹 NOTIFICACIONES
