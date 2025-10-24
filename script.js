@@ -200,118 +200,156 @@ document.addEventListener('click', (e) => {
 // ========================================
 
 function inicializarCarrusel() {
-    const track = document.querySelector('.carousel-track');
-    const btnPrev = document.querySelector('.prev');
-    const btnNext = document.querySelector('.next');
-
+    // Intentar obtener el track por ID (preferido), si no, por clase
+    let track = document.getElementById('carrusel-dinamico-container') || document.querySelector('.carousel-track');
     if (!track) {
-        console.warn('Carousel: .carousel-track no encontrado.');
+        console.warn('Carousel: track no encontrado.');
         return;
     }
 
-    // Asegurarse de que el track permita scroll horizontal
+    // Buscar el contenedor que lo rodea (para localizar los botones)
+    const container = track.closest('.carrusel-container') || track.parentElement;
+    const btnPrev = container ? container.querySelector('.prev') : document.querySelector('.prev');
+    const btnNext = container ? container.querySelector('.next') : document.querySelector('.next');
+
+    // Asegurar scroll horizontal y smooth
     track.style.overflowX = track.style.overflowX || 'auto';
     track.style.scrollBehavior = track.style.scrollBehavior || 'smooth';
 
-    // Obtener ancho de paso (primera tarjeta) — fallback a 270
+    // Medir ancho de "paso" (una tarjeta)
     const firstCard = track.querySelector('.producto-card') || track.firstElementChild;
-    const cardWidth = firstCard ? Math.ceil(firstCard.getBoundingClientRect().width + parseFloat(getComputedStyle(track).gap || 0)) : 270;
+    const gap = parseFloat(getComputedStyle(track).gap || 0);
+    const cardWidth = firstCard ? Math.ceil(firstCard.getBoundingClientRect().width + gap) : 270;
     const step = cardWidth || 270;
 
-    // Helper para quitar listeners previos (evita duplicados)
-    function clearHandler(el, propName) {
+    // Limpiar handlers previos en botones para evitar duplicados
+    function clearHandler(el, key) {
         if (!el) return;
-        const prev = el.__carouselHandler;
+        const prev = el[key];
         if (prev && typeof prev === 'function') {
             el.removeEventListener('click', prev);
+            el[key] = null;
         }
     }
 
-    // Attach handlers using named functions saved on the element
     if (btnNext) {
         clearHandler(btnNext, '__carouselNext');
-        const handlerNext = () => {
-            track.scrollBy({ left: step, behavior: 'smooth' });
-        };
+        const handlerNext = () => track.scrollBy({ left: step, behavior: 'smooth' });
         btnNext.addEventListener('click', handlerNext);
-        btnNext.__carouselHandler = handlerNext;
+        btnNext.__carouselNext = handlerNext;
     } else {
         console.warn('Carousel: botón .next no encontrado.');
     }
 
     if (btnPrev) {
         clearHandler(btnPrev, '__carouselPrev');
-        const handlerPrev = () => {
-            track.scrollBy({ left: -step, behavior: 'smooth' });
-        };
+        const handlerPrev = () => track.scrollBy({ left: -step, behavior: 'smooth' });
         btnPrev.addEventListener('click', handlerPrev);
-        btnPrev.__carouselHandler = handlerPrev;
+        btnPrev.__carouselPrev = handlerPrev;
     } else {
         console.warn('Carousel: botón .prev no encontrado.');
     }
 
-    // Accessibility: permitir teclado en los botones
+    // Accesibilidad: teclado
     [btnPrev, btnNext].forEach(btn => {
         if (!btn) return;
         btn.setAttribute('tabindex', '0');
         btn.style.cursor = 'pointer';
-        btn.style.zIndex = btn.style.zIndex || '20'; // asegúrate no tapar con overlay
+        btn.style.zIndex = btn.style.zIndex || '20';
+        // evitar duplicate keyup listeners: se asume que no existen muchos
         btn.addEventListener('keyup', (e) => {
             if (e.key === 'Enter' || e.key === ' ') btn.click();
         });
     });
 
-    // Opcional: si se llega al final, deshabilitar el botón next, y similar para prev.
+    // Deshabilitar botones al llegar a los extremos
     function actualizarEstadoBotones() {
         if (!track) return;
         if (btnNext) btnNext.disabled = (track.scrollLeft + track.clientWidth >= track.scrollWidth - 1);
         if (btnPrev) btnPrev.disabled = (track.scrollLeft <= 1);
     }
-    track.addEventListener('scroll', () => {
-        // Debounce mínimo
-        window.requestAnimationFrame(actualizarEstadoBotones);
-    });
+    track.addEventListener('scroll', () => requestAnimationFrame(actualizarEstadoBotones));
+    // estado inicial
     actualizarEstadoBotones();
 }
 
-/**
- * Carga productos desde productos.php y asegura inicializar el carrusel.
- * Además usa MutationObserver en caso de que productos.php inyecte nodos asíncronamente.
- */
 function cargarProductos() {
-    const cont = document.getElementById('carrusel-dinamico-container');
-    if (!cont) {
-        console.error('No se encontró #carrusel-dinamico-container');
+    const contPlantilla = document.getElementById('carrusel-dinamico-container');
+    if (!contPlantilla) {
+        console.error('No se encontró #carrusel-dinamico-container en la plantilla.');
         return;
     }
 
-    fetch('productos.php')
+    fetch('productos.php', { cache: 'no-store' })
         .then(r => {
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.text();
         })
         .then(html => {
-            cont.innerHTML = html;
+            // parsear sin insertar inmediatamente
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html.trim();
 
-            // Pequeño timeout para asegurar render; además se usa MutationObserver abajo
-            setTimeout(() => inicializarCarrusel(), 80);
+            const fetchedContainer = tmp.querySelector('.carrusel-container');
+            const fetchedTrack = tmp.querySelector('.carousel-track');
 
-            // Si el contenido se sigue modificando (imágenes que cargan o script interno), observamos cambios
-            const observer = new MutationObserver((mutations, obs) => {
-                // si ya contiene al menos una tarjeta, inicializamos y desconectamos
-                if (cont.querySelector('.producto-card') || cont.children.length > 0) {
-                    inicializarCarrusel();
-                    // esperamos un frame extra para seguridad visual y luego desconectamos
-                    setTimeout(() => obs.disconnect(), 150);
+            if (fetchedContainer) {
+                // El servidor devolvió TODO el contenedor (botones + track + tarjetas)
+                // Reemplazamos el contenedor de la plantilla por el nuevo contenedor
+                const existingContainer = document.querySelector('.carrusel-container');
+
+                // Asegurar que el track nuevo tenga el ID esperado para futuras referencias
+                const newTrack = fetchedContainer.querySelector('.carousel-track');
+                if (newTrack) newTrack.id = 'carrusel-dinamico-container';
+                else {
+                    // si por alguna razón no hay track, crear uno y mover las tarjetas
+                    const createdTrack = document.createElement('div');
+                    createdTrack.className = 'carousel-track';
+                    createdTrack.id = 'carrusel-dinamico-container';
+                    // mover nodos que parecen tarjetas
+                    Array.from(fetchedContainer.children).forEach(ch => {
+                        if (ch.classList && ch.classList.contains('producto-card')) createdTrack.appendChild(ch);
+                    });
+                    fetchedContainer.appendChild(createdTrack);
                 }
-            });
-            observer.observe(cont, { childList: true, subtree: true });
+
+                if (existingContainer && existingContainer.parentNode) {
+                    existingContainer.parentNode.replaceChild(fetchedContainer, existingContainer);
+                } else {
+                    // fallback: insertar al final del main
+                    document.querySelector('main')?.appendChild(fetchedContainer);
+                }
+            } else {
+                // El servidor devolvió solo tarjetas o un track parcial
+                if (fetchedTrack) {
+                    contPlantilla.innerHTML = fetchedTrack.innerHTML;
+                } else {
+                    // asumimos que tmp contiene solo <article class="producto-card">...
+                    contPlantilla.innerHTML = tmp.innerHTML;
+                }
+            }
+
+            // Dar tiempo a render y a carga de imágenes, luego inicializar
+            setTimeout(() => inicializarCarrusel(), 60);
+
+            // Observer por si hay scripts/imágenes que siguen añadiendo nodos
+            const trackNode = document.getElementById('carrusel-dinamico-container');
+            if (trackNode) {
+                const observer = new MutationObserver((mutations, obs) => {
+                    if (trackNode.querySelector('.producto-card') || trackNode.children.length > 0) {
+                        inicializarCarrusel();
+                        setTimeout(() => obs.disconnect(), 150);
+                    }
+                });
+                observer.observe(trackNode, { childList: true, subtree: true });
+            }
         })
         .catch(err => {
             console.error('Error al cargar productos:', err);
-            cont.innerHTML = '<p style="color:red;text-align:center">Error al cargar productos</p>';
+            contPlantilla.innerHTML = '<p style="color:red;text-align:center">Error al cargar productos</p>';
         });
 }
+
 
 
 // ========================================
