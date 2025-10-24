@@ -1,4 +1,5 @@
 <?php
+// producto.php
 session_start();
 header('Content-Type: text/html; charset=utf-8');
 
@@ -27,39 +28,43 @@ try {
     ");
     $productos = $stmt->fetchAll();
 } catch (PDOException $e) {
-    echo "<div style='color:red;text-align:center'>Error DB: " . htmlspecialchars($e->getMessage()) . "</div>";
+    // Es mejor devolver un JSON o un HTML simple de error si esto se carga por AJAX
+    echo "<div style='color:red;text-align:center'>Error de conexión a la Base de Datos: " . htmlspecialchars($e->getMessage()) . "</div>";
     exit;
 }
 ?>
 
-<div id="carruselProductos" class="carrusel-container">
-    <button class="carrusel-btn prev"><i class="fas fa-chevron-left"></i></button>
-    <div class="carousel-track">
+<div class="carousel-track" id="carruselProductos">
+    <?php if (empty($productos)): ?>
+        <p style="text-align:center; color: #888; width: 100%;">No hay productos destacados disponibles.</p>
+    <?php else: ?>
         <?php foreach ($productos as $producto): ?>
-            <article class="producto-card carrusel-slide">
-                <?php if ($producto['etiqueta_especial']): ?>
-                    <span class="etiqueta-caracteristica-verde"><?= htmlspecialchars($producto['etiqueta_especial']) ?></span>
-                <?php endif; ?>
+            <a href="mostrar.php?id=<?= $producto['id'] ?>" class="carrusel-slide-link" style="text-decoration: none; color: inherit;">
+                <article class="producto-card carrusel-slide">
+                    <?php if ($producto['etiqueta_especial']): ?>
+                        <span class="etiqueta-caracteristica-verde"><?= htmlspecialchars($producto['etiqueta_especial']) ?></span>
+                    <?php endif; ?>
 
-                <img src="<?= htmlspecialchars($producto['imagen_url']) ?>"
-                     alt="<?= htmlspecialchars($producto['nombre']) ?>"
-                     class="producto-imagen"
-                     onerror="this.src='https://via.placeholder.com/250x160?text=Sin+Imagen'">
+                    <img src="<?= htmlspecialchars($producto['imagen_url']) ?>"
+                         alt="<?= htmlspecialchars($producto['nombre']) ?>"
+                         class="producto-imagen"
+                         onerror="this.src='https://via.placeholder.com/250x160?text=Sin+Imagen'">
 
-                <div class="producto-info">
-                    <h3><?= htmlspecialchars($producto['nombre']) ?></h3>
-                    <p class="precio-final">$<?= number_format($producto['precio_actual'], 2, ',', '.') ?></p>
+                    <div class="producto-info">
+                        <h3><?= htmlspecialchars($producto['nombre']) ?></h3>
+                        <p class="precio-final">$<?= number_format($producto['precio_actual'], 2, ',', '.') ?></p>
 
-                    <button class="boton-agregar"
-                            data-id="<?= $producto['id'] ?>"
-                            data-nombre="<?= htmlspecialchars($producto['nombre']) ?>"
-                            data-precio="<?= $producto['precio_actual'] ?>"
-                            <?= ($producto['stock'] <= 0) ? 'disabled' : '' ?>>
-                        <?= ($producto['stock'] > 0) ? 'Agregar' : 'Sin Stock' ?>
-                    </button>
-                </div>
-            </article>
+                        <button class="boton-agregar"
+                                data-id="<?= $producto['id'] ?>"
+                                data-nombre="<?= htmlspecialchars($producto['nombre']) ?>"
+                                data-precio="<?= $producto['precio_actual'] ?>"
+                                onclick="event.stopPropagation();" 
+                                <?= ($producto['stock'] <= 0) ? 'disabled' : '' ?>>
+                            <?= ($producto['stock'] > 0) ? 'Agregar' : 'Sin Stock' ?>
+                        </button>
+                    </div>
+                </article>
+            </a>
         <?php endforeach; ?>
-    </div>
-    <button class="carrusel-btn next"><i class="fas fa-chevron-right"></i></button>
+    <?php endif; ?>
 </div>

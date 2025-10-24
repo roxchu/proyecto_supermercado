@@ -1,0 +1,331 @@
+
+:root {
+    --color-primary: #8B0000; /* Rojo Intenso */
+    --color-secondary: #f4f4f4; /* Fondo de contenido claro */
+    --color-dark: #333; /* Fondo de sidebar o texto oscuro */
+    --color-text-light: #fff;
+    --color-alert: #e74c3c; /* Para bajo stock y eliminar */
+    --color-success: #2ecc71;
+}
+
+/* Estilos Globales */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    background-color: #f0f0f0;
+}
+
+/* 1. SIDEBAR (Barra Lateral) */
+.sidebar {
+    width: 250px;
+    background-color: var(--color-dark);
+    color: var(--color-text-light);
+    height: 100vh;
+    position: fixed;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    background-color: var(--color-primary); 
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar li a {
+    display: block;
+    padding: 15px 20px;
+    text-decoration: none;
+    color: var(--color-text-light);
+    transition: background-color 0.3s;
+}
+
+.sidebar li a:hover,
+.sidebar li a.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left: 5px solid var(--color-primary);
+}
+
+.sidebar li a i {
+    margin-right: 10px;
+}
+
+/* 2. CONTENIDO PRINCIPAL */
+.main-content {
+    margin-left: 250px; 
+    flex-grow: 1;
+    padding: 20px;
+}
+
+/* ENCABEZADO CENTRADO */
+.admin-header {
+    text-align: center;
+    padding: 10px 0 30px 0;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+
+.admin-header h1 {
+    font-size: 2em;
+    color: var(--color-dark);
+    margin: 0;
+}
+
+.admin-header #admin-name {
+    color: var(--color-primary);
+    font-weight: bold;
+}
+
+/* SECCIONES */
+.content-section {
+    background-color: var(--color-text-light);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    /* Inicialmente oculta todas las secciones */
+    display: none;
+}
+
+.content-section.active-section {
+    /* Muestra solo la sección activa */
+    display: block;
+}
+
+/* 3. DASHBOARD METRICS */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.metric-card {
+    background-color: var(--color-secondary);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    transition: transform 0.2s;
+    border-left: 5px solid #ccc;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+}
+
+.metric-card i {
+    font-size: 2.5em;
+    color: var(--color-dark);
+    margin-bottom: 10px;
+}
+
+.metric-card.red-accent {
+    border-left-color: var(--color-primary);
+}
+.metric-card.alert-accent {
+    border-left-color: var(--color-alert);
+    background-color: #fbecec;
+}
+
+.metric-card h3 {
+    margin: 5px 0;
+    font-size: 1.2em;
+    color: #555;
+}
+
+.metric-card p {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--color-dark);
+}
+
+/* 4. TABLAS (para Usuarios, Productos, etc.) */
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+table th {
+    background-color: #eee;
+    font-weight: bold;
+    color: var(--color-dark);
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Estilo para las imágenes en la tabla de productos */
+table td img {
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+/* 5. BOTONES */
+.btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 5px;
+    transition: background-color 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-text-light);
+}
+
+.btn-primary:hover {
+    background-color: #b30000;
+}
+
+.btn-edit, .btn-edit-role {
+    background-color: #3498db; /* Azul para editar */
+    color: var(--color-text-light);
+}
+
+.btn-delete {
+    background-color: var(--color-alert);
+    color: var(--color-text-light);
+}
+
+.float-right {
+    float: right;
+    margin-bottom: 15px;
+}
+
+/* Estilo del Modal de Ejemplo (oculto por defecto) */
+#modal-editar-rol {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#modal-editar-rol form {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Estilos Adicionales para Modales --- */
+
+.modal-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro semitransparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--color-text-light);
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px; /* Tamaño estándar para el modal de Rol */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-content.large-modal {
+    max-width: 700px; /* Tamaño más grande para el modal de Producto */
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.modal-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Estilos de inputs en modales */
+.full-width-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Estilo para la lista de imágenes secundarias */
+.image-url-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 5px;
+}
+
+.image-url-group label {
+    flex-shrink: 0;
+    width: 100px;
+}
+
+.image-url-group input[type="url"] {
+    flex-grow: 1;
+}
+
+.image-url-group .remove-image-url {
+    height: 34px; /* Alinear con el input */
+    padding: 8px 10px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+}
