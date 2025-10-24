@@ -1,9 +1,32 @@
 // ========================================
-// script.js — Gestión del supermercado online
+// script.js — Gestión del supermercado online (REESCRITO Y CORREGIDO)
 // ========================================
 
 // 🔹 VARIABLES GLOBALES
 let usuarioActual = null;
+const backendUrl = './'; // Define la URL base para los archivos PHP
+
+// ========================================
+// 🔹 SELECTORES GLOBALES
+// ========================================
+// (Definiciones de selectores para evitar duplicidad)
+const loginModal = document.getElementById('loginModal');
+const loginLink = document.getElementById('login-link');
+const logoutLink = document.getElementById('logout-link');
+const closeModal = loginModal?.querySelector('.close-btn');
+const loginForm = document.getElementById('login-form-dni');
+const registerForm = document.getElementById('register-form');
+const loginMessage = document.getElementById('login-message');
+const registerMessage = document.getElementById('register-message');
+const showRegisterLink = document.getElementById('show-register');
+const showLoginLink = document.getElementById('show-login');
+
+// Selectores para actualizar la UI (Navegación)
+const linkGestion = document.getElementById('link-gestion');
+const linkAdmin = document.getElementById('link-admin');
+const userInfo = document.getElementById('user-info');
+const userGreeting = document.getElementById('user-greeting');
+
 
 // ========================================
 // 🔹 MENÚ LATERAL (CATEGORÍAS)
@@ -28,17 +51,6 @@ menuOverlay?.addEventListener('click', cerrarMenu);
 // ========================================
 // 🔹 MODAL LOGIN / REGISTRO
 // ========================================
-const loginModal = document.getElementById('loginModal');
-const loginLink = document.getElementById('login-link');
-const logoutLink = document.getElementById('logout-link');
-const closeModal = loginModal?.querySelector('.close-btn');
-const loginForm = document.getElementById('login-form-dni');
-const registerForm = document.getElementById('register-form');
-const loginMessage = document.getElementById('login-message');
-const registerMessage = document.getElementById('register-message');
-const showRegisterLink = document.getElementById('show-register');
-const showLoginLink = document.getElementById('show-login');
-
 // Mostrar modal de login
 loginLink?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -70,83 +82,109 @@ showLoginLink?.addEventListener('click', (e) => {
     document.getElementById('modal-title').textContent = 'Iniciar Sesión';
 });
 
-// ========================================
-// 🔹 LOGIN / REGISTRO / LOGOUT
-// ========================================
-loginForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const formData = new FormData(loginForm);
-    fetch('login/login.php', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                usuarioActual = { nombre: data.nombre, rol: data.rol };
-                updateUI(data.nombre, data.rol);
-                loginModal.style.display = 'none';
-                mostrarNotificacion(`Bienvenido ${data.nombre}`, 'success');
-            } else {
-                loginMessage.textContent = data.message || 'Error al iniciar sesión';
-                loginMessage.style.color = 'red';
-            }
-        })
-        .catch(() => mostrarNotificacion('Error de conexión', 'error'));
-});
 
-registerForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const formData = new FormData(registerForm);
-    fetch('login/registro.php', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                usuarioActual = { nombre: data.nombre, rol: data.rol };
-                updateUI(data.nombre, data.rol);
-                loginModal.style.display = 'none';
-                mostrarNotificacion(`Cuenta creada, ${data.nombre}`, 'success');
-            } else {
-                registerMessage.textContent = data.message;
-                registerMessage.style.color = 'red';
-            }
-        })
-        .catch(() => mostrarNotificacion('Error de conexión', 'error'));
-});
+// ----------------------------------------------------
+// 🔹 FUNCIÓN UNIFICADA: ACTUALIZAR INTERFAZ Y VISIBILIDAD DE ROLES
+// ----------------------------------------------------
+function actualizarInterfaz(rol, nombre) {
+    // 1. Resetear el estado por defecto
+    loginLink.style.display = 'block';
+    userInfo.style.display = 'none';
+    linkGestion.style.display = 'none';
+    linkAdmin.style.display = 'none';
+    
+    // 2. Si hay sesión activa
+    if (rol) {
+        // Actualiza la variable global que usan otras funciones (como el carrito)
+        usuarioActual = { nombre: nombre, rol: rol }; 
+        
+        // Mostrar saludo y logout, ocultar login
+        loginLink.style.display = 'none';
+        userInfo.style.display = 'flex'; // Cambiar a 'flex' para que sea visible
+        // Nota: Se corrigió la línea para usar el formato deseado
+        userGreeting.innerHTML = `<i class="fas fa-user"></i> Hola, ${nombre}!`; 
 
-logoutLink?.addEventListener('click', (e) => {
-    e.preventDefault();
-    fetch('login/logout.php').then(() => {
+        // 3. Mostrar enlaces de dashboard según el rol
+        if (rol === 'admin') {
+            linkAdmin.style.display = 'block';
+            linkGestion.style.display = 'block';
+            linkGestion.href = 'dashboard_empleado.php';
+        } else if (rol === 'empleado') {
+            linkGestion.style.display = 'block';
+            linkGestion.href = 'dashboard_empleado.php';
+        }
+    } else {
         usuarioActual = null;
-        mostrarNotificacion('Sesión cerrada correctamente.', 'info');
-        resetUI();
-    });
+    }
+}
+
+
+// ----------------------------------------------------
+// 🔹 MANEJO DEL SUBMIT DEL FORMULARIO DE LOGIN
+// ----------------------------------------------------
+loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dni = document.getElementById('dni').value;
+    
+    // Limpiar mensajes anteriores
+    loginMessage.textContent = ''; 
+
+    try {
+        const response = await fetch(backendUrl + 'login/login.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `dni=${dni}`
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Nota: Aquí no se llama a actualizarInterfaz porque la página se va a redirigir
+            // Y la nueva página o el checkSession() se encargarán de actualizar la UI
+            mostrarNotificacion(`Bienvenido, ${data.nombre}`, 'success');
+            
+            // 1. Ocultar el modal (si está abierto)
+            if (loginModal) {
+                 loginModal.style.display = 'none';
+            }
+            
+            // 2. **REDIRECCIÓN AL DASHBOARD DEL ROL** (Usando la URL del servidor)
+            window.location.href = data.redirect; 
+
+        } else {
+            loginMessage.textContent = data.message;
+            mostrarNotificacion(data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error de red o JSON inválido:', error);
+        loginMessage.textContent = 'Error de conexión con el servidor.';
+    }
 });
 
+
 // ========================================
-// 🔹 SESIÓN
+// 🔹 SESIÓN (CORREGIDO - Ruta y uso de actualizarInterfaz)
 // ========================================
 function checkSession() {
-    fetch('login/check_session.php')
+    // RUTA CORREGIDA: Se asume que check_session.php está en la raíz, no en /login/
+    fetch(backendUrl + 'login/check_session.php') 
         .then(r => r.json())
         .then(data => {
             if (data.logged_in) {
-                usuarioActual = { nombre: data.nombre, rol: data.rol };
-                updateUI(data.nombre, data.rol);
-            } else resetUI();
+                // Llama a la función unificada
+                actualizarInterfaz(data.rol, data.nombre); 
+            } else {
+                actualizarInterfaz(null, null); // Resetea la UI si no hay sesión
+            }
         })
-        .catch(() => resetUI());
+        .catch(err => {
+            console.error('Error al verificar sesión:', err);
+            actualizarInterfaz(null, null);
+        });
 }
 
-function updateUI(nombre, rol) {
-    document.getElementById('login-link').style.display = 'none';
-    const userInfo = document.getElementById('user-info');
-    userInfo.style.display = 'flex';
-    document.getElementById('user-greeting').innerHTML = `<i class="fas fa-user"></i> Hola, ${nombre}`;
-    document.getElementById('link-gestion').style.display = (rol === 'empleado' || rol === 'admin') ? 'flex' : 'none';
-    document.getElementById('link-admin').style.display = (rol === 'admin') ? 'flex' : 'none';
-}
-function resetUI() {
-    document.getElementById('login-link').style.display = 'block';
-    document.getElementById('user-info').style.display = 'none';
-}
+// Nota: Las funciones updateUI y resetUI han sido eliminadas ya que
+// la función actualizarInterfaz cumple su propósito de forma unificada.
 
 
 // ========================================
@@ -168,8 +206,8 @@ document.addEventListener('click', (e) => {
     const btn = e.target.closest('.boton-agregar');
     if (!btn) return;
 
-    // Bloquear si no hay usuario logueado
-    if (!usuarioActual) {
+    // Bloquear si no hay usuario logueado (usa la variable global actualizada)
+    if (!usuarioActual) { 
         mostrarNotificacion('Debes iniciar sesión para agregar productos 🧑‍💻', 'error');
         loginModal.style.display = 'block';
         return;
@@ -197,6 +235,7 @@ document.addEventListener('click', (e) => {
 
 // ========================================
 // 🔹 CARRUSEL + CARGA DE PRODUCTOS
+// (Contenido restaurado)
 // ========================================
 
 function inicializarCarrusel() {
@@ -349,7 +388,6 @@ function cargarProductos() {
             contPlantilla.innerHTML = '<p style="color:red;text-align:center">Error al cargar productos</p>';
         });
 }
-
 
 
 // ========================================

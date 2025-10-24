@@ -1,10 +1,15 @@
 <?php
+// login.php
+
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 // ---------------------------------------------
 // CONFIGURACIÓN DE LA BASE DE DATOS
 // ---------------------------------------------
+// Asumo que 'db.php' está en el mismo directorio. Si no, lo reescribimos aquí:
+// require 'db.php'; 
+
 $host = 'localhost';
 $db   = 'supermercado';
 $user = 'root';
@@ -47,27 +52,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
     $usuario = $stmt->fetch();
 
     if ($usuario) {
-        // Usuario encontrado
+        // --- 1. Éxito: Configurar la sesión ---
         $_SESSION['logged_in'] = true;
         $_SESSION['user_id'] = $usuario['id_usuario'];
         $_SESSION['rol'] = $usuario['nombre_rol'];
         $_SESSION['nombre'] = $usuario['nombre_usuario'];
+        
+        // --- 2. Definir la URL de redirección ---
+        $redirect_url = 'index.html'; // Por defecto para clientes
+        
+        if ($usuario['nombre_rol'] === 'admin') {
+            $redirect_url = 'login/dashboard_admin.php'; 
+        } elseif ($usuario['nombre_rol'] === 'empleado') {
+            $redirect_url = 'dashboard_empleado.php';
+        }
 
+        // --- 3. Enviar la respuesta JSON final y salir ---
         echo json_encode([
             'success' => true,
             'message' => 'Inicio de sesión exitoso.',
             'rol' => $usuario['nombre_rol'],
-            'nombre' => $usuario['nombre_usuario']
+            'nombre' => $usuario['nombre_usuario'],
+            'redirect' => $redirect_url // URL usada por script.js
         ]);
+        
     } else {
-        // No encontrado
+        // --- 4. Fracaso: DNI no encontrado ---
         echo json_encode([
             'success' => false,
             'code' => 'USER_NOT_FOUND',
-            'message' => 'Tu DNI no está registrado. ¿Deseas crear una cuenta?'
+            'message' => 'El DNI ingresado no está registrado.'
         ]);
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Solicitud no válida.']);
+    // Si no es POST o falta el DNI
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Solicitud inválida.']);
 }
+
+exit; // Aseguramos que no haya más salidas después de la respuesta JSON.
 ?>
