@@ -1,10 +1,10 @@
 <?php
 // direccion.php
 session_start();
-require_once 'db.php';
+require_once __DIR__ . '/db.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: index.html');
+    header('Location: ../index.html');
     exit;
 }
 
@@ -28,10 +28,17 @@ $stmt = $pdo->prepare("SELECT * FROM direcciones WHERE id_cliente = ? ORDER BY i
 $stmt->execute([$id_cliente]);
 $direcciones = $stmt->fetchAll();
 
-// calcular subtotal rápido desde session
-$cart = $_SESSION['carrito'] ?? [];
+// calcular subtotal desde carrito en DB
+$stmt = $pdo->prepare("SELECT c.Id_Carrito FROM carrito c WHERE c.Id_Usuario = ? AND c.estado = 'pendiente' LIMIT 1");
+$stmt->execute([$user_id]);
+$c = $stmt->fetch(PDO::FETCH_ASSOC);
 $subtotal = 0;
-foreach ($cart as $it) $subtotal += $it['Precio_Unitario'] * $it['cantidad'];
+if ($c) {
+    $stmt = $pdo->prepare("SELECT SUM(dc.Cantidad * dc.Precio_Unitario) AS subtotal FROM detalle_carrito dc WHERE dc.Id_Carrito = ?");
+    $stmt->execute([$c['Id_Carrito']]);
+    $s = $stmt->fetch(PDO::FETCH_ASSOC);
+    $subtotal = floatval($s['subtotal'] ?? 0);
+}
 ?>
 
 <!DOCTYPE html>
@@ -39,14 +46,14 @@ foreach ($cart as $it) $subtotal += $it['Precio_Unitario'] * $it['cantidad'];
 <head>
     <meta charset="utf-8">
     <title>Dirección y Pago</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
     <header><a href="carrito.php">← Volver</a><h1>Dirección de envío</h1></header>
 
     <main style="padding:20px; max-width:900px;">
-        <?php if (empty($cart)): ?>
-            <p>Tu carrito está vacío. <a href="index.html">Seguir comprando</a></p>
+        <?php if ($subtotal <= 0): ?>
+            <p>Tu carrito está vacío. <a href="../index.html">Seguir comprando</a></p>
             <?php exit; ?>
         <?php endif; ?>
 
