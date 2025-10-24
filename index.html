@@ -10,44 +10,67 @@
 
 <body>
     <header class="header">
-        <div class="logo">
-            🛒 Supermercado Online
+        
+        <div class="header-left">
+            <div class="logo">
+                <a href="#" class="logo-link">
+                    <h1>
+                        <i class="fas fa-store"></i> Supermercado Online
+                    </h1>
+                </a>
+            </div>
+
+            <button class="menu-button" id="btn-categorias" aria-expanded="false">
+                <i class="fas fa-bars"></i> Categorías
+            </button>
         </div>
 
-        <nav class="nav">
-            <a href="#" id="btn-categorias" aria-expanded="false">Categorías</a>
-            <a href="#" id="link-gestion" class="employee-only" style="display:none;">Gestión</a>
-            <a href="#" id="link-admin" class="admin-only" style="display:none;">Administración</a>
-        </nav>
+        <div class="search-bar">
+            <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos">
+            <button type="button"><i class="fas fa-search"></i></button>
+        </div>
 
-        <div class="user-area">
-            <a href="#" id="login-link">Iniciar sesión</a>
+        <div class="user-actions">
+            <a href="#" id="link-gestion" class="employee-only" style="display:none;" title="Gestión"><i class="fas fa-truck-loading"></i></a>
+            <a href="login/dashboard_admin.php" id="link-admin" class="admin-only" style="display:none;" title="Administración"><i class="fas fa-tools"></i></a>
+
+            <a href="#" id="login-link" title="Iniciar sesión"><i class="fas fa-user"></i> Iniciar sesión</a>
 
             <div id="user-info" style="display:none;">
                 <span id="user-greeting"></span>
-                <a href="#" id="logout-link">Cerrar sesión</a>
+                <a href="#" id="logout-link" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
             </div>
 
-            <div class="cart">
+            <div class="cart" title="Mi Carrito">
                 <i class="fas fa-shopping-cart"></i>
                 <span id="cart-count">0</span>
             </div>
         </div>
-    </header>
+        </header>
 
     <aside id="side-menu" class="side-menu" aria-hidden="true">
-        <button id="btn-close-menu" class="close-menu">&times;</button>
-        <ul>
-            <li><a href="#" class="side-link">Inicio</a></li>
-            <li><a href="#" class="side-link">Ofertas</a></li>
-            <li><a href="#" class="side-link">Bebidas</a></li>
-            <li><a href="#" class="side-link">Limpieza</a></li>
-            <li><a href="#" class="side-link employee-only" style="display:none;">Gestión de stock</a></li>
-            <li><a href="#" class="side-link admin-only" style="display:none;">Panel de admin</a></li>
-        </ul>
+        
+        <div class="side-menu-header">
+            <h2><i class="fas fa-list-alt"></i> Todas las Categorías</h2>
+            <button id="btn-close-menu" class="close-menu" aria-label="Cerrar Menú">&times;</button>
+        </div>
+        
+        <nav class="side-nav">
+            <ul>
+                <li><a href="#" class="side-link"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="#" class="side-link"><i class="fas fa-tags"></i> Ofertas</a></li>
+                <li><a href="#" class="side-link"><i class="fas fa-cocktail"></i> Bebidas</a></li>
+                <li><a href="#" class="side-link"><i class="fas fa-soap"></i> Limpieza</a></li>
+                <li><a href="#" class="side-link"><i class="fas fa-carrot"></i> Frutas y Verduras</a></li>
+                <li><a href="#" class="side-link"><i class="fas fa-cookie-bite"></i> Panadería</a></li>
+                <li><a href="#" class="side-link"><i class="fas fa-utensils"></i> Congelados</a></li>
+                
+                <li><a href="#" class="side-link employee-only" style="display:none;"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
+                <li><a href="#" class="side-link admin-only" style="display:none;"><i class="fas fa-cog"></i> Panel de admin</a></li>
+            </ul>
+        </nav>
     </aside>
-    <div id="menu-overlay" class="overlay"></div>
-
+    <div id="menu-overlay" class="menu-overlay"></div>
     <main class="main-content">
         <h2>Productos destacados</h2>
 
