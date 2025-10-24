@@ -1,5 +1,5 @@
 <?php
-// actualizar_carrito.php
+// actualizar_carrito.php (actualiza cantidad en DB)
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
@@ -9,91 +9,84 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-    exit;
-}
+require_once __DIR__ . '/db.php';
 
-require_once 'db.php';
+$payload = json_decode(file_get_contents('php://input'), true);
+if (!is_array($payload)) $payload = $_POST;
 
-$id_opcion = isset($_POST['id_opcion']) ? intval($_POST['id_opcion']) : 0;
-$cantidad = isset($_POST['cantidad']) ? intval($_POST['cantidad']) : 0;
+$id_producto = isset($payload['id_producto']) ? intval($payload['id_producto']) : 0;
+$cantidad = isset($payload['cantidad']) ? intval($payload['cantidad']) : 0;
 
-if ($id_opcion <= 0) {
+if ($id_producto <= 0) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'ID inválido.']);
+    echo json_encode(['success' => false, 'message' => 'ID de producto inválido.']);
     exit;
 }
 
-// si se pide eliminar (cantidad 0) -> borrar
 if ($cantidad < 0) $cantidad = 0;
 
-// obtener stock actual
-$stmt = $pdo->prepare("SELECT Stock FROM opcion_producto WHERE Id_Opcion_Producto = ? LIMIT 1");
-$stmt->execute([$id_opcion]);
-$row = $stmt->fetch();
-
-if (!$row) {
-    http_response_code(404);
-    echo json_encode(['success' => false, 'message' => 'Opción de producto no existe.']);
+$id_usuario = $_SESSION['user_id'] ?? null;
+if (!$id_usuario) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Usuario no identificado.']);
     exit;
 }
 
-$stock = intval($row['Stock']);
-if ($cantidad > $stock) {
+// obtener carrito pendiente (usar columna DNI_Cliente y Estado 'Pendiente')
+$stmt = $pdo->prepare("SELECT Id_Carrito FROM carrito WHERE DNI_Cliente = ? AND Estado = 'Pendiente' LIMIT 1");
+$stmt->execute([$id_usuario]);
+$car = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$car) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'No existe carrito pendiente.']);
+    exit;
+}
+
+$id_carrito = $car['Id_Carrito'];
+
+// comprobar stock si existe
+$stmt = $pdo->prepare("SELECT Stock FROM producto WHERE Id_Producto = ? LIMIT 1");
+$stmt->execute([$id_producto]);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($row && isset($row['Stock']) && $cantidad > intval($row['Stock'])) {
     http_response_code(409);
     echo json_encode(['success' => false, 'message' => 'La cantidad excede el stock disponible.']);
     exit;
 }
 
-if (!isset($_SESSION['carrito'])) $_SESSION['carrito'] = [];
-
 if ($cantidad === 0) {
-    if (isset($_SESSION['carrito'][$id_opcion])) {
-        unset($_SESSION['carrito'][$id_opcion]);
-    }
+    $stmt = $pdo->prepare("DELETE FROM detalle_carrito WHERE Id_Carrito = ? AND Id_Producto = ?");
+    $stmt->execute([$id_carrito, $id_producto]);
 } else {
-    // si no existe en carrito, traer datos mínimos para armarlo
-    if (!isset($_SESSION['carrito'][$id_opcion])) {
-        // traer datos
-        $stmt2 = $pdo->prepare("
-            SELECT op.Id_Opcion_Producto, op.Id_Producto, op.Nombre_Opcion, op.Precio_Unitario, p.Nombre_Producto
-            FROM opcion_producto op
-            JOIN producto p ON op.Id_Producto = p.Id_Producto
-            WHERE op.Id_Opcion_Producto = ?
-            LIMIT 1
-        ");
-        $stmt2->execute([$id_opcion]);
-        $op = $stmt2->fetch();
-        if (!$op) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Opción no encontrada al actualizar.']);
-            exit;
-        }
-        $_SESSION['carrito'][$id_opcion] = [
-            'Id_Opcion_Producto' => (int)$op['Id_Opcion_Producto'],
-            'Id_Producto' => (int)$op['Id_Producto'],
-            'Nombre_Producto' => $op['Nombre_Producto'],
-            'Nombre_Opcion' => $op['Nombre_Opcion'],
-            'Precio_Unitario' => (float)$op['Precio_Unitario'],
-            'cantidad' => $cantidad
-        ];
+    // actualizar cantidad si existe, sino insertar
+    $stmt = $pdo->prepare("SELECT * FROM detalle_carrito WHERE Id_Carrito = ? AND Id_Producto = ? LIMIT 1");
+    $stmt->execute([$id_carrito, $id_producto]);
+    $det = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($det) {
+        $stmt = $pdo->prepare("UPDATE detalle_carrito SET Cantidad = ? WHERE Id_Carrito = ? AND Id_Producto = ?");
+        $stmt->execute([$cantidad, $id_carrito, $id_producto]);
     } else {
-        $_SESSION['carrito'][$id_opcion]['cantidad'] = $cantidad;
+        // obtener precio actual del producto
+        $stmtP = $pdo->prepare("SELECT COALESCE(precio_actual, 0) AS precio FROM producto WHERE Id_Producto = ? LIMIT 1");
+        $stmtP->execute([$id_producto]);
+        $p = $stmtP->fetch(PDO::FETCH_ASSOC);
+        $precio = $p['precio'] ?? 0;
+        $stmt = $pdo->prepare("INSERT INTO detalle_carrito (Id_Carrito, Id_Producto, Cantidad, Precio_Unitario_Momento) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$id_carrito, $id_producto, $cantidad, $precio]);
     }
 }
 
 // responder resumen
-$total_items = 0; $total_price = 0;
-foreach ($_SESSION['carrito'] as $it) {
-    $total_items += $it['cantidad'];
-    $total_price += $it['Precio_Unitario'] * $it['cantidad'];
-}
+$stmt = $pdo->prepare("SELECT SUM(dc.Cantidad) AS items, SUM(dc.Cantidad * dc.Precio_Unitario) AS total
+                       FROM detalle_carrito dc WHERE dc.Id_Carrito = ?");
+$stmt->execute([$id_carrito]);
+$sum = $stmt->fetch(PDO::FETCH_ASSOC);
 
 echo json_encode([
     'success' => true,
-    'message' => 'Carrito actualizado.',
-    'cart_summary' => ['items' => $total_items, 'total' => $total_price],
-    'cart' => $_SESSION['carrito']
+    'cart_summary' => [
+        'items' => intval($sum['items'] ?? 0),
+        'total' => floatval($sum['total'] ?? 0)
+    ]
 ]);
+
