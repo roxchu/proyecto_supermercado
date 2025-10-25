@@ -3,7 +3,6 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 include '../login/control_acceso.php';
-include '../db.php';
 
 header('Content-Type: application/json');
 

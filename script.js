@@ -126,12 +126,12 @@ function actualizarInterfaz(rol, nombre) {
         // 3. Mostrar enlaces de dashboard según el rol
         if (rol === 'admin') {
             linkAdmin.style.display = 'inline-block';
-            linkAdmin.href = 'login/dashboard_admin.php';
+            linkAdmin.href = 'paneles/dashboard_admin.php';
             linkGestion.style.display = 'inline-block';
-            linkGestion.href = 'login/dashboard_empleado.php';
+            linkGestion.href = 'paneles/dashboard_empleado.php';
         } else if (rol === 'empleado') {
             linkGestion.style.display = 'inline-block';
-            linkGestion.href = 'dashboard_empleado.php';
+            linkGestion.href = 'paneles/dashboard_empleado.php';
         }
         
         // 4. Actualizar elementos del menú lateral según rol
