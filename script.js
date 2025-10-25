@@ -1,5 +1,5 @@
 // ========================================
-// script.js — Gestión del supermercado online (REESCRITO Y CORREGIDO)
+// script.js – Gestión del supermercado online (CORREGIDO)
 // ========================================
 
 // 🔹 VARIABLES GLOBALES
@@ -9,7 +9,6 @@ const backendUrl = './'; // Define la URL base para los archivos PHP
 // ========================================
 // 🔹 SELECTORES GLOBALES
 // ========================================
-// (Definiciones de selectores para evitar duplicidad)
 const loginModal = document.getElementById('loginModal');
 const loginLink = document.getElementById('login-link');
 const logoutLink = document.getElementById('logout-link');
@@ -83,6 +82,27 @@ showLoginLink?.addEventListener('click', (e) => {
 });
 
 
+// ========================================
+// 🔹 CERRAR SESIÓN
+// ========================================
+logoutLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    
+    fetch(backendUrl + 'login/logout.php')
+        .then(() => {
+            mostrarNotificacion('Sesión cerrada correctamente', 'success');
+            // Resetear interfaz
+            actualizarInterfaz(null, null);
+            // Recargar página después de un momento
+            setTimeout(() => window.location.reload(), 1000);
+        })
+        .catch(err => {
+            console.error('Error al cerrar sesión:', err);
+            mostrarNotificacion('Error al cerrar sesión', 'error');
+        });
+});
+
+
 // ----------------------------------------------------
 // 🔹 FUNCIÓN UNIFICADA: ACTUALIZAR INTERFAZ Y VISIBILIDAD DE ROLES
 // ----------------------------------------------------
@@ -101,20 +121,39 @@ function actualizarInterfaz(rol, nombre) {
         // Mostrar saludo y logout, ocultar login
         loginLink.style.display = 'none';
         userInfo.style.display = 'flex'; // Cambiar a 'flex' para que sea visible
-        // Nota: Se corrigió la línea para usar el formato deseado
         userGreeting.innerHTML = `<i class="fas fa-user"></i> Hola, ${nombre}!`; 
 
         // 3. Mostrar enlaces de dashboard según el rol
         if (rol === 'admin') {
-            linkAdmin.style.display = 'block';
-            linkGestion.style.display = 'block';
-            linkGestion.href = 'dashboard_empleado.php';
+            linkAdmin.style.display = 'inline-block';
+            linkAdmin.href = 'login/dashboard_admin.php';
+            linkGestion.style.display = 'inline-block';
+            linkGestion.href = 'login/dashboard_empleado.php';
         } else if (rol === 'empleado') {
-            linkGestion.style.display = 'block';
+            linkGestion.style.display = 'inline-block';
             linkGestion.href = 'dashboard_empleado.php';
+        }
+        
+        // 4. Actualizar elementos del menú lateral según rol
+        const employeeLinks = document.querySelectorAll('.employee-only');
+        const adminLinks = document.querySelectorAll('.admin-only');
+        
+        if (rol === 'admin') {
+            employeeLinks.forEach(el => el.style.display = 'block');
+            adminLinks.forEach(el => el.style.display = 'block');
+        } else if (rol === 'empleado') {
+            employeeLinks.forEach(el => el.style.display = 'block');
+            adminLinks.forEach(el => el.style.display = 'none');
+        } else {
+            employeeLinks.forEach(el => el.style.display = 'none');
+            adminLinks.forEach(el => el.style.display = 'none');
         }
     } else {
         usuarioActual = null;
+        // Ocultar elementos de empleado y admin cuando no hay sesión
+        document.querySelectorAll('.employee-only, .admin-only').forEach(el => {
+            el.style.display = 'none';
+        });
     }
 }
 
@@ -139,17 +178,23 @@ loginForm?.addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (data.success) {
-            // Nota: Aquí no se llama a actualizarInterfaz porque la página se va a redirigir
-            // Y la nueva página o el checkSession() se encargarán de actualizar la UI
             mostrarNotificacion(`Bienvenido, ${data.nombre}`, 'success');
             
-            // 1. Ocultar el modal (si está abierto)
+            // 1. Ocultar el modal
             if (loginModal) {
                  loginModal.style.display = 'none';
             }
             
-            // 2. **REDIRECCIÓN AL DASHBOARD DEL ROL** (Usando la URL del servidor)
-            window.location.href = data.redirect; 
+            // 2. Actualizar la interfaz antes de redirigir
+            actualizarInterfaz(data.rol, data.nombre);
+            
+            // 3. Si es cliente, solo recarga la página
+            // Si es empleado o admin, redirige al dashboard
+            if (data.rol === 'cliente') {
+                setTimeout(() => window.location.reload(), 500);
+            } else {
+                setTimeout(() => window.location.href = data.redirect, 500);
+            }
 
         } else {
             loginMessage.textContent = data.message;
@@ -158,15 +203,16 @@ loginForm?.addEventListener('submit', async (e) => {
     } catch (error) {
         console.error('Error de red o JSON inválido:', error);
         loginMessage.textContent = 'Error de conexión con el servidor.';
+        mostrarNotificacion('Error de conexión con el servidor', 'error');
     }
 });
 
 
 // ========================================
-// 🔹 SESIÓN (CORREGIDO - Ruta y uso de actualizarInterfaz)
+// 🔹 SESIÓN (CORREGIDO - Ruta correcta)
 // ========================================
 function checkSession() {
-    // RUTA CORREGIDA: Se asume que check_session.php está en la raíz, no en /login/
+    // RUTA CORREGIDA: check_session.php está en la carpeta login/
     fetch(backendUrl + 'login/check_session.php') 
         .then(r => r.json())
         .then(data => {
@@ -182,9 +228,6 @@ function checkSession() {
             actualizarInterfaz(null, null);
         });
 }
-
-// Nota: Las funciones updateUI y resetUI han sido eliminadas ya que
-// la función actualizarInterfaz cumple su propósito de forma unificada.
 
 
 // ========================================
@@ -235,7 +278,6 @@ document.addEventListener('click', (e) => {
 
 // ========================================
 // 🔹 CARRUSEL + CARGA DE PRODUCTOS
-// (Contenido restaurado)
 // ========================================
 
 function inicializarCarrusel() {
@@ -295,7 +337,6 @@ function inicializarCarrusel() {
         btn.setAttribute('tabindex', '0');
         btn.style.cursor = 'pointer';
         btn.style.zIndex = btn.style.zIndex || '20';
-        // evitar duplicate keyup listeners: se asume que no existen muchos
         btn.addEventListener('keyup', (e) => {
             if (e.key === 'Enter' || e.key === ' ') btn.click();
         });
@@ -308,7 +349,6 @@ function inicializarCarrusel() {
         if (btnPrev) btnPrev.disabled = (track.scrollLeft <= 1);
     }
     track.addEventListener('scroll', () => requestAnimationFrame(actualizarEstadoBotones));
-    // estado inicial
     actualizarEstadoBotones();
 }
 
@@ -325,7 +365,6 @@ function cargarProductos() {
             return r.text();
         })
         .then(html => {
-            // parsear sin insertar inmediatamente
             const tmp = document.createElement('div');
             tmp.innerHTML = html.trim();
 
@@ -333,19 +372,13 @@ function cargarProductos() {
             const fetchedTrack = tmp.querySelector('.carousel-track');
 
             if (fetchedContainer) {
-                // El servidor devolvió TODO el contenedor (botones + track + tarjetas)
-                // Reemplazamos el contenedor de la plantilla por el nuevo contenedor
                 const existingContainer = document.querySelector('.carrusel-container');
-
-                // Asegurar que el track nuevo tenga el ID esperado para futuras referencias
                 const newTrack = fetchedContainer.querySelector('.carousel-track');
                 if (newTrack) newTrack.id = 'carrusel-dinamico-container';
                 else {
-                    // si por alguna razón no hay track, crear uno y mover las tarjetas
                     const createdTrack = document.createElement('div');
                     createdTrack.className = 'carousel-track';
                     createdTrack.id = 'carrusel-dinamico-container';
-                    // mover nodos que parecen tarjetas
                     Array.from(fetchedContainer.children).forEach(ch => {
                         if (ch.classList && ch.classList.contains('producto-card')) createdTrack.appendChild(ch);
                     });
@@ -355,23 +388,18 @@ function cargarProductos() {
                 if (existingContainer && existingContainer.parentNode) {
                     existingContainer.parentNode.replaceChild(fetchedContainer, existingContainer);
                 } else {
-                    // fallback: insertar al final del main
                     document.querySelector('main')?.appendChild(fetchedContainer);
                 }
             } else {
-                // El servidor devolvió solo tarjetas o un track parcial
                 if (fetchedTrack) {
                     contPlantilla.innerHTML = fetchedTrack.innerHTML;
                 } else {
-                    // asumimos que tmp contiene solo <article class="producto-card">...
                     contPlantilla.innerHTML = tmp.innerHTML;
                 }
             }
 
-            // Dar tiempo a render y a carga de imágenes, luego inicializar
             setTimeout(() => inicializarCarrusel(), 60);
 
-            // Observer por si hay scripts/imágenes que siguen añadiendo nodos
             const trackNode = document.getElementById('carrusel-dinamico-container');
             if (trackNode) {
                 const observer = new MutationObserver((mutations, obs) => {

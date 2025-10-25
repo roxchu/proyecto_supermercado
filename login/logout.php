@@ -1,6 +1,5 @@
 <?php
 // logout.php
-
 session_start();
 
 // Destruir todas las variables de sesión
@@ -15,10 +14,18 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// Finalmente, destruir la sesión.
+// Destruir la sesión
 session_destroy();
 
-// Redirigir al usuario al index
+// Si es una petición AJAX/Fetch, devolver JSON
+if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'message' => 'Sesión cerrada correctamente']);
+    exit;
+}
+
+// Si es una petición directa (navegación), redirigir
 header('Location: index.html'); 
 exit;
 ?>

@@ -1,6 +1,9 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 include 'control_acceso.php';
-include '../carrito/db.php'; // Asumo que esto crea una variable $pdo (o $conn)
+include '../db.php';
 
 // SOLO permite admin
 verificar_rol('admin');

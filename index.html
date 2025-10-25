@@ -13,7 +13,7 @@
         
         <div class="header-left">
             <div class="logo">
-                <a href="#" class="logo-link">
+                <a href="index.html" class="logo-link">
                     <h1>
                         <i class="fas fa-store"></i> Supermercado Online
                     </h1>
@@ -31,23 +31,41 @@
         </div>
 
         <div class="user-actions">
-            <a href="#" id="link-gestion" class="employee-only" style="display:none;" title="Gestión"><i class="fas fa-truck-loading"></i></a>
-            <a href="login/dashboard_admin.php" id="link-admin" class="admin-only" style="display:none;" title="Administración"><i class="fas fa-tools"></i></a>
+            <!-- PANEL DE GESTIÓN (EMPLEADO) -->
+            <a href="paneles/dashboard_empleado.php" id="link-gestion" class="employee-only action-link" style="display:none;" title="Panel de Gestión">
+                <i class="fas fa-truck-loading"></i>
+                <span class="action-text">Gestión</span>
+            </a>
+            
+            <!-- PANEL DE ADMINISTRACIÓN (ADMIN) -->
+            <a href="paneles/dashboard_admin.php" id="link-admin" class="admin-only action-link" style="display:none;" title="Administración">
+                <i class="fas fa-tools"></i>
+                <span class="action-text">Admin</span>
+            </a>
 
-            <a href="#" id="login-link" title="Iniciar sesión"><i class="fas fa-user"></i> Iniciar sesión</a>
+            <!-- BOTÓN DE LOGIN (visible cuando NO hay sesión) -->
+            <a href="#" id="login-link" class="action-link" title="Iniciar sesión">
+                <i class="fas fa-user"></i>
+                <span class="action-text">Iniciar sesión</span>
+            </a>
 
-            <div id="user-info" style="display:none;">
-                <span id="user-greeting"></span>
-                <a href="#" id="logout-link" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
+            <!-- INFO DE USUARIO (visible cuando HAY sesión) -->
+            <div id="user-info" class="user-info-container" style="display:none;">
+                <span id="user-greeting" class="user-greeting"></span>
+                <a href="#" id="logout-link" class="action-link" title="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="action-text">Salir</span>
+                </a>
             </div>
 
-            <div class="cart" title="Mi Carrito">
+            <!-- CARRITO -->
+            <div class="cart action-link" title="Mi Carrito">
                 <i class="fas fa-shopping-cart"></i>
                 <span id="cart-count">0</span>
             </div>
         </div>
         
-        </header>
+    </header>
 
     <aside id="side-menu" class="side-menu" aria-hidden="true">
         
@@ -58,7 +76,7 @@
         
         <nav class="side-nav">
             <ul>
-                <li><a href="#" class="side-link"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="index.html" class="side-link"><i class="fas fa-home"></i> Inicio</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-tags"></i> Ofertas</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-cocktail"></i> Bebidas</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-soap"></i> Limpieza</a></li>
@@ -66,12 +84,14 @@
                 <li><a href="#" class="side-link"><i class="fas fa-cookie-bite"></i> Panadería</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-utensils"></i> Congelados</a></li>
                 
-                <li><a href="#" class="side-link employee-only" style="display:none;"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
-                <li><a href="#" class="side-link admin-only" style="display:none;"><i class="fas fa-cog"></i> Panel de admin</a></li>
+                <li><a href="paneles/dashboard_empleado.php" class="side-link employee-only" style="display:none;"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
+                <li><a href="paneles/dashboard_admin.php" class="side-link admin-only" style="display:none;"><i class="fas fa-cog"></i> Panel de admin</a></li>
             </ul>
         </nav>
     </aside>
+    
     <div id="menu-overlay" class="menu-overlay"></div>
+    
     <main class="main-content">
         <h2>Productos destacados</h2>
 

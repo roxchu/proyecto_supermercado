@@ -1,7 +1,9 @@
 <?php
-include 'control_acceso.php';
-include '../carrito/db.php'; 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
+include '../login/control_acceso.php';
+include '../db.php';
 // Solo permite admin para CUALQUIER acción en este archivo
 verificar_rol('admin');
 
