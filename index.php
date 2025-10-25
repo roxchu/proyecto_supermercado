@@ -22,7 +22,7 @@ session_start();
             </div>
 
             <div id="carrusel-dinamico-container">
-                <p style="text-align:center; padding: 50px;">Cargando productos...</p>
+                <p style="text-align:center; padding: 50px;">Cargando productos....</p>
             </div>
             
         </section>
