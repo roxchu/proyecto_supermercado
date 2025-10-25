@@ -6,20 +6,16 @@
     <title>Supermercado Online</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <base href="/proyecto_supermercado/">
 </head>
-
 <body>
     <header class="header">
-        
         <div class="header-left">
             <div class="logo">
                 <a href="index.html" class="logo-link">
-                    <h1>
-                        <i class="fas fa-store"></i> Supermercado Online
-                    </h1>
+                    <h1><i class="fas fa-store"></i> Supermercado Online</h1>
                 </a>
             </div>
-
             <button class="menu-button" id="btn-categorias" aria-expanded="false">
                 <i class="fas fa-bars"></i> Categorías
             </button>
@@ -32,13 +28,14 @@
 
         <div class="user-actions">
             <!-- PANEL DE GESTIÓN (EMPLEADO) -->
-            <a href="paneles/dashboard_empleado.php" id="link-gestion" class="employee-only action-link" style="display:none;" title="Panel de Gestión">
+            <!-- href absolute to allow no-JS fallback; JS will protect navigation -->
+            <a href="/proyecto_supermercado/paneles/dashboard_empleado.php" id="link-gestion" class="employee-only action-link" style="display:none;" title="Panel de Gestión">
                 <i class="fas fa-truck-loading"></i>
                 <span class="action-text">Gestión</span>
             </a>
             
             <!-- PANEL DE ADMINISTRACIÓN (ADMIN) -->
-            <a href="paneles/dashboard_admin.php" id="link-admin" class="admin-only action-link" style="display:none;" title="Administración">
+            <a href="/proyecto_supermercado/paneles/dashboard_admin.php" id="link-admin" class="admin-only action-link" style="display:none;" title="Administración">
                 <i class="fas fa-tools"></i>
                 <span class="action-text">Admin</span>
             </a>
@@ -64,16 +61,13 @@
                 <span id="cart-count">0</span>
             </div>
         </div>
-        
     </header>
 
     <aside id="side-menu" class="side-menu" aria-hidden="true">
-        
         <div class="side-menu-header">
             <h2><i class="fas fa-list-alt"></i> Todas las Categorías</h2>
             <button id="btn-close-menu" class="close-menu" aria-label="Cerrar Menú">&times;</button>
         </div>
-        
         <nav class="side-nav">
             <ul>
                 <li><a href="index.html" class="side-link"><i class="fas fa-home"></i> Inicio</a></li>
@@ -83,25 +77,22 @@
                 <li><a href="#" class="side-link"><i class="fas fa-carrot"></i> Frutas y Verduras</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-cookie-bite"></i> Panadería</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-utensils"></i> Congelados</a></li>
-                
-                <li><a href="paneles/dashboard_empleado.php" class="side-link employee-only" style="display:none;"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
-                <li><a href="paneles/dashboard_admin.php" class="side-link admin-only" style="display:none;"><i class="fas fa-cog"></i> Panel de admin</a></li>
+                <li><a href="/proyecto_supermercado/paneles/dashboard_empleado.php" class="side-link employee-only" style="display:none;"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
+                <li><a href="/proyecto_supermercado/paneles/dashboard_admin.php" class="side-link admin-only" style="display:none;"><i class="fas fa-cog"></i> Panel de admin</a></li>
             </ul>
         </nav>
     </aside>
     
     <div id="menu-overlay" class="menu-overlay"></div>
-    
+
     <main class="main-content">
         <h2>Productos destacados</h2>
 
         <div class="carrusel-container">
             <button class="carrusel-btn prev">‹</button> 
-
             <div class="carousel-track" id="carrusel-dinamico-container">
                 <p style="text-align:center; color: #555;">Cargando productos...</p>
             </div>
-
             <button class="carrusel-btn next">›</button>
         </div>
     </main>
@@ -129,6 +120,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script> 
+    <script src="script.js"></script>
 </body>
 </html>

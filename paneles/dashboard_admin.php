@@ -2,8 +2,8 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-include 'control_acceso.php';
-include '../db.php';
+require_once __DIR__ . '/../login/control_acceso.php'; // <-- ruta corregida
+require_once __DIR__ . '/../db.php';
 
 // SOLO permite admin
 verificar_rol('admin');

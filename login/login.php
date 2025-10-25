@@ -62,9 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
         $redirect_url = 'index.html'; // Por defecto para clientes
         
         if ($usuario['nombre_rol'] === 'admin') {
-            $redirect_url = 'index.html'; 
+            $redirect_url = 'paneles/dashboard_admin.php'; // Panel de admin
         } elseif ($usuario['nombre_rol'] === 'empleado') {
-            $redirect_url = 'index.html';
+            $redirect_url = 'paneles/dashboard_empleado.php';
         }
 
         // --- 3. Enviar la respuesta JSON final y salir ---
