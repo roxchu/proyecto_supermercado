@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-10-2025 a las 23:32:24
+-- Tiempo de generación: 26-10-2025 a las 22:59:39
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -36,6 +36,13 @@ CREATE TABLE `carrito` (
   `Costo_Envio` decimal(10,2) NOT NULL DEFAULT 0.00,
   `Total_Final` decimal(10,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
+
+--
+-- Volcado de datos para la tabla `carrito`
+--
+
+INSERT INTO `carrito` (`Id_Carrito`, `DNI_Cliente`, `Id_Direccion`, `Fecha_Agregado`, `Estado`, `Costo_Envio`, `Total_Final`) VALUES
+(1, 4321, 0, '2025-10-26 18:19:26', 'Pendiente', 0.00, 0.00);
 
 -- --------------------------------------------------------
 
@@ -93,8 +100,18 @@ CREATE TABLE `detalle_carrito` (
   `Id_Carrito` int(11) NOT NULL,
   `Id_Producto` int(11) NOT NULL,
   `Cantidad` int(11) NOT NULL CHECK (`Cantidad` > 0),
-  `Precio_Unitario_Momento` decimal(10,2) NOT NULL
+  `Precio_Unitario_Momento` decimal(10,2) NOT NULL,
+  `Total` decimal(10,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
+
+--
+-- Volcado de datos para la tabla `detalle_carrito`
+--
+
+INSERT INTO `detalle_carrito` (`Id_Detalle_Carrito`, `Id_Carrito`, `Id_Producto`, `Cantidad`, `Precio_Unitario_Momento`, `Total`) VALUES
+(1, 1, 4, 1, 1850.00, 0.00),
+(2, 1, 2, 15, 8900.00, 0.00),
+(5, 1, 3, 44, 1250.00, 55000.00);
 
 -- --------------------------------------------------------
 
@@ -254,7 +271,7 @@ CREATE TABLE `rol` (
 
 INSERT INTO `rol` (`id_rol`, `nombre_rol`, `rol_descripcion`) VALUES
 (1, 'admin', 'Superusuario'),
-(2, 'employee', 'Empleado de Supermercado'),
+(2, 'empleado', 'Empleado de Supermercado'),
 (3, 'client', 'Cliente Registrado');
 
 -- --------------------------------------------------------
@@ -298,7 +315,8 @@ CREATE TABLE `venta` (
   `id_empleado` int(11) DEFAULT NULL,
   `fecha_venta` datetime NOT NULL DEFAULT current_timestamp(),
   `Total_Venta` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `Id_Direccion_Envio` int(11) DEFAULT NULL
+  `Id_Direccion_Envio` int(11) DEFAULT NULL,
+  `Estado` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
 
 --
@@ -330,6 +348,8 @@ ALTER TABLE `cliente`
 --
 ALTER TABLE `detalle_carrito`
   ADD PRIMARY KEY (`Id_Detalle_Carrito`),
+  ADD UNIQUE KEY `Id_Carrito` (`Id_Carrito`,`Id_Producto`),
+  ADD UNIQUE KEY `Id_Carrito_2` (`Id_Carrito`,`Id_Producto`),
   ADD KEY `FK_DetalleCarrito_Carrito` (`Id_Carrito`),
   ADD KEY `FK_DetalleCarrito_Producto` (`Id_Producto`);
 
@@ -393,7 +413,7 @@ ALTER TABLE `venta`
 -- AUTO_INCREMENT de la tabla `carrito`
 --
 ALTER TABLE `carrito`
-  MODIFY `Id_Carrito` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_Carrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `categoria`
@@ -405,7 +425,7 @@ ALTER TABLE `categoria`
 -- AUTO_INCREMENT de la tabla `detalle_carrito`
 --
 ALTER TABLE `detalle_carrito`
-  MODIFY `Id_Detalle_Carrito` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_Detalle_Carrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `detalle_venta`
