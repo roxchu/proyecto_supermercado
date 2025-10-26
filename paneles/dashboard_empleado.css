@@ -1,0 +1,197 @@
+/* Definición de Variables (Asegura la coherencia de color) */
+:root {
+    --color-primary: #007bff; /* Azul vibrante, diferente al rojo del Admin */
+    --color-secondary: #f8f9fa; /* Fondo de contenido claro */
+    --color-dark: #343a40; /* Fondo de sidebar o texto oscuro */
+    --color-text-light: #fff;
+    --color-alert: #dc3545; /* Rojo para estados críticos */
+    --color-success: #28a745; /* Verde para éxito */
+    --color-warning: #ffc107; /* Amarillo para pendiente */
+}
+
+/* Estilos Globales */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    background-color: var(--color-secondary);
+}
+
+/* 1. SIDEBAR (Barra Lateral) */
+.sidebar {
+    width: 250px;
+    background-color: var(--color-dark);
+    color: var(--color-text-light);
+    height: 100vh;
+    position: fixed;
+    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    font-size: 1.4em;
+    font-weight: 600;
+    background-color: var(--color-primary); 
+    color: var(--color-text-light);
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar li a {
+    display: block;
+    padding: 15px 20px;
+    color: #ccc;
+    text-decoration: none;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar li a:hover,
+.sidebar li a.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-light);
+    border-left: 4px solid var(--color-primary);
+    padding-left: 16px;
+}
+
+/* 2. MAIN CONTENT (Contenido Principal) */
+.main-content {
+    margin-left: 250px; /* Igual al ancho del sidebar */
+    padding: 20px;
+    width: calc(100% - 250px);
+}
+
+.main-header {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.main-header h1 {
+    margin: 0;
+    color: var(--color-dark);
+}
+.main-header p {
+    margin: 5px 0 0;
+    color: #6c757d;
+}
+
+/* Regla para asegurar que los enlaces de acción en el header sean tratados como flex items,
+   permitiendo que el JS los haga visibles con display: flex */
+   .header .user-actions .action-link {
+    /* Define cómo se comporta el enlace para que el ícono y el texto se alineen */
+    display: flex;
+    align-items: center; 
+    gap: 5px; /* Espacio entre el ícono y el texto "Gestión" */
+}
+
+/* Sobrescribe la regla de display si es necesario, aunque el JS debería ser suficiente */
+/* Usamos el ID para asegurar máxima prioridad */
+#link-gestion, #link-admin {
+    /* Por defecto, si no hay sesión, se ocultan. El JS lo pone en 'flex' si es necesario. */
+    display: none; 
+}
+
+/* 3. WIDGETS Y TABLAS (Ventas Pendientes) */
+.widget {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.widget h3 {
+    margin-top: 0;
+    color: var(--color-primary);
+    border-bottom: 2px solid var(--color-secondary);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Tablas */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.pedidos-pendientes table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pedidos-pendientes th, 
+.pedidos-pendientes td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.pedidos-pendientes th {
+    background-color: var(--color-secondary);
+    color: var(--color-dark);
+    font-weight: 600;
+    border-top: 1px solid #dee2e6;
+}
+
+.pedidos-pendientes tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Botones y Tags de Estado */
+.status-tag {
+    padding: 4px 10px;
+    border-radius: 50px; /* Más redondeado para tags */
+    font-weight: bold;
+    font-size: 0.8em;
+    color: var(--color-text-light);
+}
+
+.status-pendiente {
+    background-color: var(--color-warning);
+}
+
+.status-preparando {
+    background-color: var(--color-primary);
+}
+/* Agrega más estados según los desarrolles (ej. entregado, cancelado) */
+
+.btn-primary {
+    background-color: var(--color-success);
+    color: var(--color-text-light);
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: #1e7e34; /* Tono más oscuro de éxito */
+}
+
+/* Mensajes de feedback */
+.success-message {
+    color: var(--color-success);
+    font-weight: bold;
+    padding: 10px;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+}
+
+.error {
+    color: var(--color-alert);
+    font-weight: bold;
+    padding: 10px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+}

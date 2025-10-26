@@ -1,5 +1,5 @@
 <?php
-// login.php
+// login/login.php
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
@@ -7,7 +7,7 @@ header('Content-Type: application/json; charset=utf-8');
 // ---------------------------------------------
 // CONFIGURACIÓN DE LA BASE DE DATOS
 // ---------------------------------------------
-// Asumo que 'db.php' está en el mismo directorio. Si no, lo reescribimos aquí:
+// Nota: Usar el include/require de 'db.php' si existe para no duplicar código
 // require 'db.php'; 
 
 $host = 'localhost';
@@ -34,6 +34,9 @@ try {
 // ---------------------------------------------
 // LÓGICA DE AUTENTICACIÓN
 // ---------------------------------------------
+
+// El bloque 'if ($user)' inicial fue eliminado por ser redundante y causar errores.
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
     $dni = trim($_POST['dni']);
 
@@ -43,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
     }
 
     $stmt = $pdo->prepare("
-        SELECT u.id_usuario, u.nombre_usuario, r.nombre_rol
+        SELECT u.id_usuario, u.nombre_usuario, r.nombre_rol, u.id_rol
         FROM usuario u
         JOIN rol r ON u.id_rol = r.id_rol
         WHERE u.DNI = ?
@@ -52,32 +55,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
     $usuario = $stmt->fetch();
 
     if ($usuario) {
-        // --- 1. Éxito: Configurar la sesión ---
+        // --- 1. NORMALIZACIÓN DEL ROL ---
+        $rol_normalizado = strtolower($usuario['nombre_rol']); // Obtiene 'employee' o 'admin'
+        
+        // CORRECCIÓN CLAVE: Mapear 'employee' a 'empleado' (Español)
+        if ($usuario['id_rol'] == 1 || $rol_normalizado === 'admin') {
+            $rol_final = 'admin';
+        } elseif ($usuario['id_rol'] == 2 || $rol_normalizado === 'employee') {
+            $rol_final = 'empleado'; // <-- ROL UNIFICADO EN ESPAÑOL
+        } else {
+            $rol_final = 'cliente'; // Asume rol 3 es cliente
+        }
+        
+        // --- 2. Éxito: Configurar la sesión con el rol normalizado ---
         $_SESSION['logged_in'] = true;
         $_SESSION['user_id'] = $usuario['id_usuario'];
-        $_SESSION['rol'] = $usuario['nombre_rol'];
+        $_SESSION['rol'] = $rol_final; // Usamos 'empleado'
         $_SESSION['nombre'] = $usuario['nombre_usuario'];
+        $_SESSION['id_rol'] = $usuario['id_rol'];
         
-        // --- 2. Definir la URL de redirección ---
+        // --- 3. Definir la URL de redirección ---
         $redirect_url = 'index.html'; // Por defecto para clientes
         
-        if ($usuario['nombre_rol'] === 'admin') {
+        // ¡La lógica de redirección ahora compara contra el rol normalizado!
+        if ($rol_final === 'admin') {
             $redirect_url = 'paneles/dashboard_admin.php'; // Panel de admin
-        } elseif ($usuario['nombre_rol'] === 'empleado') {
+        } elseif ($rol_final === 'empleado') {
             $redirect_url = 'paneles/dashboard_empleado.php';
         }
 
-        // --- 3. Enviar la respuesta JSON final y salir ---
+        // --- 4. Enviar la respuesta JSON final y salir ---
         echo json_encode([
             'success' => true,
             'message' => 'Inicio de sesión exitoso.',
-            'rol' => $usuario['nombre_rol'],
+            'rol' => $rol_final, // Devolver 'empleado' al JS
             'nombre' => $usuario['nombre_usuario'],
-            'redirect' => $redirect_url // URL usada por script.js
+            'redirect' => $redirect_url 
         ]);
         
     } else {
-        // --- 4. Fracaso: DNI no encontrado ---
+        // --- 5. Fracaso: DNI no encontrado ---
         echo json_encode([
             'success' => false,
             'code' => 'USER_NOT_FOUND',
@@ -90,5 +107,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
     echo json_encode(['success' => false, 'message' => 'Solicitud inválida.']);
 }
 
-exit; // Aseguramos que no haya más salidas después de la respuesta JSON.
+exit; 
 ?>

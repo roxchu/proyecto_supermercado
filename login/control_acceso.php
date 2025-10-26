@@ -1,65 +1,73 @@
 <?php
-// control_acceso.php - versión mejorada
+// control_acceso.php 
 // Se incluye al inicio de cada página protegida.
 
 function verificar_rol($rol_requerido) {
-    // Si la sesión no ha sido iniciada, la iniciamos
+    // 1. GESTIÓN DE SESIÓN Y LOGIN
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
 
-    // 1) Verificar si está logueado
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        // Ajusta la ruta al login según tu estructura
-        header('Location: /proyecto_supermercado/login/login.html');
+        header('Location: /proyecto_supermercado/login/login.php');
         exit;
     }
 
-    // Normalizamos $rol_requerido a array
+    // 2. PREPARACIÓN DE ROLES (Normalizar todo a string minúscula)
     $roles_permitidos = is_array($rol_requerido) ? $rol_requerido : [$rol_requerido];
+    
+    // Normalizamos el input de la función a un array de strings en minúsculas
+    $roles_permitidos_lower = array_map('strtolower', $roles_permitidos); 
 
-    // Soportamos dos formas en sesión:
-    // - $_SESSION['rol'] puede ser el nombre ('admin') o
-    // - $_SESSION['id_rol'] puede ser el id numérico (1,2,...)
-    $rol_actual = $_SESSION['rol'] ?? null;       // nombre textual
-    $id_rol_actual = $_SESSION['id_rol'] ?? null; // id numérico
+    $rol_actual = $_SESSION['rol'] ?? null;
+    $id_rol_actual = $_SESSION['id_rol'] ?? null;
+    
+    // Normalizamos el rol de la sesión a string en minúsculas
+    $rol_actual_lower = strtolower((string)($rol_actual ?? '')); 
 
-    // Comparación directa (permite que el dev pase id o nombre en $rol_requerido)
-    foreach ($roles_permitidos as $permitido) {
-        // si el dev pasó un id (ej. 2) y en sesión tenemos id, coincidirá
-        if ($rol_actual !== null && (string)$rol_actual === (string)$permitido) {
-            return; // permitido
+    // 3. COMPARACIÓN ESTRICTA (Sin consultas a BD, solo sesión vs. requeridos)
+    foreach ($roles_permitidos_lower as $permitido_lower) {
+        
+        // Compara el nombre de rol de la sesión (ej. 'admin')
+        if ($rol_actual_lower !== '' && $rol_actual_lower === $permitido_lower) { 
+            return; // ¡Permitido por nombre!
         }
-        if ($id_rol_actual !== null && (string)$id_rol_actual === (string)$permitido) {
-            return; // permitido
+
+        // Compara el ID de rol de la sesión (ej. 1) con el rol requerido (ej. '1' o 'admin')
+        if ($id_rol_actual !== null && (string)$id_rol_actual === $permitido_lower) { 
+            return; // ¡Permitido por ID!
         }
     }
 
-    // Si no hubo coincidencia directa, intentamos mapear id -> nombre consultando BD
-    // (esto hace la función más tolerante y evita inconsistencias entre guardar id o nombre)
+    // 4. FALLBACK: CONSULTA A LA BASE DE DATOS
+    // Si la comparación estricta falla, intentamos mapear el ID a nombre consultando la BD.
     $dbPath = __DIR__ . '/../db.php';
     if (file_exists($dbPath)) {
-        require_once $dbPath; // crea $pdo
+        require_once $dbPath; 
         if (isset($pdo) && $id_rol_actual) {
             try {
                 $stmt = $pdo->prepare('SELECT nombre_rol FROM rol WHERE id_rol = ?');
                 $stmt->execute([$id_rol_actual]);
                 $nombre_rol = $stmt->fetchColumn();
+                
                 if ($nombre_rol) {
-                    foreach ($roles_permitidos as $permitido) {
-                        if ((string)$nombre_rol === (string)$permitido) {
-                            return; // permitido
+                    $nombre_rol_lower = strtolower($nombre_rol); 
+                    
+                    foreach ($roles_permitidos_lower as $permitido_lower) {
+                        if ($nombre_rol_lower === $permitido_lower) { 
+                            return; // ¡Permitido por BD!
                         }
                     }
                 }
             } catch (PDOException $e) {
-                // No interrumpimos la ejecución por un fallo aquí; seguiremos denegando acceso más abajo.
+                // Fallo de BD, se deniega acceso
             }
         }
     }
-
-    // Si llegamos aquí, acceso denegado
-    header('Location: /proyecto_supermercado/sin_permiso.php');
+    
+    // 5. DENIEGO DE ACCESO
+    // Si la ejecución llega hasta aquí, el acceso es denegado
+    header('Location: /proyecto_supermercado/login/sin_permiso.php'); 
     exit;
 }
 ?>

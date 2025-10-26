@@ -27,26 +27,22 @@
         </div>
 
         <div class="user-actions">
-            <!-- PANEL DE GESTIÓN (EMPLEADO) -->
-            <!-- href absolute to allow no-JS fallback; JS will protect navigation -->
-            <a href="/proyecto_supermercado/paneles/dashboard_empleado.php" id="link-gestion" class="employee-only action-link" style="display:none;" title="Panel de Gestión">
+            
+            <a href="/proyecto_supermercado/paneles/dashboard_empleado.php" id="link-gestion" class="employee-only action-link" style="display:none;" title="Panel de Gestión de Pedidos">
                 <i class="fas fa-truck-loading"></i>
                 <span class="action-text">Gestión</span>
             </a>
             
-            <!-- PANEL DE ADMINISTRACIÓN (ADMIN) -->
-            <a href="/proyecto_supermercado/paneles/dashboard_admin.php" id="link-admin" class="admin-only action-link" style="display:none;" title="Administración">
+            <a href="/proyecto_supermercado/paneles/dashboard_admin.php" id="link-admin" class="admin-only action-link" style="display:none;" title="Administración del Sistema">
                 <i class="fas fa-tools"></i>
                 <span class="action-text">Admin</span>
             </a>
 
-            <!-- BOTÓN DE LOGIN (visible cuando NO hay sesión) -->
             <a href="#" id="login-link" class="action-link" title="Iniciar sesión">
                 <i class="fas fa-user"></i>
                 <span class="action-text">Iniciar sesión</span>
             </a>
 
-            <!-- INFO DE USUARIO (visible cuando HAY sesión) -->
             <div id="user-info" class="user-info-container" style="display:none;">
                 <span id="user-greeting" class="user-greeting"></span>
                 <a href="#" id="logout-link" class="action-link" title="Cerrar sesión">
@@ -55,7 +51,6 @@
                 </a>
             </div>
 
-            <!-- CARRITO -->
             <div class="cart action-link" title="Mi Carrito">
                 <i class="fas fa-shopping-cart"></i>
                 <span id="cart-count">0</span>
@@ -77,8 +72,10 @@
                 <li><a href="#" class="side-link"><i class="fas fa-carrot"></i> Frutas y Verduras</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-cookie-bite"></i> Panadería</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-utensils"></i> Congelados</a></li>
-                <li><a href="/proyecto_supermercado/paneles/dashboard_empleado.php" class="side-link employee-only" style="display:none;"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
-                <li><a href="/proyecto_supermercado/paneles/dashboard_admin.php" class="side-link admin-only" style="display:none;"><i class="fas fa-cog"></i> Panel de admin</a></li>
+                
+                <li class="employee-only" style="display:none;"><a href="/proyecto_supermercado/paneles/dashboard_empleado.php" class="side-link"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
+                
+                <li class="admin-only" style="display:none;"><a href="/proyecto_supermercado/paneles/dashboard_admin.php" class="side-link"><i class="fas fa-cog"></i> Panel de admin</a></li>
             </ul>
         </nav>
     </aside>
@@ -87,7 +84,6 @@
 
     <main class="main-content">
         <h2>Productos destacados</h2>
-
         <div class="carrusel-container">
             <button class="carrusel-btn prev">‹</button> 
             <div class="carousel-track" id="carrusel-dinamico-container">
@@ -120,6 +116,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js"></script> 
 </body>
 </html>
