@@ -10,50 +10,54 @@
 </head>
 <body>
     <header class="header">
-        <div class="header-left">
-            <div class="logo">
-                <a href="index.html" class="logo-link">
-                    <h1><i class="fas fa-store"></i> Supermercado Online</h1>
-                </a>
-            </div>
-            <button class="menu-button" id="btn-categorias" aria-expanded="false">
-                <i class="fas fa-bars"></i> Categorías
-            </button>
-        </div>
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo">
+                        <a href="index.html" class="logo-link">
+                            <h1><i class="fas fa-store"></i> Supermercado Online</h1>
+                        </a>
+                    </div>
+                    <button class="menu-button" id="btn-categorias" aria-expanded="false">
+                        <i class="fas fa-bars"></i> Categorías
+                    </button>
+                </div>
 
-        <div class="search-bar">
-            <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos">
-            <button type="button"><i class="fas fa-search"></i></button>
-        </div>
+                <div class="search-bar">
+                    <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos">
+                    <button type="button"><i class="fas fa-search"></i></button>
+                </div>
 
-        <div class="user-actions">
-            
-            <a href="/proyecto_supermercado/paneles/dashboard_empleado.php" id="link-gestion" class="employee-only action-link" style="display:none;" title="Panel de Gestión de Pedidos">
-                <i class="fas fa-truck-loading"></i>
-                <span class="action-text">Gestión</span>
-            </a>
-            
-            <a href="/proyecto_supermercado/paneles/dashboard_admin.php" id="link-admin" class="admin-only action-link" style="display:none;" title="Administración del Sistema">
-                <i class="fas fa-tools"></i>
-                <span class="action-text">Admin</span>
-            </a>
+                <div class="user-actions">
+                    
+                    <a href="/proyecto_supermercado/paneles/dashboard_empleado.php" id="link-gestion" class="employee-only action-link" style="display:none;" title="Panel de Gestión de Pedidos">
+                        <i class="fas fa-truck-loading"></i>
+                        <span class="action-text">Gestión</span>
+                    </a>
+                    
+                    <a href="/proyecto_supermercado/paneles/dashboard_admin.php" id="link-admin" class="admin-only action-link" style="display:none;" title="Administración del Sistema">
+                        <i class="fas fa-tools"></i>
+                        <span class="action-text">Admin</span>
+                    </a>
 
-            <a href="#" id="login-link" class="action-link" title="Iniciar sesión">
-                <i class="fas fa-user"></i>
-                <span class="action-text">Iniciar sesión</span>
-            </a>
+                    <a href="#" id="login-link" class="action-link" title="Iniciar sesión">
+                        <i class="fas fa-user"></i>
+                        <span class="action-text">Iniciar sesión</span>
+                    </a>
 
-            <div id="user-info" class="user-info-container" style="display:none;">
-                <span id="user-greeting" class="user-greeting"></span>
-                <a href="#" id="logout-link" class="action-link" title="Cerrar sesión">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span class="action-text">Salir</span>
-                </a>
-            </div>
+                    <div id="user-info" class="user-info-container" style="display:none;">
+                        <span id="user-greeting" class="user-greeting"></span>
+                        <a href="#" id="logout-link" class="action-link" title="Cerrar sesión">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="action-text">Salir</span>
+                        </a>
+                    </div>
 
-            <div class="cart action-link" title="Mi Carrito">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count">0</span>
+                    <div class="cart action-link" title="Mi Carrito">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count">0</span>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -83,13 +87,15 @@
     <div id="menu-overlay" class="menu-overlay"></div>
 
     <main class="main-content">
-        <h2>Productos destacados</h2>
-        <div class="carrusel-container">
-            <button class="carrusel-btn prev">‹</button> 
-            <div class="carousel-track" id="carrusel-dinamico-container">
-                <p style="text-align:center; color: #555;">Cargando productos...</p>
+        <div class="container">
+            <h2>Productos destacados</h2>
+            <div class="carrusel-container">
+                <button class="carrusel-btn prev">‹</button> 
+                <div class="carousel-track" id="carrusel-dinamico-container">
+                    <p style="text-align:center; color: #555;">Cargando productos...</p>
+                </div>
+                <button class="carrusel-btn next">›</button>
             </div>
-            <button class="carrusel-btn next">›</button>
         </div>
     </main>
 

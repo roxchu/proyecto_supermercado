@@ -1,6 +1,7 @@
 // scripts.js – 
 
-(function() {
+// Esperar a que el DOM esté completamente cargado
+document.addEventListener('DOMContentLoaded', function() {
   // Funcionalidad del carrito de compras
   // ---------------------------
   // DETECCIÓN DINÁMICA DE BASE
@@ -48,6 +49,13 @@
   const sideMenu = document.getElementById('side-menu');
   const menuOverlay = document.getElementById('menu-overlay');
 
+  // Debug - verificar que los elementos existen
+  console.log('Elementos del menú:');
+  console.log('btnCategorias:', btnCategorias);
+  console.log('btnCloseMenu:', btnCloseMenu);
+  console.log('sideMenu:', sideMenu);
+  console.log('menuOverlay:', menuOverlay);
+
   // ---------------------------
   // UTILIDADES
   // ---------------------------
@@ -75,12 +83,21 @@
   // MENÚ LATERAL
   // ---------------------------
   function cerrarMenu() {
+    console.log('Cerrando menú lateral'); // Debug
     sideMenu?.classList.remove('open');
     menuOverlay?.classList.remove('active');
   }
-  btnCategorias?.addEventListener('click', () => {
+  
+  function abrirMenu() {
+    console.log('Abriendo menú lateral'); // Debug
     sideMenu?.classList.add('open');
     menuOverlay?.classList.add('active');
+  }
+  
+  btnCategorias?.addEventListener('click', (e) => {
+    e.preventDefault();
+    console.log('Click en botón categorías'); // Debug
+    abrirMenu();
   });
   btnCloseMenu?.addEventListener('click', cerrarMenu);
   menuOverlay?.addEventListener('click', cerrarMenu);
@@ -144,10 +161,15 @@
     if (loginLink) loginLink.style.display = 'block';
     if (userInfo) userInfo.style.display = 'none';
     
-    // Aseguramos que los enlaces del header y del side-menu están ocultos inicialmente
-    // Usaremos 'flex' para los íconos del header y 'block' para los del side-menu.
-    if (linkGestion) linkGestion.style.display = 'none';
-    if (linkAdmin) linkAdmin.style.display = 'none';
+    // Remover clases show y ocultar elementos por defecto
+    if (linkGestion) {
+        linkGestion.classList.remove('show');
+        linkGestion.style.display = 'none';
+    }
+    if (linkAdmin) {
+        linkAdmin.classList.remove('show');
+        linkAdmin.style.display = 'none';
+    }
     if (sideLinkGestion) sideLinkGestion.style.display = 'none';
     if (sideLinkAdmin) sideLinkAdmin.style.display = 'none';
 
@@ -161,15 +183,19 @@
         
         // El enlace de Gestión (Camión) es para Admin Y Empleado
         if (rol === 'admin' || rol === 'empleado') {
-            // CORRECCIÓN: Usamos 'flex' para los enlaces del header
-            if (linkGestion) linkGestion.style.display = 'flex'; 
+            if (linkGestion) {
+                linkGestion.classList.add('show');
+                linkGestion.style.display = 'flex'; 
+            }
             if (sideLinkGestion) sideLinkGestion.style.display = 'block'; 
         }
         
         // El enlace de Admin (Herramientas) es SOLO para Admin
         if (rol === 'admin') {
-            // CORRECCIÓN: Usamos 'flex' para los enlaces del header
-            if (linkAdmin) linkAdmin.style.display = 'flex'; 
+            if (linkAdmin) {
+                linkAdmin.classList.add('show');
+                linkAdmin.style.display = 'flex'; 
+            }
             if (sideLinkAdmin) sideLinkAdmin.style.display = 'block'; 
         }
 
@@ -178,8 +204,14 @@
         if (userGreeting) userGreeting.textContent = '';
         
         // Ocultar todos los paneles si no hay sesión
-        if (linkGestion) linkGestion.style.display = 'none';
-        if (linkAdmin) linkAdmin.style.display = 'none';
+        if (linkGestion) {
+            linkGestion.classList.remove('show');
+            linkGestion.style.display = 'none';
+        }
+        if (linkAdmin) {
+            linkAdmin.classList.remove('show');
+            linkAdmin.style.display = 'none';
+        }
         if (sideLinkGestion) sideLinkGestion.style.display = 'none';
         if (sideLinkAdmin) sideLinkAdmin.style.display = 'none';
     }
@@ -389,12 +421,18 @@
   }
 
   function cargarProductos() {
+    console.log('🛒 Intentando cargar productos...');
+    console.log('BASE URL:', BASE);
+    
     const contPlantilla = document.getElementById('carrusel-dinamico-container');
+    console.log('Contenedor encontrado:', contPlantilla ? '✅' : '❌');
+    
     if (!contPlantilla) {
-      // Ignorar silenciosamente si no existe el contenedor en esta página
+      console.log('⚠️ No existe el contenedor carrusel-dinamico-container en esta página');
       return;
     }
 
+    console.log('📡 Haciendo fetch a:', BASE + 'productos.php');
     fetch(BASE + 'productos.php', { cache: 'no-store', credentials: 'same-origin' })
       .then(r => {
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -423,6 +461,7 @@
         }
 
         setTimeout(() => inicializarCarrusel(), 60);
+        console.log('✅ Productos cargados exitosamente');
 
         const trackNode = document.getElementById('carrusel-dinamico-container');
         if (trackNode) {
@@ -436,8 +475,9 @@
         }
       })
       .catch(err => {
-        console.error('Error al cargar productos:', err);
-        contPlantilla.innerHTML = '<p style="color:red;text-align:center">Error al cargar productos</p>';
+        console.error('❌ Error al cargar productos:', err);
+        console.log('URL que falló:', BASE + 'productos.php');
+        contPlantilla.innerHTML = '<p style="color:red;text-align:center">Error al cargar productos: ' + err.message + '</p>';
       });
   }
 
@@ -446,17 +486,26 @@
   // ---------------------------
   // INICIALIZACIÓN
   // ---------------------------
-  document.addEventListener('DOMContentLoaded', () => {
-    // Comprueba sesión y actualiza UI
-    checkSession();
-    // Carga productos y configura carrusel
-    cargarProductos();
-    // El contador del carrito se actualiza automáticamente en carrito.js
-  });
+  // INICIALIZACIÓN AL CARGAR EL DOM
+  // ---------------------------
+  
+  console.log('🚀 Inicializando aplicación...');
+  console.log('BASE detectada:', BASE);
+  
+  // Comprueba sesión y actualiza UI al cargar la página
+  console.log('🔐 Verificando sesión...');
+  checkSession();
+  
+  // Carga productos y configura carrusel si existe el contenedor
+  console.log('🛒 Iniciando carga de productos...');
+  cargarProductos();
+  
+  // El contador del carrito se actualiza automáticamente en carrito.js
+  console.log('✅ Inicialización completada');
 
   // ---------------------------
   // EXPOSICIÓN PARA DEBUG
   // ---------------------------
   window.__MYAPP = { BASE, checkSession, actualizarInterfaz, usuarioActual };
 
-})();
+});

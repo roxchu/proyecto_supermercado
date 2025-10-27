@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin - Supermercado Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header Test -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo">
+                        <a href="index.html">
+                            <h1>
+                                <i class="fas fa-store"></i> Supermercado Online
+                            </h1>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos">
+                    <button type="button"><i class="fas fa-search"></i></button>
+                </div>
+
+                <div class="user-actions">
+                    <a href="#" id="link-gestion" class="employee-only" style="display:none;" title="Gestión">
+                        <i class="fas fa-truck-loading"></i>
+                        <span>Gestión</span>
+                    </a>
+                    <a href="paneles/dashboard_admin.php" id="link-admin" class="admin-only" style="display:none;" title="Administración">
+                        <i class="fas fa-tools"></i>
+                        <span>Admin</span>
+                    </a>
+
+                    <a href="#" id="login-link" title="Iniciar sesión">
+                        <i class="fas fa-user"></i>
+                        <span>Iniciar sesión</span>
+                    </a>
+
+                    <div id="user-info" style="display:none;">
+                        <span id="user-greeting"></span>
+                        <a href="#" id="logout-link" title="Cerrar sesión">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+
+                    <div class="cart" title="Mi Carrito">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 2rem;">
+        <h2>Test de Visibilidad Admin</h2>
+        <p>Esta página es para probar la visibilidad de los botones de admin.</p>
+        
+        <div style="margin: 2rem 0; padding: 1rem; background: var(--color-superficial-1); border-radius: var(--border-radius);">
+            <h3>Controles de Prueba:</h3>
+            <button onclick="testAdmin()" style="margin: 0.5rem; padding: 0.5rem 1rem; background: var(--color-primario); color: white; border: none; border-radius: var(--border-radius); cursor: pointer;">
+                Simular Login Admin
+            </button>
+            <button onclick="testEmpleado()" style="margin: 0.5rem; padding: 0.5rem 1rem; background: var(--color-secundario); color: white; border: none; border-radius: var(--border-radius); cursor: pointer;">
+                Simular Login Empleado
+            </button>
+            <button onclick="testLogout()" style="margin: 0.5rem; padding: 0.5rem 1rem; background: var(--color-error); color: white; border: none; border-radius: var(--border-radius); cursor: pointer;">
+                Simular Logout
+            </button>
+        </div>
+        
+        <div id="debug-info" style="margin: 2rem 0; padding: 1rem; background: var(--color-superficial-2); border-radius: var(--border-radius);">
+            <h3>Estado Actual:</h3>
+            <p id="current-state">Sin sesión</p>
+        </div>
+    </main>
+
+    <script>
+        // Definir las funciones de actualización de interfaz localmente para prueba
+        let usuarioActual = null;
+        const loginLink = document.getElementById('login-link');
+        const userInfo = document.getElementById('user-info');
+        const userGreeting = document.getElementById('user-greeting');
+        const linkGestion = document.getElementById('link-gestion');
+        const linkAdmin = document.getElementById('link-admin');
+        const debugInfo = document.getElementById('current-state');
+
+        function actualizarInterfaz(rol, nombre) {
+            // 1. Ocultar todos por defecto
+            if (loginLink) loginLink.style.display = 'block';
+            if (userInfo) userInfo.style.display = 'none';
+            
+            // Remover clases show y ocultar elementos por defecto
+            if (linkGestion) {
+                linkGestion.classList.remove('show');
+                linkGestion.style.display = 'none';
+            }
+            if (linkAdmin) {
+                linkAdmin.classList.remove('show');
+                linkAdmin.style.display = 'none';
+            }
+
+            if (rol) {
+                usuarioActual = { nombre: nombre, rol: rol };
+                if (loginLink) loginLink.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'flex';
+                if (userGreeting) userGreeting.innerHTML = `<i class="fas fa-user"></i> Hola, ${nombre}!`;
+
+                // 2. Mostrar/Ocultar basado en el ROL
+                if (rol === 'admin' || rol === 'empleado') {
+                    if (linkGestion) {
+                        linkGestion.classList.add('show');
+                        linkGestion.style.display = 'flex'; 
+                    }
+                }
+                
+                if (rol === 'admin') {
+                    if (linkAdmin) {
+                        linkAdmin.classList.add('show');
+                        linkAdmin.style.display = 'flex'; 
+                    }
+                }
+
+                // Actualizar debug info
+                debugInfo.textContent = `Usuario: ${nombre}, Rol: ${rol}`;
+            } else {
+                usuarioActual = null;
+                if (userGreeting) userGreeting.textContent = '';
+                
+                if (linkGestion) {
+                    linkGestion.classList.remove('show');
+                    linkGestion.style.display = 'none';
+                }
+                if (linkAdmin) {
+                    linkAdmin.classList.remove('show');
+                    linkAdmin.style.display = 'none';
+                }
+                
+                debugInfo.textContent = 'Sin sesión';
+            }
+        }
+
+        function testAdmin() {
+            actualizarInterfaz('admin', 'Juan Admin');
+        }
+
+        function testEmpleado() {
+            actualizarInterfaz('empleado', 'María Empleada');
+        }
+
+        function testLogout() {
+            actualizarInterfaz(null, null);
+        }
+
+        // Inicializar sin sesión
+        actualizarInterfaz(null, null);
+    </script>
+</body>
+</html>

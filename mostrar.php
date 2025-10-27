@@ -73,143 +73,417 @@ if ($producto_id !== null) {
         $error = "Ocurrió un error al buscar el producto.";
     }
 }
-?>
 
-<!DOCTYPE html>
-<html lang="es">
+// Variables para el header
+$page_title = $producto ? htmlspecialchars($producto['Nombre_Producto']) . ' - Supermercado Online' : 'Producto no encontrado - Supermercado Online';
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?= $producto ? htmlspecialchars($producto['Nombre_Producto']) : 'Producto no encontrado' ?> - Supermercado Online</title>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+// Estilos adicionales específicos para esta página
+$additional_styles = '
+<style>
+    /* Estilos específicos de la lupa y del layout del producto */
+    .imagen-lupa-contenedor {
+        position: relative;
+        overflow: hidden;
+        cursor: crosshair;
+        display: inline-block;
+    }
 
-    <style>
-        /* Estilos específicos de la lupa y del layout del producto */
-        .imagen-lupa-contenedor {
-            position: relative;
-            overflow: hidden;
-            cursor: crosshair;
-            display: inline-block;
+    .lupa-zoom-area {
+        position: absolute;
+        top: 0;
+        left: 100%;
+        width: 250px;
+        height: 250px;
+        border: 2px solid var(--color-azul-principal, #007bff);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        background-repeat: no-repeat;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        transform: translate(20px, 0);
+        z-index: 10;
+    }
+
+    .producto-imagen img {
+        object-fit: contain;
+        max-width: 370px;
+        height: 370px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+    }
+
+    /* Estilos base de la página de producto */
+    .producto-principal {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .producto-imagen {
+        flex-shrink: 0;
+    }
+
+    .producto-detalles {
+        flex-grow: 1;
+    }
+
+    .opinion-rating {
+        color: gold;
+        font-size: 1.2em;
+    }
+
+    .opinion {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+
+    /* Estilos para la sección de agregar reseñas */
+    .agregar-resena {
+        background: var(--color-blanco);
+        padding: var(--espacio-lg);
+        border-radius: var(--radio-md);
+        box-shadow: var(--sombra-sm);
+        margin-top: var(--espacio-lg);
+        border: 1px solid var(--color-gris-200);
+    }
+
+    .agregar-resena h2 {
+        color: var(--color-gris-800);
+        margin-bottom: var(--espacio-md);
+        font-size: var(--texto-xl);
+    }
+
+    .login-message {
+        background: var(--color-secundario-light);
+        padding: var(--espacio-md);
+        border-radius: var(--radio-md);
+        text-align: center;
+        margin-bottom: var(--espacio-md);
+    }
+
+    .login-message p {
+        margin-bottom: var(--espacio-sm);
+        color: var(--color-secundario-hover);
+    }
+
+    .btn-login {
+        background: var(--color-secundario);
+        color: var(--color-blanco);
+        padding: var(--espacio-sm) var(--espacio-md);
+        border-radius: var(--radio-md);
+        border: none;
+        cursor: pointer;
+        transition: var(--transicion-rapida);
+    }
+
+    .btn-login:hover {
+        background: var(--color-secundario-hover);
+        transform: translateY(-1px);
+    }
+
+    .form-resena {
+        display: flex;
+        flex-direction: column;
+        gap: var(--espacio-md);
+    }
+
+    .rating-input label,
+    .comment-input label {
+        font-weight: var(--peso-medium);
+        color: var(--color-gris-700);
+        margin-bottom: var(--espacio-sm);
+        display: block;
+    }
+
+    .star-rating {
+        display: flex;
+        gap: 4px;
+        margin-top: var(--espacio-sm);
+    }
+
+    .star {
+        font-size: 2em;
+        color: var(--color-gris-300);
+        cursor: pointer;
+        transition: all var(--transicion-rapida);
+        user-select: none;
+    }
+
+    .star:hover,
+    .star.active {
+        color: #ffd700;
+        transform: scale(1.1);
+    }
+
+    .star.hover {
+        color: #ffed4e;
+    }
+
+    .comment-input textarea {
+        width: 100%;
+        padding: var(--espacio-md);
+        border: 2px solid var(--color-gris-300);
+        border-radius: var(--radio-md);
+        font-family: inherit;
+        font-size: var(--texto-base);
+        resize: vertical;
+        min-height: 100px;
+        transition: var(--transicion-rapida);
+    }
+
+    .comment-input textarea:focus {
+        outline: none;
+        border-color: var(--color-primario);
+        box-shadow: 0 0 0 3px var(--color-primario-light);
+    }
+
+    .form-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--espacio-md);
+    }
+
+    .btn-enviar-resena {
+        background: linear-gradient(135deg, var(--color-primario), var(--color-primario-hover));
+        color: var(--color-blanco);
+        padding: var(--espacio-md) var(--espacio-lg);
+        border: none;
+        border-radius: var(--radio-md);
+        font-weight: var(--peso-medium);
+        cursor: pointer;
+        transition: all var(--transicion-rapida);
+        display: flex;
+        align-items: center;
+        gap: var(--espacio-sm);
+    }
+
+    .btn-enviar-resena:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--sombra-md);
+    }
+
+    .btn-enviar-resena:disabled {
+        background: var(--color-gris-400);
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .loading {
+        color: var(--color-primario);
+        font-style: italic;
+    }
+
+    .message {
+        padding: var(--espacio-md);
+        border-radius: var(--radio-md);
+        margin-top: var(--espacio-md);
+    }
+
+    .message.success {
+        background: var(--color-exito-light);
+        color: var(--color-exito);
+        border: 1px solid var(--color-exito);
+    }
+
+    .message.error {
+        background: var(--color-peligro-light);
+        color: var(--color-peligro);
+        border: 1px solid var(--color-peligro);
+    }
+</style>';
+
+// Scripts adicionales específicos para esta página
+$additional_scripts = '
+<script>
+    // --- Script de la Lupa (mantenido) ---
+    const contenedor = document.querySelector(\'.imagen-lupa-contenedor\');
+    const imgPrincipal = document.getElementById(\'imagen-principal\');
+    const lupa = document.getElementById(\'lupa-zoom\');
+
+    if (contenedor && imgPrincipal && lupa) {
+        const zoomSrc = imgPrincipal.getAttribute(\'data-zoom-src\');
+        lupa.style.backgroundImage = `url(\'${zoomSrc}\')`;
+        const factorZoom = 2;
+
+        const actualizarTamanioFondo = () => {
+            if (imgPrincipal.naturalWidth > 0 && imgPrincipal.naturalHeight > 0) {
+                lupa.style.backgroundSize = `${imgPrincipal.naturalWidth * factorZoom}px ${imgPrincipal.naturalHeight * factorZoom}px`;
+            } else {
+                setTimeout(actualizarTamanioFondo, 100);
+            }
+        };
+
+        const moverLupa = (e) => {
+            const rect = imgPrincipal.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            x = Math.max(0, Math.min(x, rect.width));
+            y = Math.max(0, Math.min(y, rect.height));
+
+            const bgPosX = -(x * factorZoom - lupa.offsetWidth / 2);
+            const bgPosY = -(y * factorZoom - lupa.offsetHeight / 2);
+
+            lupa.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
+        };
+
+        const mostrarLupa = () => {
+            actualizarTamanioFondo();
+            lupa.style.opacity = \'1\';
+            contenedor.addEventListener(\'mousemove\', moverLupa);
+        };
+
+        const ocultarLupa = () => {
+            lupa.style.opacity = \'0\';
+            contenedor.removeEventListener(\'mousemove\', moverLupa);
+        };
+
+        // Event Listeners
+        contenedor.addEventListener(\'mouseenter\', mostrarLupa);
+        contenedor.addEventListener(\'mouseleave\', ocultarLupa);
+
+        // Carga inicial
+        if (imgPrincipal.complete && imgPrincipal.naturalWidth > 0) {
+            actualizarTamanioFondo();
+        } else {
+            imgPrincipal.addEventListener(\'load\', actualizarTamanioFondo);
         }
+    }
 
-        .lupa-zoom-area {
-            position: absolute;
-            top: 0;
-            left: 100%;
-            width: 250px;
-            height: 250px;
-            border: 2px solid var(--color-azul-principal, #007bff);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            background-repeat: no-repeat;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-            transform: translate(20px, 0);
-            z-index: 10;
+    // --- Script para las Reseñas ---
+    document.addEventListener(\'DOMContentLoaded\', function() {
+        const formResena = document.getElementById(\'form-resena\');
+        const loginMessage = document.getElementById(\'login-required-message\');
+        const stars = document.querySelectorAll(\'.star\');
+        const ratingValue = document.getElementById(\'rating-value\');
+        const resenaMessage = document.getElementById(\'resena-message\');
+        const loadingSpan = document.getElementById(\'resena-loading\');
+        
+        // Verificar si el usuario está logueado
+        function verificarSesionParaResena() {
+            if (window.__MYAPP && window.__MYAPP.usuarioActual) {
+                formResena.style.display = \'block\';
+                loginMessage.style.display = \'none\';
+            } else {
+                formResena.style.display = \'none\';
+                loginMessage.style.display = \'block\';
+            }
         }
-
-        .producto-imagen img {
-            object-fit: contain;
-            max-width: 370px;
-            height: 370px;
-            border: 1px solid #eee;
-            border-radius: 4px;
+        
+        // Manejar el sistema de estrellas
+        stars.forEach((star, index) => {
+            star.addEventListener(\'click\', function() {
+                const rating = this.getAttribute(\'data-rating\');
+                ratingValue.value = rating;
+                
+                // Actualizar estrellas visualmente
+                stars.forEach((s, i) => {
+                    if (i < rating) {
+                        s.classList.add(\'active\');
+                        s.textContent = \'★\';
+                    } else {
+                        s.classList.remove(\'active\');
+                        s.textContent = \'☆\';
+                    }
+                });
+            });
+            
+            // Efecto hover
+            star.addEventListener(\'mouseenter\', function() {
+                const rating = this.getAttribute(\'data-rating\');
+                stars.forEach((s, i) => {
+                    if (i < rating) {
+                        s.classList.add(\'hover\');
+                    } else {
+                        s.classList.remove(\'hover\');
+                    }
+                });
+            });
+        });
+        
+        // Quitar efecto hover al salir del área de estrellas
+        document.querySelector(\'.star-rating\').addEventListener(\'mouseleave\', function() {
+            stars.forEach(s => s.classList.remove(\'hover\'));
+        });
+        
+        // Manejar envío del formulario
+        formResena.addEventListener(\'submit\', async function(e) {
+            e.preventDefault();
+            
+            const rating = ratingValue.value;
+            const comentario = document.getElementById(\'comentario\').value;
+            
+            if (rating == 0) {
+                mostrarMensaje(\'Por favor selecciona una calificación\', \'error\');
+                return;
+            }
+            
+            const submitBtn = formResena.querySelector(\'.btn-enviar-resena\');
+            submitBtn.disabled = true;
+            loadingSpan.style.display = \'inline\';
+            
+            try {
+                const formData = new FormData();
+                formData.append(\'accion\', \'agregar_resena\');
+                formData.append(\'producto_id\', \'<?= $producto_id ?>\');
+                formData.append(\'calificacion\', rating);
+                formData.append(\'comentario\', comentario);
+                
+                const response = await fetch(\'agregar_resena.php\', {
+                    method: \'POST\',
+                    body: formData,
+                    credentials: \'same-origin\'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    mostrarMensaje(\'¡Reseña agregada exitosamente!\', \'success\');
+                    formResena.reset();
+                    ratingValue.value = 0;
+                    stars.forEach(s => {
+                        s.classList.remove(\'active\');
+                        s.textContent = \'☆\';
+                    });
+                    
+                    // Recargar la página después de 2 segundos para mostrar la nueva reseña
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    mostrarMensaje(result.message || \'Error al agregar la reseña\', \'error\');
+                }
+                
+            } catch (error) {
+                console.error(\'Error:\', error);
+                mostrarMensaje(\'Error al enviar la reseña\', \'error\');
+            } finally {
+                submitBtn.disabled = false;
+                loadingSpan.style.display = \'none\';
+            }
+        });
+        
+        function mostrarMensaje(texto, tipo) {
+            resenaMessage.textContent = texto;
+            resenaMessage.className = `message ${tipo}`;
+            resenaMessage.style.display = \'block\';
+            
+            setTimeout(() => {
+                resenaMessage.style.display = \'none\';
+            }, 5000);
         }
+        
+        // Verificar sesión inicial
+        verificarSesionParaResena();
+        
+        // Re-verificar cuando cambie la sesión
+        setInterval(verificarSesionParaResena, 1000);
+    });
+</script>';
 
-        /* Estilos base de la página de producto */
-        .producto-principal {
-            display: flex;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .producto-imagen {
-            flex-shrink: 0;
-        }
-
-        .producto-detalles {
-            flex-grow: 1;
-        }
-
-        .opinion-rating {
-            color: gold;
-            font-size: 1.2em;
-        }
-
-        .opinion {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-        }
-    </style>
-</head>
-
-<body>
-    <header class="header">
-
-        <div class="header-left">
-            <div class="logo">
-                <a href="#" class="logo-link">
-                    <h1>
-                        <i class="fas fa-store"></i> Supermercado Online
-                    </h1>
-                </a>
-            </div>
-
-            <button class="menu-button" id="btn-categorias" aria-expanded="false">
-                <i class="fas fa-bars"></i> Categorías
-            </button>
-        </div>
-
-        <div class="search-bar">
-            <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos">
-            <button type="button"><i class="fas fa-search"></i></button>
-        </div>
-
-        <div class="user-actions">
-            <a href="#" id="link-gestion" class="employee-only" style="display:none;" title="Gestión"><i class="fas fa-truck-loading"></i></a>
-            <a href="login/dashboard_admin.php" id="link-admin" class="admin-only" style="display:none;" title="Administración"><i class="fas fa-tools"></i></a>
-
-            <a href="#" id="login-link" title="Iniciar sesión"><i class="fas fa-user"></i> Iniciar sesión</a>
-
-            <div id="user-info" style="display:none;">
-                <span id="user-greeting"></span>
-                <a href="#" id="logout-link" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
-            </div>
-
-            <div class="cart" title="Mi Carrito">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count">0</span>
-            </div>
-        </div>
-    </header>
-
-    <aside id="side-menu" class="side-menu" aria-hidden="true">
-
-        <div class="side-menu-header">
-            <h2><i class="fas fa-list-alt"></i> Todas las Categorías</h2>
-            <button id="btn-close-menu" class="close-menu" aria-label="Cerrar Menú">&times;</button>
-        </div>
-
-        <nav class="side-nav">
-            <ul>
-                <li><a href="#" class="side-link"><i class="fas fa-home"></i> Inicio</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-tags"></i> Ofertas</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-cocktail"></i> Bebidas</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-soap"></i> Limpieza</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-carrot"></i> Frutas y Verduras</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-cookie-bite"></i> Panadería</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-utensils"></i> Congelados</a></li>
-
-                <li><a href="#" class="side-link employee-only" style="display:none;"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
-                <li><a href="#" class="side-link admin-only" style="display:none;"><i class="fas fa-cog"></i> Panel de admin</a></li>
-            </ul>
-        </nav>
-    </aside>
-    <div id="menu-overlay" class="overlay"></div>
-    <main class="main-content container"> <?php if ($error): ?>
+// Incluir el header
+include 'header.php';
+?> <?php if ($error): ?>
             <p class="error"><?= htmlspecialchars($error) ?></p>
         <?php elseif ($producto): ?>
 
@@ -320,94 +594,55 @@ if ($producto_id !== null) {
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <p>Este producto todavía no tiene opiniones.</p>
+                        <p>Este producto todavía no tiene opiniones. ¡Sé el primero en opinar!</p>
                     <?php endif; ?>
+                </div>
+
+                <!-- Sección para agregar nueva reseña -->
+                <div class="agregar-resena">
+                    <h2>Agregar tu opinión</h2>
+                    
+                    <div id="login-required-message" class="login-message" style="display:none;">
+                        <p><i class="fas fa-info-circle"></i> Debes iniciar sesión para dejar una reseña.</p>
+                        <button onclick="document.getElementById('login-link').click()" class="btn-login">Iniciar Sesión</button>
+                    </div>
+
+                    <form id="form-resena" class="form-resena" style="display:none;">
+                        <div class="rating-input">
+                            <label>Calificación:</label>
+                            <div class="star-rating">
+                                <span class="star" data-rating="1">☆</span>
+                                <span class="star" data-rating="2">☆</span>
+                                <span class="star" data-rating="3">☆</span>
+                                <span class="star" data-rating="4">☆</span>
+                                <span class="star" data-rating="5">☆</span>
+                            </div>
+                            <input type="hidden" id="rating-value" name="calificacion" value="0" required>
+                        </div>
+
+                        <div class="comment-input">
+                            <label for="comentario">Comentario:</label>
+                            <textarea id="comentario" name="comentario" rows="4" 
+                                    placeholder="Comparte tu experiencia con este producto..."></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-enviar-resena">
+                                <i class="fas fa-paper-plane"></i> Enviar Reseña
+                            </button>
+                            <span id="resena-loading" class="loading" style="display:none;">
+                                <i class="fas fa-spinner fa-spin"></i> Enviando...
+                            </span>
+                        </div>
+                    </form>
+
+                    <div id="resena-message" class="message" style="display:none;"></div>
                 </div>
             <?php else: ?>
                 <p class="error">El producto solicitado no existe o no está disponible.</p>
             <?php endif; ?>
-    </main>
 
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2 id="modal-title">Iniciar Sesión</h2>
-
-            <form id="login-form-dni">
-                <input type="text" id="dni" name="dni" placeholder="DNI" required />
-                <button type="submit">Ingresar</button>
-                <p id="login-message"></p>
-                <p>¿No tienes cuenta? <a href="#" id="show-register">Registrate</a></p>
-            </form>
-
-            <form id="register-form" style="display:none;">
-                <input type="text" id="reg-dni" name="dni" placeholder="DNI" required />
-                <input type="text" id="nombre" name="nombre" placeholder="Nombre completo" required />
-                <input type="email" id="correo" name="correo" placeholder="Correo electrónico" required />
-                <button type="submit">Crear cuenta</button>
-                <p id="register-message"></p>
-                <p>¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // --- Script de la Lupa (mantenido) ---
-        const contenedor = document.querySelector('.imagen-lupa-contenedor');
-        const imgPrincipal = document.getElementById('imagen-principal');
-        const lupa = document.getElementById('lupa-zoom');
-
-        if (contenedor && imgPrincipal && lupa) {
-            const zoomSrc = imgPrincipal.getAttribute('data-zoom-src');
-            lupa.style.backgroundImage = `url('${zoomSrc}')`;
-            const factorZoom = 2;
-
-            const actualizarTamanioFondo = () => {
-                if (imgPrincipal.naturalWidth > 0 && imgPrincipal.naturalHeight > 0) {
-                    lupa.style.backgroundSize = `${imgPrincipal.naturalWidth * factorZoom}px ${imgPrincipal.naturalHeight * factorZoom}px`;
-                } else {
-                    setTimeout(actualizarTamanioFondo, 100);
-                }
-            };
-
-            const moverLupa = (e) => {
-                const rect = imgPrincipal.getBoundingClientRect();
-                let x = e.clientX - rect.left;
-                let y = e.clientY - rect.top;
-                x = Math.max(0, Math.min(x, rect.width));
-                y = Math.max(0, Math.min(y, rect.height));
-
-                const bgPosX = -(x * factorZoom - lupa.offsetWidth / 2);
-                const bgPosY = -(y * factorZoom - lupa.offsetHeight / 2);
-
-                lupa.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
-            };
-
-            const mostrarLupa = () => {
-                actualizarTamanioFondo();
-                lupa.style.opacity = '1';
-                contenedor.addEventListener('mousemove', moverLupa);
-            };
-
-            const ocultarLupa = () => {
-                lupa.style.opacity = '0';
-                contenedor.removeEventListener('mousemove', moverLupa);
-            };
-
-            // Event Listeners
-            contenedor.addEventListener('mouseenter', mostrarLupa);
-            contenedor.addEventListener('mouseleave', ocultarLupa);
-
-            // Carga inicial
-            if (imgPrincipal.complete && imgPrincipal.naturalWidth > 0) {
-                actualizarTamanioFondo();
-            } else {
-                imgPrincipal.addEventListener('load', actualizarTamanioFondo);
-            }
-        }
-    </script>
-    <script src="script.js"></script>
-    <script src="js/carrito.js"></script>
-</body>
-
-</html>
+<?php
+// Incluir el footer
+include 'footer.php';
+?>
