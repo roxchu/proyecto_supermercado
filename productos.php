@@ -55,14 +55,13 @@ try {
                         <h3><?= htmlspecialchars($producto['nombre']) ?></h3>
                         <p class="precio-final">$<?= number_format($producto['precio_actual'], 2, ',', '.') ?></p>
 
-                        <button class="boton-agregar"
-                                data-id="<?= $producto['id'] ?>"
-                                data-nombre="<?= htmlspecialchars($producto['nombre']) ?>"
-                                data-precio="<?= $producto['precio_actual'] ?>"
-                                onclick="event.stopPropagation();" 
-                                <?= ($producto['stock'] <= 0) ? 'disabled' : '' ?>>
-                            <?= ($producto['stock'] > 0) ? 'Agregar' : 'Sin Stock' ?>
-                        </button>
+                        <div class="producto" data-id="<?= $producto['id'] ?>" data-nombre="<?= htmlspecialchars($producto['nombre']) ?>">
+                            <button class="boton-agregar"
+                                    onclick="event.stopPropagation();" 
+                                    <?= ($producto['stock'] <= 0) ? 'disabled' : '' ?>>
+                                <?= ($producto['stock'] > 0) ? 'Agregar' : 'Sin Stock' ?>
+                            </button>
+                        </div>
                     </div>
                 </article>
             </a>

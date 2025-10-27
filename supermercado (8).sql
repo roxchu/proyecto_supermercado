@@ -228,7 +228,7 @@ INSERT INTO `producto_imagenes` (`Id_Imagen`, `Id_Producto`, `url_imagen`, `orde
 CREATE TABLE `producto_opiniones` (
   `Id_Opinion` int(11) NOT NULL,
   `Id_Producto` int(11) NOT NULL,
-  `Nombre_Usuario` varchar(100) DEFAULT 'Anónimo',
+  `id_usuario` int(11) NOT NULL,
   `Calificacion` tinyint(1) NOT NULL CHECK (`Calificacion` >= 1 and `Calificacion` <= 5),
   `Comentario` text DEFAULT NULL,
   `Fecha_Opinion` timestamp NOT NULL DEFAULT current_timestamp()
@@ -238,12 +238,12 @@ CREATE TABLE `producto_opiniones` (
 -- Volcado de datos para la tabla `producto_opiniones`
 --
 
-INSERT INTO `producto_opiniones` (`Id_Opinion`, `Id_Producto`, `Nombre_Usuario`, `Calificacion`, `Comentario`, `Fecha_Opinion`) VALUES
-(0, 1, 'Juan Pérez', 5, '¡Excelentes manzanas! Muy frescas y crujientes. Llegaron rápido.', '2025-10-24 00:00:48'),
-(0, 1, 'Ana Gómez', 4, 'Buenas manzanas, aunque un poco caras para mi gusto.', '2025-10-24 00:00:48'),
-(0, 1, 'Usuario Anónimo', 5, 'Las mejores que probé en mucho tiempo.', '2025-10-24 00:00:48'),
-(0, 2, 'Carlos Ruiz', 5, 'El pollo estaba perfecto para el horno. Buen tamaño y sabor.', '2025-10-24 00:00:48'),
-(0, 4, 'María López', 3, 'Es Coca Cola, no hay mucho que decir. Llegó bien fría.', '2025-10-24 00:00:48');
+INSERT INTO `producto_opiniones` (`Id_Opinion`, `Id_Producto`, `id_usuario`, `Calificacion`, `Comentario`, `Fecha_Opinion`) VALUES
+(0, 1, 6, 5, '¡Excelentes manzanas! Muy frescas y crujientes. Llegaron rápido.', '2025-10-24 00:00:48'),
+(0, 1, 7, 4, 'Buenas manzanas, aunque un poco caras para mi gusto.', '2025-10-24 00:00:48'),
+(0, 1, 8, 5, 'Las mejores que probé en mucho tiempo.', '2025-10-24 00:00:48'),
+(0, 2, 6, 5, 'El pollo estaba perfecto para el horno. Buen tamaño y sabor.', '2025-10-24 00:00:48'),
+(0, 4, 7, 3, 'Es Coca Cola, no hay mucho que decir. Llegó bien fría.', '2025-10-24 00:00:48');
 
 -- --------------------------------------------------------
 

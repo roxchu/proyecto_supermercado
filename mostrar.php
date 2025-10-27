@@ -49,10 +49,11 @@ if ($producto_id !== null) {
             }
 
             // --- Si el producto existe, buscar sus opiniones ---
-            $sql_opiniones = "SELECT Nombre_Usuario, Calificacion, Comentario, Fecha_Opinion
-                              FROM producto_opiniones
-                              WHERE Id_Producto = ?
-                              ORDER BY Fecha_Opinion DESC";
+            $sql_opiniones = "SELECT u.nombre_usuario as Nombre_Usuario, po.Calificacion, po.Comentario, po.Fecha_Opinion
+                              FROM producto_opiniones po
+                              INNER JOIN usuario u ON po.id_usuario = u.id_usuario
+                              WHERE po.Id_Producto = ?
+                              ORDER BY po.Fecha_Opinion DESC";
 
             $stmt_opiniones = $pdo->prepare($sql_opiniones);
 

@@ -198,8 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!idProducto) return;
 
         // Intentar obtener la cantidad del input si existe
-        const inputCantidad = productoDiv.querySelector('input[type="number"]#cantidad'); 
-        const cantidad = inputCantidad ? parseInt(inputCantidad.value) || 1 : 1;
+        const selectCantidad = productoDiv.querySelector('select[name="cantidad"]'); 
+        const cantidad = selectCantidad ? parseInt(selectCantidad.value) || 1 : 1;
 
         cargando = true;
         btn.disabled = true;
@@ -278,22 +278,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === 6. REDIRECCIONES DE BOTONES ===
     
-    // El login/registro debe redirigir a un HTML o a la página de inicio de sesión,
-    // no al script PHP. Asumo que las URL a continuación son las correctas.
+    // Los botones de iniciar sesión y registro deben mostrar el modal, no redirigir
     carritoSidebar.querySelector(".btn-iniciar").addEventListener("click", () => {
-        window.location.href = "login/login.php"; // Redirigir a una página HTML de login
+        // Cerrar el carrito y mostrar el modal de login
+        cerrarCarrito();
+        const loginModal = document.getElementById('loginModal');
+        const loginForm = document.getElementById('login-form-dni');
+        const registerForm = document.getElementById('register-form');
+        
+        if (loginModal) {
+            loginModal.style.display = 'block';
+            if (loginForm) loginForm.style.display = 'block';
+            if (registerForm) registerForm.style.display = 'none';
+            const modalTitle = document.getElementById('modal-title');
+            if (modalTitle) modalTitle.textContent = 'Iniciar Sesión';
+        }
     });
 
     carritoSidebar.querySelector(".btn-registrarse").addEventListener("click", () => {
-        window.location.href = "login/registro.php"; // Redirigir a una página HTML de registro
+        // Cerrar el carrito y mostrar el modal de registro
+        cerrarCarrito();
+        const loginModal = document.getElementById('loginModal');
+        const loginForm = document.getElementById('login-form-dni');
+        const registerForm = document.getElementById('register-form');
+        
+        if (loginModal) {
+            loginModal.style.display = 'block';
+            if (registerForm) registerForm.style.display = 'block';
+            if (loginForm) loginForm.style.display = 'none';
+            const modalTitle = document.getElementById('modal-title');
+            if (modalTitle) modalTitle.textContent = 'Crear Cuenta';
+        }
     });
 
     btnPagar.addEventListener("click", () => {
         window.location.href = "direcciones/direcciones.php"; // Usar una página de checkout genérica
     });
 
-    // 7. Carga inicial del estado de la sesión (para el conteo inicial)
-    // verificarSesion(); 
-    // Nota: Es mejor que 'check_session.php' devuelva el conteo del carrito
-    // o que 'cargarCarrito' sea llamado inmediatamente si el carrito está visible.
+    // 7. Carga inicial del estado de la sesión y carrito
+    (async function inicializarCarrito() {
+        await verificarSesion();
+        if (sesionActiva) {
+            await cargarCarrito(); // Solo cargar si hay sesión activa
+        }
+    })();
 });
