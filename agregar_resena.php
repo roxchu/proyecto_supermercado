@@ -57,6 +57,9 @@ if (!empty($comentario) && strlen($comentario) > 500) {
 }
 
 try {
+    // Debug: Log de la información recibida
+    error_log("Agregar reseña - Producto ID: $producto_id, User ID: $user_id, Calificación: $calificacion");
+    
     // Verificar que el producto existe
     $stmt_producto = $pdo->prepare("SELECT Id_Producto FROM producto WHERE Id_Producto = ?");
     $stmt_producto->execute([$producto_id]);
@@ -67,7 +70,7 @@ try {
     }
     
     // Verificar si el usuario ya ha reseñado este producto
-    $stmt_check = $pdo->prepare("SELECT Id_Opinion FROM opinion WHERE Id_Producto = ? AND Id_Usuario = ?");
+    $stmt_check = $pdo->prepare("SELECT Id_Opinion FROM producto_opiniones WHERE Id_Producto = ? AND id_usuario = ?");
     $stmt_check->execute([$producto_id, $user_id]);
     
     if ($stmt_check->fetch()) {
@@ -75,8 +78,13 @@ try {
         exit;
     }
     
+    // Debug: Verificar las columnas de la tabla producto_opiniones
+    $stmt_columns = $pdo->query("SHOW COLUMNS FROM producto_opiniones");
+    $columns = $stmt_columns->fetchAll(PDO::FETCH_COLUMN);
+    error_log("Columnas de tabla producto_opiniones: " . implode(', ', $columns));
+    
     // Insertar la nueva reseña
-    $sql_insert = "INSERT INTO opinion (Id_Producto, Id_Usuario, Calificacion, Comentario, Fecha_Opinion) 
+    $sql_insert = "INSERT INTO producto_opiniones (Id_Producto, id_usuario, Calificacion, Comentario, Fecha_Opinion) 
                    VALUES (?, ?, ?, ?, NOW())";
     
     $stmt_insert = $pdo->prepare($sql_insert);
@@ -93,14 +101,16 @@ try {
             'message' => '¡Reseña agregada exitosamente! Gracias por tu opinión.'
         ]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Error al guardar la reseña']);
+        $errorInfo = $stmt_insert->errorInfo();
+        error_log("Error SQL: " . print_r($errorInfo, true));
+        echo json_encode(['success' => false, 'message' => 'Error al guardar la reseña: ' . $errorInfo[2]]);
     }
     
 } catch (PDOException $e) {
-    error_log("Error en agregar_resena.php: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+    error_log("Error PDO en agregar_resena.php: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Error de base de datos: ' . $e->getMessage()]);
 } catch (Exception $e) {
     error_log("Error general en agregar_resena.php: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Error inesperado']);
+    echo json_encode(['success' => false, 'message' => 'Error inesperado: ' . $e->getMessage()]);
 }
 ?>

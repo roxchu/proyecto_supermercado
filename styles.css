@@ -1028,11 +1028,15 @@ input, textarea, select {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     display: none;
-    justify-content: center;
-    align-items: center;
     z-index: var(--z-modal);
     padding: var(--espacio-md);
     animation: fadeIn 0.3s ease-out;
+}
+
+.modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .modal-content {

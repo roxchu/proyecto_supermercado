@@ -108,16 +108,25 @@ document.addEventListener('DOMContentLoaded', function() {
   loginLink?.addEventListener('click', (e) => {
     e.preventDefault();
     if (!loginModal) return;
-    loginModal.style.display = 'block';
+    loginModal.classList.add('show');
+    loginModal.style.display = 'flex';
     if (loginForm) loginForm.style.display = 'block';
     if (registerForm) registerForm.style.display = 'none';
     const mt = document.getElementById('modal-title');
     if (mt) mt.textContent = 'Iniciar Sesión';
   });
 
-  closeModal?.addEventListener('click', () => (loginModal.style.display = 'none'));
+  closeModal?.addEventListener('click', () => {
+    if (loginModal) {
+      loginModal.classList.remove('show');
+      loginModal.style.display = 'none';
+    }
+  });
   window.addEventListener('click', (e) => {
-    if (e.target === loginModal) loginModal.style.display = 'none';
+    if (e.target === loginModal) {
+      loginModal.classList.remove('show');
+      loginModal.style.display = 'none';
+    }
   });
 
   showRegisterLink?.addEventListener('click', (e) => {
@@ -215,6 +224,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sideLinkGestion) sideLinkGestion.style.display = 'none';
         if (sideLinkAdmin) sideLinkAdmin.style.display = 'none';
     }
+    
+    // Disparar evento de cambio de sesión para otros scripts
+    document.dispatchEvent(new CustomEvent('sessionChanged', { 
+        detail: { rol: rol, nombre: nombre, logged_in: !!rol } 
+    }));
 }
 
   // ---------------------------
@@ -241,7 +255,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (data.success) {
         mostrarNotificacion(`Bienvenido, ${data.nombre}`, 'success');
-        if (loginModal) loginModal.style.display = 'none';
+        if (loginModal) {
+          loginModal.classList.remove('show');
+          loginModal.style.display = 'none';
+        }
         
         // La respuesta ya trae el rol
         const rol = data.rol ? data.rol.toString().toLowerCase() : null;

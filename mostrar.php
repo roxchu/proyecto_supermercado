@@ -127,6 +127,26 @@ $additional_styles = '
         flex-grow: 1;
     }
 
+    /* Secciones debajo del producto */
+    .producto-descripcion,
+    .producto-opiniones {
+        background: var(--color-blanco);
+        padding: var(--espacio-lg);
+        border-radius: var(--radio-md);
+        box-shadow: var(--sombra-sm);
+        margin-bottom: var(--espacio-lg);
+        border: 1px solid var(--color-gris-200);
+    }
+
+    .producto-descripcion h2,
+    .producto-opiniones h2 {
+        color: var(--color-gris-800);
+        margin-bottom: var(--espacio-md);
+        font-size: var(--texto-xl);
+        border-bottom: 2px solid var(--color-primario);
+        padding-bottom: var(--espacio-sm);
+    }
+
     .opinion-rating {
         color: gold;
         font-size: 1.2em;
@@ -136,6 +156,20 @@ $additional_styles = '
         border-bottom: 1px solid #eee;
         padding-bottom: 15px;
         margin-bottom: 15px;
+    }
+
+    .opinion:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    /* Información solo para admin */
+    .admin-only-info {
+        display: none !important;
+    }
+
+    .admin-only-info.show-admin {
+        display: block !important;
     }
 
     /* Estilos para la sección de agregar reseñas */
@@ -361,7 +395,18 @@ $additional_scripts = '
         
         // Verificar si el usuario está logueado
         function verificarSesionParaResena() {
-            if (window.__MYAPP && window.__MYAPP.usuarioActual) {
+            // Verificar múltiples fuentes de información de sesión
+            const userInfo = document.getElementById(\'user-info\');
+            const loginLink = document.getElementById(\'login-link\');
+            const userGreeting = document.getElementById(\'user-greeting\');
+            
+            // Si user-info está visible y login-link está oculto, el usuario está logueado
+            const estaLogueado = (userInfo && userInfo.style.display !== \'none\' && userInfo.style.display !== \'\') ||
+                                (loginLink && loginLink.style.display === \'none\') ||
+                                (userGreeting && userGreeting.textContent && userGreeting.textContent.trim() !== \'\') ||
+                                (window.__MYAPP && window.__MYAPP.usuarioActual);
+            
+            if (estaLogueado) {
                 formResena.style.display = \'block\';
                 loginMessage.style.display = \'none\';
             } else {
@@ -423,9 +468,18 @@ $additional_scripts = '
             loadingSpan.style.display = \'inline\';
             
             try {
+                // Obtener el ID del producto desde el DOM
+                const productoElement = document.querySelector(\'.producto[data-id]\');
+                const productoId = productoElement ? productoElement.getAttribute(\'data-id\') : \'<?= $producto_id ?>\';
+                
+                if (!productoId || productoId === \'\') {
+                    mostrarMensaje(\'Error: No se puede identificar el producto\', \'error\');
+                    return;
+                }
+                
                 const formData = new FormData();
                 formData.append(\'accion\', \'agregar_resena\');
-                formData.append(\'producto_id\', \'<?= $producto_id ?>\');
+                formData.append(\'producto_id\', productoId);
                 formData.append(\'calificacion\', rating);
                 formData.append(\'comentario\', comentario);
                 
@@ -473,11 +527,94 @@ $additional_scripts = '
             }, 5000);
         }
         
-        // Verificar sesión inicial
-        verificarSesionParaResena();
+        // Verificar sesión inicial con el servidor
+        async function verificarSesionInicial() {
+            try {
+                const response = await fetch(\'login/check_session.php\', {
+                    method: \'GET\',
+                    credentials: \'same-origin\',
+                    headers: { \'Accept\': \'application/json\' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.logged_in) {
+                        formResena.style.display = \'block\';
+                        loginMessage.style.display = \'none\';
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log(\'Error verificando sesión:\', error);
+            }
+            
+            // Si falla la verificación del servidor, usar verificación del DOM
+            verificarSesionParaResena();
+        }
         
-        // Re-verificar cuando cambie la sesión
-        setInterval(verificarSesionParaResena, 1000);
+        // Escuchar cambios en el estado de sesión
+        document.addEventListener(\'sessionChanged\', function(event) {
+            verificarSesionParaResena();
+            // Mostrar/ocultar información de admin
+            mostrarInfoAdmin(event.detail);
+        });
+        
+        // Función para mostrar información solo a admins
+        function mostrarInfoAdmin(sessionData) {
+            const adminOnlyElements = document.querySelectorAll(\'.admin-only-info\');
+            
+            if (sessionData && sessionData.rol === \'admin\') {
+                // Mostrar elementos solo para admin
+                adminOnlyElements.forEach(element => {
+                    element.classList.add(\'show-admin\');
+                    element.style.display = \'block\';
+                });
+            } else {
+                // Ocultar elementos para no-admin
+                adminOnlyElements.forEach(element => {
+                    element.classList.remove(\'show-admin\');
+                    element.style.display = \'none\';
+                });
+            }
+        }
+        
+        // Verificar sesión inicial para admin info
+        async function verificarSesionInicialAdmin() {
+            try {
+                const response = await fetch(\'login/check_session.php\', {
+                    method: \'GET\',
+                    credentials: \'same-origin\',
+                    headers: { \'Accept\': \'application/json\' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    mostrarInfoAdmin(data);
+                }
+            } catch (error) {
+                console.log(\'Error verificando sesión para admin:\', error);
+            }
+        }
+        
+        // También escuchar cambios en user-info
+        const userInfo = document.getElementById(\'user-info\');
+        if (userInfo) {
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === \'attributes\' && mutation.attributeName === \'style\') {
+                        verificarSesionParaResena();
+                    }
+                });
+            });
+            observer.observe(userInfo, { attributes: true });
+        }
+        
+        // Verificar sesión inicial
+        verificarSesionInicial();
+        verificarSesionInicialAdmin();
+        
+        // Re-verificar cuando cambie la sesión (cada 2 segundos es suficiente)
+        setInterval(verificarSesionParaResena, 2000);
     });
 </script>';
 
@@ -538,7 +675,7 @@ include 'header.php';
 
 
                     <div class="producto" data-id="<?= $producto['Id_Producto'] ?>" data-nombre="<?= $producto['Nombre_Producto'] ?>">
-                        <div class="producto-cantidad">
+                        <div class="producto-cantidad admin-only-info" style="display:none;">
                             <label for="cantidad">Cantidad:</label>
                             <select name="cantidad" id="cantidad" <?= ($producto['Stock'] <= 0) ? 'disabled' : '' ?>>
                                 <option value="1">1 unidad</option>
@@ -563,81 +700,83 @@ include 'header.php';
 
                     </div>
                 </div>
+            </div>
 
-                <div class="producto-descripcion">
-                    <h2>Descripción</h2>
-                    <p><?= nl2br(htmlspecialchars($producto['Descripcion'])) ?></p>
-                </div>
+            <!-- Secciones debajo del producto -->
+            <div class="producto-descripcion">
+                <h2>Descripción</h2>
+                <p><?= nl2br(htmlspecialchars($producto['Descripcion'])) ?></p>
+            </div>
 
-                <div class="producto-opiniones">
-                    <h2>Opiniones del producto</h2>
-                    <?php if (!empty($opiniones)): ?>
-                        <?php foreach ($opiniones as $opinion): ?>
-                            <div class="opinion">
-                                <div class="opinion-header">
-                                    <span class="opinion-rating">
-                                        <?php
-                                                        $calif = max(0, min(5, $opinion['Calificacion']));
-                                        ?>
-                                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                                            <?= ($i <= $calif) ? '★' : '☆' ?>
-                                        <?php endfor; ?>
-                                    </span>
-                                    <span class="opinion-meta">
-                                        Por <?= htmlspecialchars($opinion['Nombre_Usuario']) ?> -
-                                        <?= date('d/m/Y', strtotime($opinion['Fecha_Opinion'])) ?>
-                                    </span>
-                                </div>
-                                <?php if (!empty($opinion['Comentario'])): ?>
-                                    <p class="opinion-cuerpo"><?= nl2br(htmlspecialchars($opinion['Comentario'])) ?></p>
-                                <?php endif; ?>
+            <div class="producto-opiniones">
+                <h2>Opiniones del producto</h2>
+                <?php if (!empty($opiniones)): ?>
+                    <?php foreach ($opiniones as $opinion): ?>
+                        <div class="opinion">
+                            <div class="opinion-header">
+                                <span class="opinion-rating">
+                                    <?php
+                                                    $calif = max(0, min(5, $opinion['Calificacion']));
+                                    ?>
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <?= ($i <= $calif) ? '★' : '☆' ?>
+                                    <?php endfor; ?>
+                                </span>
+                                <span class="opinion-meta">
+                                    Por <?= htmlspecialchars($opinion['Nombre_Usuario']) ?> -
+                                    <?= date('d/m/Y', strtotime($opinion['Fecha_Opinion'])) ?>
+                                </span>
                             </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <p>Este producto todavía no tiene opiniones. ¡Sé el primero en opinar!</p>
-                    <?php endif; ?>
+                            <?php if (!empty($opinion['Comentario'])): ?>
+                                <p class="opinion-cuerpo"><?= nl2br(htmlspecialchars($opinion['Comentario'])) ?></p>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p>Este producto todavía no tiene opiniones. ¡Sé el primero en opinar!</p>
+                <?php endif; ?>
+            </div>
+
+            <!-- Sección para agregar nueva reseña -->
+            <div class="agregar-resena">
+                <h2>Agregar tu opinión</h2>
+                
+                <div id="login-required-message" class="login-message" style="display:none;">
+                    <p><i class="fas fa-info-circle"></i> Debes iniciar sesión para dejar una reseña.</p>
+                    <button onclick="document.getElementById('login-link').click()" class="btn-login">Iniciar Sesión</button>
                 </div>
 
-                <!-- Sección para agregar nueva reseña -->
-                <div class="agregar-resena">
-                    <h2>Agregar tu opinión</h2>
-                    
-                    <div id="login-required-message" class="login-message" style="display:none;">
-                        <p><i class="fas fa-info-circle"></i> Debes iniciar sesión para dejar una reseña.</p>
-                        <button onclick="document.getElementById('login-link').click()" class="btn-login">Iniciar Sesión</button>
+                <form id="form-resena" class="form-resena" style="display:none;">
+                    <div class="rating-input">
+                        <label>Calificación:</label>
+                        <div class="star-rating">
+                            <span class="star" data-rating="1">☆</span>
+                            <span class="star" data-rating="2">☆</span>
+                            <span class="star" data-rating="3">☆</span>
+                            <span class="star" data-rating="4">☆</span>
+                            <span class="star" data-rating="5">☆</span>
+                        </div>
+                        <input type="hidden" id="rating-value" name="calificacion" value="0" required>
                     </div>
 
-                    <form id="form-resena" class="form-resena" style="display:none;">
-                        <div class="rating-input">
-                            <label>Calificación:</label>
-                            <div class="star-rating">
-                                <span class="star" data-rating="1">☆</span>
-                                <span class="star" data-rating="2">☆</span>
-                                <span class="star" data-rating="3">☆</span>
-                                <span class="star" data-rating="4">☆</span>
-                                <span class="star" data-rating="5">☆</span>
-                            </div>
-                            <input type="hidden" id="rating-value" name="calificacion" value="0" required>
-                        </div>
+                    <div class="comment-input">
+                        <label for="comentario">Comentario:</label>
+                        <textarea id="comentario" name="comentario" rows="4" 
+                                placeholder="Comparte tu experiencia con este producto..."></textarea>
+                    </div>
 
-                        <div class="comment-input">
-                            <label for="comentario">Comentario:</label>
-                            <textarea id="comentario" name="comentario" rows="4" 
-                                    placeholder="Comparte tu experiencia con este producto..."></textarea>
-                        </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-enviar-resena">
+                            <i class="fas fa-paper-plane"></i> Enviar Reseña
+                        </button>
+                        <span id="resena-loading" class="loading" style="display:none;">
+                            <i class="fas fa-spinner fa-spin"></i> Enviando...
+                        </span>
+                    </div>
+                </form>
 
-                        <div class="form-actions">
-                            <button type="submit" class="btn-enviar-resena">
-                                <i class="fas fa-paper-plane"></i> Enviar Reseña
-                            </button>
-                            <span id="resena-loading" class="loading" style="display:none;">
-                                <i class="fas fa-spinner fa-spin"></i> Enviando...
-                            </span>
-                        </div>
-                    </form>
-
-                    <div id="resena-message" class="message" style="display:none;"></div>
-                </div>
+                <div id="resena-message" class="message" style="display:none;"></div>
+            </div>
             <?php else: ?>
                 <p class="error">El producto solicitado no existe o no está disponible.</p>
             <?php endif; ?>
