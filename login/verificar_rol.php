@@ -6,10 +6,6 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-/**
- * Verifica si el usuario actual tiene alguno de los roles permitidos.
- * * @param array $roles_permitidos Array de roles aceptados (ej: ['empleado', 'admin'])
- */
 function verificar_rol(array $roles_permitidos) {
     // 1. Definir la URL base si no está definida (Asume que está en el directorio raíz)
     // Cambia esto si tu estructura de carpetas es diferente
@@ -22,7 +18,7 @@ function verificar_rol(array $roles_permitidos) {
     // 2. Verificar si hay sesión de rol
     if (!isset($_SESSION['rol']) || empty($_SESSION['rol'])) {
         // No hay sesión activa, redirigir a login
-        header('Location: ' . BASE_URL . 'index.html'); // O a login/login.php si es un script.
+        header('Location: ' . BASE_URL . 'index.html'); // 
         exit;
     }
 
