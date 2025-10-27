@@ -1,6 +1,8 @@
 <?php
 // login/check_session.php - Verificar si hay una sesión activa (AJAX)
 
+session_start();
+
 // Aseguramos que la sesión esté iniciada
 session_start();
 

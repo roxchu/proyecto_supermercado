@@ -1,5 +1,8 @@
 <?php
 // login/login.php
+// Permitir el uso de sesión entre subcarpetas
+
+session_start();
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');

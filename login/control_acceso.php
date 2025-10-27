@@ -1,6 +1,9 @@
 <?php
 // control_acceso.php 
 // Se incluye al inicio de cada página protegida.
+// Permitir el uso de sesión entre subcarpetas
+
+session_start();
 
 function verificar_rol($rol_requerido) {
     // 1. GESTIÓN DE SESIÓN Y LOGIN

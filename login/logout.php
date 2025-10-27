@@ -1,4 +1,8 @@
 <?php
+// Permitir el uso de sesión entre subcarpetas
+
+session_start();
+
 // logout.php
 session_start();
 
