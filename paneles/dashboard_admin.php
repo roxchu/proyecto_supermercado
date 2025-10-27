@@ -2,8 +2,9 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once __DIR__ . '/../login/control_acceso.php'; // <-- ruta corregida
-require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../login/control_acceso.php';
+require_once __DIR__ . '/../carrito/db.php';
+
 
 // SOLO permite admin
 verificar_rol('admin');

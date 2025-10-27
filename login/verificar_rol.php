@@ -15,6 +15,7 @@ function verificar_rol(array $roles_permitidos) {
         define('BASE_URL', '/proyecto_supermercado/'); 
     }
 
+    
     // 2. Verificar si hay sesión de rol
     if (!isset($_SESSION['rol']) || empty($_SESSION['rol'])) {
         // No hay sesión activa, redirigir a login

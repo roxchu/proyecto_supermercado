@@ -1,5 +1,8 @@
 <?php
 // login/login.php
+// Permitir el uso de sesión entre subcarpetas
+
+session_start();
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
@@ -57,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
     if ($usuario) {
         // --- 1. NORMALIZACIÓN DEL ROL ---
         $rol_normalizado = strtolower($usuario['nombre_rol']); // Obtiene 'employee' o 'admin'
-        
+
         // CORRECCIÓN CLAVE: Mapear 'employee' a 'empleado' (Español)
         if ($usuario['id_rol'] == 1 || $rol_normalizado === 'admin') {
             $rol_final = 'admin';
@@ -66,17 +69,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
         } else {
             $rol_final = 'cliente'; // Asume rol 3 es cliente
         }
-        
+
         // --- 2. Éxito: Configurar la sesión con el rol normalizado ---
         $_SESSION['logged_in'] = true;
         $_SESSION['user_id'] = $usuario['id_usuario'];
         $_SESSION['rol'] = $rol_final; // Usamos 'empleado'
         $_SESSION['nombre'] = $usuario['nombre_usuario'];
         $_SESSION['id_rol'] = $usuario['id_rol'];
-        
+        $_SESSION['dni'] = (string)$dni;
+
+        session_write_close();
+
         // --- 3. Definir la URL de redirección ---
         $redirect_url = 'index.html'; // Por defecto para clientes
-        
+
         // ¡La lógica de redirección ahora compara contra el rol normalizado!
         if ($rol_final === 'admin') {
             $redirect_url = 'paneles/dashboard_admin.php'; // Panel de admin
@@ -90,9 +96,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
             'message' => 'Inicio de sesión exitoso.',
             'rol' => $rol_final, // Devolver 'empleado' al JS
             'nombre' => $usuario['nombre_usuario'],
-            'redirect' => $redirect_url 
+            'redirect' => $redirect_url
         ]);
-        
     } else {
         // --- 5. Fracaso: DNI no encontrado ---
         echo json_encode([
@@ -107,5 +112,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
     echo json_encode(['success' => false, 'message' => 'Solicitud inválida.']);
 }
 
-exit; 
-?>
+exit;

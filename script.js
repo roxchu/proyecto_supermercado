@@ -1,6 +1,7 @@
 // scripts.js – 
 
 (function() {
+  // Funcionalidad del carrito de compras
   // ---------------------------
   // DETECCIÓN DINÁMICA DE BASE
   // ---------------------------
@@ -282,7 +283,13 @@
         headers: { 'Accept': 'application/json' }
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        console.log("Error al parsear JSON de sesión");
+        return;
+      }
       if (data.logged_in) {
         const rol = data.rol ? data.rol.toString().toLowerCase() : (data.id_rol ? data.id_rol.toString() : null);
         actualizarInterfaz(rol, data.nombre || data.nombre_usuario || 'Usuario');
@@ -316,60 +323,6 @@
       if (linkAdmin.style.display === 'none') {
            e.preventDefault();
       }
-  });
-
-  // ---------------------------
-  // CARRITO: contador y agregar
-  // ---------------------------
-  function actualizarContadorCarrito() {
-    fetch(BASE + 'carrito/obtener_carrito.php', { credentials: 'same-origin' })
-      .then(r => r.json())
-      .then(d => {
-        const cc = document.getElementById('cart-count');
-        if (cc) cc.textContent = d.total_items || 0;
-      })
-      .catch(() => {
-        const cc = document.getElementById('cart-count');
-        if (cc) cc.textContent = 0;
-      });
-  }
-
-  document.addEventListener('click', (e) => {
-    // buscar el botón más cercano con clase .boton-agregar
-    let btn = null;
-    try {
-      btn = e.target.closest('.boton-agregar');
-    } catch (err) {
-      // algunos navegadores antiguos pueden necesitar fallback
-      btn = null;
-    }
-    if (!btn) return;
-
-    if (!usuarioActual) {
-      mostrarNotificacion('Debes iniciar sesión para agregar productos', 'error');
-      if (loginModal) loginModal.style.display = 'block';
-      return;
-    }
-
-    const id = btn.dataset.id;
-    const nombre = btn.dataset.nombre || 'Producto';
-
-    fetch(BASE + 'carrito/agregar_carrito.php', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_producto: id, cantidad: 1 })
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        mostrarNotificacion(`${nombre} agregado al carrito`, 'success');
-        actualizarContadorCarrito();
-      } else {
-        mostrarNotificacion(data.message || 'Error al agregar producto', 'error');
-      }
-    })
-    .catch(() => mostrarNotificacion('Error de conexión', 'error'));
   });
 
   // ---------------------------
@@ -438,7 +391,7 @@
   function cargarProductos() {
     const contPlantilla = document.getElementById('carrusel-dinamico-container');
     if (!contPlantilla) {
-      console.error('No se encontró #carrusel-dinamico-container en la plantilla.');
+      // Ignorar silenciosamente si no existe el contenedor en esta página
       return;
     }
 
@@ -488,6 +441,8 @@
       });
   }
 
+
+  
   // ---------------------------
   // INICIALIZACIÓN
   // ---------------------------
@@ -496,8 +451,7 @@
     checkSession();
     // Carga productos y configura carrusel
     cargarProductos();
-    // Actualiza contador de carrito
-    actualizarContadorCarrito();
+    // El contador del carrito se actualiza automáticamente en carrito.js
   });
 
   // ---------------------------

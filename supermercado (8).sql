@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-10-2025 a las 23:32:24
+-- Tiempo de generación: 27-10-2025 a las 04:46:57
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -29,13 +29,12 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `carrito` (
   `Id_Carrito` int(11) NOT NULL,
-  `DNI_Cliente` int(11) NOT NULL,
-  `Id_Direccion` int(11) NOT NULL,
-  `Fecha_Agregado` datetime NOT NULL DEFAULT current_timestamp(),
-  `Estado` varchar(200) NOT NULL DEFAULT 'Pendiente',
-  `Costo_Envio` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `Total_Final` decimal(10,2) NOT NULL DEFAULT 0.00
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
+  `id_usuario` int(11) NOT NULL,
+  `Id_Producto` int(11) NOT NULL,
+  `Precio_Unitario_Momento` decimal(10,2) NOT NULL,
+  `Cantidad` int(11) NOT NULL DEFAULT 1,
+  `Total` decimal(10,2) GENERATED ALWAYS AS (`Cantidad` * `Precio_Unitario_Momento`) STORED
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -91,10 +90,20 @@ INSERT INTO `cliente` (`id_cliente`) VALUES
 CREATE TABLE `detalle_carrito` (
   `Id_Detalle_Carrito` int(11) NOT NULL,
   `Id_Carrito` int(11) NOT NULL,
-  `Id_Producto` int(11) NOT NULL,
-  `Cantidad` int(11) NOT NULL CHECK (`Cantidad` > 0),
-  `Precio_Unitario_Momento` decimal(10,2) NOT NULL
+  `Id_Direccion` int(11) NOT NULL,
+  `Fecha_Agregado` datetime NOT NULL DEFAULT current_timestamp(),
+  `Estado` varchar(200) NOT NULL DEFAULT 'Pendiente',
+  `Costo_Envio` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `Total_Final` decimal(10,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
+
+--
+-- Volcado de datos para la tabla `detalle_carrito`
+--
+
+INSERT INTO `detalle_carrito` (`Id_Detalle_Carrito`, `Id_Carrito`, `Id_Direccion`, `Fecha_Agregado`, `Estado`, `Costo_Envio`, `Total_Final`) VALUES
+(1, 0, 0, '2025-10-26 18:19:26', 'Pendiente', 0.00, 14500.00),
+(2, 0, 0, '2025-10-26 19:19:50', 'Pendiente', 0.00, 0.00);
 
 -- --------------------------------------------------------
 
@@ -254,7 +263,7 @@ CREATE TABLE `rol` (
 
 INSERT INTO `rol` (`id_rol`, `nombre_rol`, `rol_descripcion`) VALUES
 (1, 'admin', 'Superusuario'),
-(2, 'employee', 'Empleado de Supermercado'),
+(2, 'empleado', 'Empleado de Supermercado'),
 (3, 'client', 'Cliente Registrado');
 
 -- --------------------------------------------------------
@@ -298,7 +307,8 @@ CREATE TABLE `venta` (
   `id_empleado` int(11) DEFAULT NULL,
   `fecha_venta` datetime NOT NULL DEFAULT current_timestamp(),
   `Total_Venta` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `Id_Direccion_Envio` int(11) DEFAULT NULL
+  `Id_Direccion_Envio` int(11) DEFAULT NULL,
+  `Estado` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
 
 --
@@ -309,9 +319,7 @@ CREATE TABLE `venta` (
 -- Indices de la tabla `carrito`
 --
 ALTER TABLE `carrito`
-  ADD PRIMARY KEY (`Id_Carrito`),
-  ADD KEY `FK_Carrito_Cliente` (`DNI_Cliente`),
-  ADD KEY `FK_Carrito_Direccion` (`Id_Direccion`);
+  ADD PRIMARY KEY (`Id_Carrito`);
 
 --
 -- Indices de la tabla `categoria`
@@ -330,8 +338,11 @@ ALTER TABLE `cliente`
 --
 ALTER TABLE `detalle_carrito`
   ADD PRIMARY KEY (`Id_Detalle_Carrito`),
-  ADD KEY `FK_DetalleCarrito_Carrito` (`Id_Carrito`),
-  ADD KEY `FK_DetalleCarrito_Producto` (`Id_Producto`);
+  ADD UNIQUE KEY `Id_Detalle_Carrito_3` (`Id_Detalle_Carrito`),
+  ADD KEY `FK_Carrito_Direccion` (`Id_Direccion`),
+  ADD KEY `Id_Detalle_Carrito` (`Id_Detalle_Carrito`),
+  ADD KEY `Id_Carrito` (`Id_Carrito`),
+  ADD KEY `Id_Detalle_Carrito_2` (`Id_Detalle_Carrito`);
 
 --
 -- Indices de la tabla `detalle_venta`
@@ -405,7 +416,7 @@ ALTER TABLE `categoria`
 -- AUTO_INCREMENT de la tabla `detalle_carrito`
 --
 ALTER TABLE `detalle_carrito`
-  MODIFY `Id_Detalle_Carrito` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_Detalle_Carrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `detalle_venta`
