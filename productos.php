@@ -1,6 +1,5 @@
 <?php
-
-// producto.php
+// productos.php
 session_start();
 header('Content-Type: text/html; charset=utf-8');
 
@@ -17,19 +16,38 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-    $stmt = $pdo->query("
-        SELECT p.Id_Producto AS id, p.Nombre_Producto AS nombre, p.Descripcion AS descripcion,
-               p.imagen_url, p.precio_actual, p.precio_anterior, p.etiqueta_especial,
-               p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria
-        FROM producto p
-        LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
-        WHERE p.es_destacado = 1
-        ORDER BY p.Id_Producto
-        LIMIT 12
-    ");
+
+    // --- Filtro por categoría (si se envía) ---
+    $categoria = isset($_GET['categoria']) ? trim($_GET['categoria']) : null;
+
+    if ($categoria) {
+        $stmt = $pdo->prepare("
+            SELECT p.Id_Producto AS id, p.Nombre_Producto AS nombre, p.Descripcion AS descripcion,
+                   p.imagen_url, p.precio_actual, p.precio_anterior, p.etiqueta_especial,
+                   p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria
+            FROM producto p
+            LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+            WHERE c.Nombre_Categoria = ?
+            ORDER BY p.Id_Producto
+        ");
+        $stmt->execute([$categoria]);
+    } else {
+        // Modo por defecto (productos destacados)
+        $stmt = $pdo->query("
+            SELECT p.Id_Producto AS id, p.Nombre_Producto AS nombre, p.Descripcion AS descripcion,
+                   p.imagen_url, p.precio_actual, p.precio_anterior, p.etiqueta_especial,
+                   p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria
+            FROM producto p
+            LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+            WHERE p.es_destacado = 1
+            ORDER BY p.Id_Producto
+            LIMIT 12
+        ");
+    }
+
     $productos = $stmt->fetchAll();
+
 } catch (PDOException $e) {
-    // Es mejor devolver un JSON o un HTML simple de error si esto se carga por AJAX
     echo "<div style='color:red;text-align:center'>Error de conexión a la Base de Datos: " . htmlspecialchars($e->getMessage()) . "</div>";
     exit;
 }
@@ -37,7 +55,7 @@ try {
 
 <div class="carousel-track" id="carruselProductos">
     <?php if (empty($productos)): ?>
-        <p style="text-align:center; color: #888; width: 100%;">No hay productos destacados disponibles.</p>
+        <p style="text-align:center; color: #888; width: 100%;">No hay productos en esta categoría.</p>
     <?php else: ?>
         <?php foreach ($productos as $producto): ?>
             <a href="mostrar.php?id=<?= $producto['id'] ?>" class="carrusel-slide-link" style="text-decoration: none; color: inherit;">
