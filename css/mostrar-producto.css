@@ -1,0 +1,223 @@
+/* mostrar-producto.css - Estilos específicos para la página de detalle de producto */
+
+.producto-imagen img {
+    object-fit: contain;
+    max-width: 370px;
+    height: 370px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+/* Estilos base de la página de producto */
+.producto-principal {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.producto-imagen {
+    flex-shrink: 0;
+}
+
+.producto-detalles {
+    flex-grow: 1;
+}
+
+/* Secciones debajo del producto */
+.producto-descripcion,
+.producto-opiniones {
+    background: var(--color-blanco);
+    padding: var(--espacio-lg);
+    border-radius: var(--radio-md);
+    box-shadow: var(--sombra-sm);
+    margin-bottom: var(--espacio-lg);
+    border: 1px solid var(--color-gris-200);
+}
+
+.producto-descripcion h2,
+.producto-opiniones h2 {
+    color: var(--color-gris-800);
+    margin-bottom: var(--espacio-md);
+    font-size: var(--texto-xl);
+    border-bottom: 2px solid var(--color-primario);
+    padding-bottom: var(--espacio-sm);
+}
+
+.opinion-rating {
+    color: gold;
+    font-size: 1.2em;
+}
+
+.opinion {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.opinion:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* Información solo para admin */
+.admin-only-info {
+    display: none !important;
+}
+
+.admin-only-info.show-admin {
+    display: block !important;
+}
+
+/* Estilos para la sección de agregar reseñas */
+.agregar-resena {
+    background: var(--color-blanco);
+    padding: var(--espacio-lg);
+    border-radius: var(--radio-md);
+    box-shadow: var(--sombra-sm);
+    margin-top: var(--espacio-lg);
+    border: 1px solid var(--color-gris-200);
+}
+
+.agregar-resena h2 {
+    color: var(--color-gris-800);
+    margin-bottom: var(--espacio-md);
+    font-size: var(--texto-xl);
+}
+
+.login-message {
+    background: var(--color-secundario-light);
+    padding: var(--espacio-md);
+    border-radius: var(--radio-md);
+    text-align: center;
+    margin-bottom: var(--espacio-md);
+}
+
+.login-message p {
+    margin-bottom: var(--espacio-sm);
+    color: var(--color-secundario-hover);
+}
+
+.btn-login {
+    background: var(--color-secundario);
+    color: var(--color-blanco);
+    padding: var(--espacio-sm) var(--espacio-md);
+    border-radius: var(--radio-md);
+    border: none;
+    cursor: pointer;
+    transition: var(--transicion-rapida);
+}
+
+.btn-login:hover {
+    background: var(--color-secundario-hover);
+    transform: translateY(-1px);
+}
+
+.form-resena {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-md);
+}
+
+.rating-input label,
+.comment-input label {
+    font-weight: var(--peso-medium);
+    color: var(--color-gris-700);
+    margin-bottom: var(--espacio-sm);
+    display: block;
+}
+
+.star-rating {
+    display: flex;
+    gap: 4px;
+    margin-top: var(--espacio-sm);
+}
+
+.star {
+    font-size: 2em;
+    color: var(--color-gris-300);
+    cursor: pointer;
+    transition: all var(--transicion-rapida);
+    user-select: none;
+}
+
+.star:hover,
+.star.active {
+    color: #ffd700;
+    transform: scale(1.1);
+}
+
+.star.hover {
+    color: #ffed4e;
+}
+
+.comment-input textarea {
+    width: 100%;
+    padding: var(--espacio-md);
+    border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-md);
+    font-family: inherit;
+    font-size: var(--texto-base);
+    resize: vertical;
+    min-height: 100px;
+    transition: var(--transicion-rapida);
+}
+
+.comment-input textarea:focus {
+    outline: none;
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px var(--color-primario-light);
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+}
+
+.btn-enviar-resena {
+    background: linear-gradient(135deg, var(--color-primario), var(--color-primario-hover));
+    color: var(--color-blanco);
+    padding: var(--espacio-md) var(--espacio-lg);
+    border: none;
+    border-radius: var(--radio-md);
+    font-weight: var(--peso-medium);
+    cursor: pointer;
+    transition: all var(--transicion-rapida);
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+}
+
+.btn-enviar-resena:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sombra-md);
+}
+
+.btn-enviar-resena:disabled {
+    background: var(--color-gris-400);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading {
+    color: var(--color-primario);
+    font-style: italic;
+}
+
+.message {
+    padding: var(--espacio-md);
+    border-radius: var(--radio-md);
+    margin-top: var(--espacio-md);
+}
+
+.message.success {
+    background: var(--color-exito-light);
+    color: var(--color-exito);
+    border: 1px solid var(--color-exito);
+}
+
+.message.error {
+    background: var(--color-peligro-light);
+    color: var(--color-peligro);
+    border: 1px solid var(--color-peligro);
+}
