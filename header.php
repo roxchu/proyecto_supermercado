@@ -55,7 +55,7 @@
 
                     <div id="user-info" style="display:none;">
                         <span id="user-greeting"></span>
-                        <a href="#" id="logout-link" title="Cerrar sesión">
+                        <a href="#" id="logoutLink" title="Cerrar sesión">
                             <i class="fas fa-sign-out-alt"></i>
                         </a>
                     </div>
