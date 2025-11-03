@@ -3,36 +3,10 @@
  * Script para obtener el contenido completo del carrito de compras del usuario logueado.
  * Devuelve la lista de productos y la información de precios/cantidades en formato JSON.
  */
-declare(strict_types=1);
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-// ---------------------------------------------
-// CONFIGURACIÓN DE LA BASE DE DATOS
-// ---------------------------------------------
-// Nota: Replicamos la configuración de los otros scripts para asegurar la conexión
-$host = 'localhost';
-$db   = 'supermercado';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE               => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE    => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES      => false,
-];
-
-try {
-    // Si 'db.php' existe y es el estándar, lo usaríamos en lugar de duplicar el código.
-    // require __DIR__ . '/db.php'; 
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error de conexión a la base de datos.']);
-    exit;
-}
+require_once __DIR__ . '/db.php';
 
 // ---------------------------------------------
 // LÓGICA DE OBTENER CARRITO
@@ -75,21 +49,22 @@ try {
 
     // 2. --- Consultar productos del carrito ---
     // INNER JOIN con 'producto' es correcto para obtener el nombre del producto
-    $sql = "
+        $sql = "
         SELECT 
-            c.Id_Carrito,
-            c.Id_Producto,
+            dc.Id_Detalle_Carrito as Id_Carrito,
+            dc.Id_Producto,
             p.Nombre_Producto AS nombre,
-            c.Precio_Unitario_Momento,
-            c.Cantidad,
-            c.Total
-        FROM carrito c
-        INNER JOIN producto p ON p.Id_Producto = c.Id_Producto
-        WHERE c.id_usuario = ?
-        ORDER BY c.Id_Carrito DESC
-    ";
-    
-    $stmt = $pdo->prepare($sql);
+            dc.Precio_Unitario_Momento,
+            dc.Cantidad,
+            dc.Total
+        FROM venta_unificada vu
+        INNER JOIN detalle_carrito dc ON vu.id_venta = dc.Id_Venta
+        INNER JOIN producto p ON p.Id_Producto = dc.Id_Producto
+        WHERE vu.id_usuario = ? 
+        AND vu.tipo_venta = 'virtual' 
+        AND vu.Estado = 'Pendiente'
+        ORDER BY dc.Id_Detalle_Carrito DESC
+    ";    $stmt = $pdo->prepare($sql);
     $stmt->execute([$idUsuario]);
     $carrito = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

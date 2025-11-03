@@ -77,7 +77,7 @@ try {
             $valid_statuses = ['Pendiente', 'Preparando', 'Enviado', 'Entregado', 'Cancelado'];
 
             if ($venta_id && $new_status && in_array($new_status, $valid_statuses)) {
-                $sql = "UPDATE venta SET Estado_Venta = :Estado_Venta, id_empleado = :id_empleado, Fecha_Actualizacion = NOW() WHERE id_venta = :id_venta";
+                $sql = "UPDATE venta_unificada SET Estado = :Estado_Venta, id_empleado = :id_empleado WHERE id_venta = :id_venta";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
                     'Estado_Venta' => $new_status, 
@@ -102,13 +102,13 @@ try {
              $sql = "SELECT 
                         v.id_venta, 
                         v.Fecha_Venta, 
-                        v.Total_Final, 
-                        c.nombre_cliente AS cliente_nombre,
-                        v.Estado_Venta
-                     FROM venta v
-                     JOIN cliente c ON v.id_cliente = c.id_cliente
-                     WHERE v.Estado_Venta IN ('Pendiente', 'Preparando')
-                     ORDER BY v.Fecha_Venta ASC LIMIT 50";
+                        vu.Total_Venta, 
+                        u.nombre_usuario AS cliente_nombre,
+                        vu.Estado
+                     FROM venta_unificada vu
+                     JOIN usuario u ON vu.id_usuario = u.id_usuario
+                     WHERE vu.Estado IN ('Pendiente', 'Preparando')
+                     ORDER BY vu.fecha_venta ASC LIMIT 50";
             
             $stmt = $pdo->query($sql);
             $ventas = $stmt->fetchAll(PDO::FETCH_ASSOC);

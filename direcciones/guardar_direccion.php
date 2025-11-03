@@ -3,18 +3,18 @@ session_start();
 require '../carrito/db.php'; // conexión $pdo
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id_cliente = $_SESSION['user_id'] ?? $_SESSION['id_usuario'] ?? $_SESSION['dni'] ?? null;
+    $id_usuario = $_SESSION['user_id'] ?? $_SESSION['id_usuario'] ?? $_SESSION['dni'] ?? null;
 
-    if (!$id_cliente) {
+    if (!$id_usuario) {
         die("No hay usuario autenticado.");
     }
 
     $stmt = $pdo->prepare("INSERT INTO direcciones 
-        (id_cliente, nombre_direccion, calle_numero, piso_depto, Ciudad, Provincia, Codigo_postal, Referencia)
+        (id_usuario, nombre_direccion, calle_numero, piso_depto, Ciudad, Provincia, Codigo_postal, Referencia)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
     $ok = $stmt->execute([
-        $id_cliente,
+        $id_usuario,
         $_POST['nombre_direccion'],
         $_POST['calle_numero'],
         $_POST['piso_depto'] ?? null,

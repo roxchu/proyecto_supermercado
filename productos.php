@@ -23,10 +23,12 @@ try {
     if ($categoria) {
         $stmt = $pdo->prepare("
             SELECT p.Id_Producto AS id, p.Nombre_Producto AS nombre, p.Descripcion AS descripcion,
-                   p.imagen_url, p.precio_actual, p.precio_anterior, p.etiqueta_especial,
-                   p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria
+                   p.precio_actual, p.precio_anterior, p.etiqueta_especial,
+                   p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria,
+                   pi.url_imagen AS imagen_url
             FROM producto p
             LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+            LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
             WHERE c.Nombre_Categoria = ?
             ORDER BY p.Id_Producto
         ");
@@ -35,10 +37,12 @@ try {
         // Modo por defecto (productos destacados)
         $stmt = $pdo->query("
             SELECT p.Id_Producto AS id, p.Nombre_Producto AS nombre, p.Descripcion AS descripcion,
-                   p.imagen_url, p.precio_actual, p.precio_anterior, p.etiqueta_especial,
-                   p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria
+                   p.precio_actual, p.precio_anterior, p.etiqueta_especial,
+                   p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria,
+                   pi.url_imagen AS imagen_url
             FROM producto p
             LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+            LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
             WHERE p.es_destacado = 1
             ORDER BY p.Id_Producto
             LIMIT 12
@@ -64,7 +68,7 @@ try {
                         <span class="etiqueta-caracteristica-verde"><?= htmlspecialchars($producto['etiqueta_especial']) ?></span>
                     <?php endif; ?>
 
-                    <img src="<?= htmlspecialchars($producto['imagen_url']) ?>"
+                    <img src="<?= htmlspecialchars($producto['imagen_url'] ?: 'https://via.placeholder.com/250x160?text=Sin+Imagen') ?>"
                          alt="<?= htmlspecialchars($producto['nombre']) ?>"
                          class="producto-imagen"
                          onerror="this.src='https://via.placeholder.com/250x160?text=Sin+Imagen'">

@@ -26,9 +26,10 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 // 2. Si el ID es válido, buscar el producto y sus opiniones
 if ($producto_id !== null) {
     // --- Obtener datos del producto ---
-    $sql_producto = "SELECT p.*, c.Nombre_Categoria
+    $sql_producto = "SELECT p.*, c.Nombre_Categoria, pi.url_imagen AS imagen_url
                      FROM producto p
                      LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+                     LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
                      WHERE p.Id_Producto = ?";
 
     $stmt_producto = $pdo->prepare($sql_producto);

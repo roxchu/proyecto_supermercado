@@ -1,161 +1,174 @@
 <?php
 /**
- * Script para agregar o actualizar la cantidad de un producto en el carrito del usuario.
- * Utiliza PDO para las operaciones de base de datos.
- * Estilo de conexión y respuesta JSON similar a login.php/registro.php.
+ * AGREGAR CARRITO - Versión actualizada para nueva estructura
+ * Agrega productos al carrito usando venta_unificada y detalle_carrito
  */
-declare(strict_types=1);
+
+header('Content-Type: application/json');
+
+// --- VERIFICAR SESSIÓN ---
 session_start();
-header('Content-Type: application/json; charset=utf-8');
+$idUsuario = $_SESSION['user_id'] ?? $_SESSION['id_usuario'] ?? null;
 
-// ---------------------------------------------
-// CONFIGURACIÓN DE LA BASE DE DATOS
-// ---------------------------------------------
-// Nota: En una aplicación real, esta configuración debería estar en un solo archivo incluido (e.g., 'db.php')
-$host = 'localhost';
-$db   = 'supermercado';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE               => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE    => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES      => false,
-];
-
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error de conexión a la base de datos.']);
+if (!$idUsuario) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Usuario no autenticado'
+    ]);
     exit;
 }
 
-// ---------------------------------------------
-// LÓGICA DE AGREGAR AL CARRITO
-// ---------------------------------------------
 try {
-    // 1. --- Verificar Usuario Logueado ---
-    // Usamos 'user_id' como en login.php/registro.php
-    $idUsuario = $_SESSION['user_id'] ?? null;
+    require_once __DIR__ . '/db.php';
 
-    if (!$idUsuario) {
-        http_response_code(401); // No autorizado
-        echo json_encode([
-            'success' => false,
-            'message' => 'Debe iniciar sesión para agregar productos al carrito.'
-        ]);
-        exit;
-    }
-
-    // 2. --- Leer y Validar la Entrada JSON (Esperamos JSON, como en el ejemplo previo) ---
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405); // Método no permitido
-        echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
-        exit;
-    }
-    
+    // --- OBTENER Y VALIDAR DATOS DEL POST ---
     $input = json_decode(file_get_contents('php://input'), true);
-
-    if (json_last_error() !== JSON_ERROR_NONE || !isset($input['id_producto'], $input['cantidad'])) {
-        http_response_code(400); // Solicitud incorrecta
-        echo json_encode([
-            'success' => false,
-            'message' => 'Datos incompletos o formato JSON inválido.'
-        ]);
-        exit;
-    }
-
-    // Sanitización y conversión de tipos
-    $idProducto = (int)$input['id_producto'];
-    $cantidad = max(1, (int)$input['cantidad']); // Aseguramos cantidad >= 1
-
-    if ($idProducto <= 0) {
-        http_response_code(400); 
-        echo json_encode(['success' => false, 'message' => 'ID de producto inválido.']);
-        exit;
-    }
     
-    // 3. --- Obtener el Precio Actual del Producto (Crucial para la seguridad) ---
-    // Se asume la existencia de la tabla 'producto' con la columna 'precio_actual'
-    $stmtPrecio = $pdo->prepare("SELECT precio_actual FROM producto WHERE Id_Producto = ?");
-    $stmtPrecio->execute([$idProducto]);
-    $precioUnitario = $stmtPrecio->fetchColumn(); 
-
-    if (!$precioUnitario) {
-        http_response_code(404); // No encontrado
-        echo json_encode([
-            'success' => false,
-            'message' => 'Producto no encontrado o sin precio disponible.'
-        ]);
-        exit;
-    }
-    
-    $precioUnitario = (float)$precioUnitario; 
-
-    // 4. --- Lógica de Carrito: Insertar o Actualizar ---
-
-    // A. Verificar si el producto ya está en el carrito
-    $stmtCheck = $pdo->prepare("
-        SELECT Id_Carrito, Cantidad
-        FROM carrito
-        WHERE id_usuario = ? AND Id_Producto = ?
-    ");
-    $stmtCheck->execute([$idUsuario, $idProducto]);
-    $item = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-
-    $pdo->beginTransaction(); // Iniciar transacción para asegurar la integridad
-
-    if ($item) {
-        // B. El producto ya existe: Actualizar la cantidad
-        $nuevaCantidad = $item['Cantidad'] + $cantidad;
-        $idCarrito = $item['Id_Carrito'];
-        
-        // Actualizar Cantidad y Precio_Unitario_Momento. 'Total' es GENERADO por la DB.
-        $sqlUpdate = "
-            UPDATE carrito
-            SET Cantidad = ?, Precio_Unitario_Momento = ? 
-            WHERE Id_Carrito = ?
-        ";
-        $stmtUpdate = $pdo->prepare($sqlUpdate);
-        $stmtUpdate->execute([$nuevaCantidad, $precioUnitario, $idCarrito]);
-        
-        $mensajeExito = "Cantidad actualizada correctamente. Nueva cantidad: " . $nuevaCantidad;
+    if (!$input) {
+        // Fallback para form-data tradicional
+        $idProducto = (int)($_POST['id_producto'] ?? 0);
+        $cantidad = (int)($_POST['cantidad'] ?? 1);
     } else {
-        // C. El producto es nuevo: Insertar nuevo registro
-        // 'Total' se omite en el INSERT porque es una columna GENERATED.
-        $sqlInsert = "
-            INSERT INTO carrito (id_usuario, Id_Producto, Precio_Unitario_Momento, Cantidad)
-            VALUES (?, ?, ?, ?)
-        ";
-        $stmtInsert = $pdo->prepare($sqlInsert);
-        $stmtInsert->execute([$idUsuario, $idProducto, $precioUnitario, $cantidad]);
-        
-        $mensajeExito = "Producto agregado por primera vez al carrito.";
+        $idProducto = (int)($input['id_producto'] ?? 0);
+        $cantidad = (int)($input['cantidad'] ?? 1);
     }
 
-    $pdo->commit(); // Confirmar los cambios
+    // Validaciones básicas
+    if ($idProducto <= 0) {
+        throw new Exception('ID de producto inválido');
+    }
 
-    // 5. --- Respuesta de Éxito ---
+    if ($cantidad <= 0) {
+        $cantidad = 1;
+    }
+
+    // --- VERIFICAR QUE EL PRODUCTO EXISTE Y OBTENER PRECIO ---
+    $stmtProd = $pdo->prepare("
+        SELECT Id_Producto, Nombre_Producto, precio_actual, Stock 
+        FROM producto 
+        WHERE Id_Producto = ?
+    ");
+    $stmtProd->execute([$idProducto]);
+    $producto = $stmtProd->fetch(PDO::FETCH_ASSOC);
+
+    if (!$producto) {
+        throw new Exception('Producto no encontrado');
+    }
+
+    if ($producto['Stock'] < $cantidad) {
+        throw new Exception('Stock insuficiente. Disponible: ' . $producto['Stock']);
+    }
+
+    $precioUnitario = (float)$producto['precio_actual'];
+
+    $pdo->beginTransaction();
+
+    // --- BUSCAR O CREAR CARRITO VIRTUAL PENDIENTE ---
+    $stmtCarrito = $pdo->prepare("
+        SELECT id_venta 
+        FROM venta_unificada 
+        WHERE id_usuario = ? 
+        AND tipo_venta = 'virtual' 
+        AND Estado = 'Pendiente'
+        LIMIT 1
+    ");
+    $stmtCarrito->execute([$idUsuario]);
+    $carritoExistente = $stmtCarrito->fetch(PDO::FETCH_ASSOC);
+
+    if ($carritoExistente) {
+        $idVenta = $carritoExistente['id_venta'];
+    } else {
+        // Crear nuevo carrito virtual
+        $stmtNuevoCarrito = $pdo->prepare("
+            INSERT INTO venta_unificada 
+            (id_usuario, tipo_venta, Estado, Total_Venta) 
+            VALUES (?, 'virtual', 'Pendiente', 0.00)
+        ");
+        $stmtNuevoCarrito->execute([$idUsuario]);
+        $idVenta = $pdo->lastInsertId();
+    }
+
+    // --- VERIFICAR SI EL PRODUCTO YA ESTÁ EN EL CARRITO ---
+    $stmtCheck = $pdo->prepare("
+        SELECT Id_Detalle_Carrito, Cantidad
+        FROM detalle_carrito
+        WHERE Id_Venta = ? AND Id_Producto = ?
+    ");
+    $stmtCheck->execute([$idVenta, $idProducto]);
+    $itemExistente = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+    if ($itemExistente) {
+        // Actualizar cantidad existente
+        $nuevaCantidad = $itemExistente['Cantidad'] + $cantidad;
+        
+        // Verificar stock para nueva cantidad
+        if ($producto['Stock'] < $nuevaCantidad) {
+            throw new Exception('Stock insuficiente para la cantidad solicitada. Disponible: ' . $producto['Stock'] . ', en carrito: ' . $itemExistente['Cantidad']);
+        }
+
+        $stmtUpdate = $pdo->prepare("
+            UPDATE detalle_carrito 
+            SET Cantidad = ?, Precio_Unitario_Momento = ?
+            WHERE Id_Detalle_Carrito = ?
+        ");
+        $stmtUpdate->execute([$nuevaCantidad, $precioUnitario, $itemExistente['Id_Detalle_Carrito']]);
+        
+        $mensaje = "Cantidad actualizada en el carrito";
+        
+    } else {
+        // Insertar nuevo item en el carrito
+        $stmtInsert = $pdo->prepare("
+            INSERT INTO detalle_carrito 
+            (Id_Venta, Id_Producto, Precio_Unitario_Momento, Cantidad) 
+            VALUES (?, ?, ?, ?)
+        ");
+        $stmtInsert->execute([$idVenta, $idProducto, $precioUnitario, $cantidad]);
+        
+        $mensaje = "Producto agregado al carrito";
+    }
+
+    // --- ACTUALIZAR TOTAL DEL CARRITO ---
+    $stmtTotal = $pdo->prepare("
+        UPDATE venta_unificada 
+        SET Total_Venta = (
+            SELECT COALESCE(SUM(Total), 0) 
+            FROM detalle_carrito 
+            WHERE Id_Venta = ?
+        )
+        WHERE id_venta = ?
+    ");
+    $stmtTotal->execute([$idVenta, $idVenta]);
+
+    // --- OBTENER TOTAL ACTUALIZADO ---
+    $stmtGetTotal = $pdo->prepare("
+        SELECT Total_Venta, 
+               (SELECT COUNT(*) FROM detalle_carrito WHERE Id_Venta = ?) as items_count
+        FROM venta_unificada 
+        WHERE id_venta = ?
+    ");
+    $stmtGetTotal->execute([$idVenta, $idVenta]);
+    $totales = $stmtGetTotal->fetch(PDO::FETCH_ASSOC);
+
+    $pdo->commit();
+
     echo json_encode([
         'success' => true,
-        'message' => $mensajeExito
+        'message' => $mensaje,
+        'producto' => $producto['Nombre_Producto'],
+        'cantidad_agregada' => $cantidad,
+        'total_carrito' => (float)$totales['Total_Venta'],
+        'items_en_carrito' => (int)$totales['items_count'],
+        'id_venta' => $idVenta
     ]);
 
-} catch (Throwable $e) {
-    // 6. --- Manejo de Errores ---
-    if (isset($pdo) && $pdo->inTransaction()) {
+} catch (Exception $e) {
+    if (isset($pdo)) {
         $pdo->rollBack();
     }
     
-    error_log("Error en agregar_carrito.php: " . $e->getMessage());
-    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error interno al procesar el carrito.',
-        'debug' => $e->getMessage() // Útil para desarrollo
+        'message' => $e->getMessage()
     ]);
 }
 ?>

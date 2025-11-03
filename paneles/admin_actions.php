@@ -106,29 +106,37 @@ try {
 
             if ($id_producto) {
                 // --- MODO UPDATE (EDITAR) ---
+                // Actualizar datos del producto (sin imagen_url)
                 $sql_prod = "UPDATE producto 
                              SET Nombre_Producto = ?, Descripcion = ?, precio_actual = ?, 
-                                 precio_anterior = ?, Stock = ?, Id_Categoria = ?, imagen_url = ?
+                                 precio_anterior = ?, Stock = ?, Id_Categoria = ?
                              WHERE Id_Producto = ?";
                 $stmt_prod = $pdo->prepare($sql_prod);
-                $stmt_prod->execute([$nombre, $descripcion, $precio_actual, $precio_anterior, $stock, $id_categoria, $imagen_principal, $id_producto]);
+                $stmt_prod->execute([$nombre, $descripcion, $precio_actual, $precio_anterior, $stock, $id_categoria, $id_producto]);
                 $message = 'Producto actualizado.';
             } else {
                 // --- MODO INSERT (CREAR) ---
-                $sql_prod = "INSERT INTO producto (Nombre_Producto, Descripcion, precio_actual, precio_anterior, Stock, Id_Categoria, imagen_url) 
-                             VALUES (?, ?, ?, ?, ?, ?, ?)";
+                // Crear producto sin imagen_url
+                $sql_prod = "INSERT INTO producto (Nombre_Producto, Descripcion, precio_actual, precio_anterior, Stock, Id_Categoria) 
+                             VALUES (?, ?, ?, ?, ?, ?)";
                 $stmt_prod = $pdo->prepare($sql_prod);
-                $stmt_prod->execute([$nombre, $descripcion, $precio_actual, $precio_anterior, $stock, $id_categoria, $imagen_principal]);
+                $stmt_prod->execute([$nombre, $descripcion, $precio_actual, $precio_anterior, $stock, $id_categoria]);
                 $id_producto = $pdo->lastInsertId(); // Obtenemos el ID del nuevo producto
                 $message = 'Producto creado.';
             }
 
-            // --- GESTIÓN DE IMÁGENES SECUNDARIAS (TABLA producto_imagenes) ---
-            // 1. Borramos todas las imágenes secundarias existentes (orden > 1) para este producto
-            $stmt_delete_imgs = $pdo->prepare("DELETE FROM producto_imagenes WHERE Id_Producto = ? AND orden > 1");
+            // --- GESTIÓN DE TODAS LAS IMÁGENES (TABLA producto_imagenes) ---
+            // 1. Borramos todas las imágenes existentes para este producto
+            $stmt_delete_imgs = $pdo->prepare("DELETE FROM producto_imagenes WHERE Id_Producto = ?");
             $stmt_delete_imgs->execute([$id_producto]);
 
-            // 2. Insertamos las nuevas imágenes secundarias
+            // 2. Insertamos la imagen principal (orden = 1)
+            if (!empty($imagen_principal)) {
+                $stmt_insert_img = $pdo->prepare("INSERT INTO producto_imagenes (Id_Producto, url_imagen, orden) VALUES (?, ?, 1)");
+                $stmt_insert_img->execute([$id_producto, $imagen_principal]);
+            }
+
+            // 3. Insertamos las imágenes secundarias
             $stmt_insert_img = $pdo->prepare("INSERT INTO producto_imagenes (Id_Producto, url_imagen, orden) VALUES (?, ?, ?)");
             $orden = 2; // Empezamos desde el orden 2
             foreach ($imagenes_secundarias as $url) {

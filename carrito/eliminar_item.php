@@ -1,143 +1,175 @@
 <?php
 /**
- * Script para eliminar una línea de producto del carrito del usuario.
- * Se espera recibir el 'id_producto' o 'Id_Carrito' a través de POST/JSON.
+ * ELIMINAR ITEM DEL CARRITO - Versión actualizada para nueva estructura
+ * Elimina productos del carrito usando venta_unificada y detalle_carrito
  */
-declare(strict_types=1);
+
+header('Content-Type: application/json');
+
+// --- VERIFICAR SESSIÓN ---
 session_start();
-header('Content-Type: application/json; charset=utf-8');
+$idUsuario = $_SESSION['user_id'] ?? $_SESSION['id_usuario'] ?? null;
 
-// ---------------------------------------------
-// CONFIGURACIÓN DE LA BASE DE DATOS
-// ---------------------------------------------
-// Se replica la conexión de los otros scripts
-$host = 'localhost';
-$db   = 'supermercado';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE               => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE    => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES      => false,
-];
-
-try {
-    // Si 'db.php' existe y es el estándar, lo usaríamos en lugar de duplicar el código.
-    // require __DIR__ . '/db.php'; 
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error de conexión a la base de datos.']);
+if (!$idUsuario) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Usuario no autenticado'
+    ]);
     exit;
 }
 
-// ---------------------------------------------
-// LÓGICA DE ELIMINACIÓN DE ÍTEM
-// ---------------------------------------------
 try {
-    // 1. --- Detectar usuario logueado ---
-    // Usamos 'user_id' como en login.php/agregar_carrito.php
-    $idUsuario = $_SESSION['user_id'] ?? $_SESSION['id_usuario'] ?? null;
-    $dni = $_SESSION['dni'] ?? null;
+    require_once __DIR__ . '/db.php';
 
-    if (!$idUsuario && !$dni) {
-        http_response_code(401); // No autorizado
-        echo json_encode([
-            'success' => false,
-            'message' => 'Debe iniciar sesión para modificar el carrito.'
-        ]);
-        exit;
-    }
-
-    // Lógica para obtener idUsuario si solo hay DNI (replicada de obtener_carrito.php)
-    if (!$idUsuario && $dni) {
-        $stmtUser = $pdo->prepare("SELECT id_usuario FROM usuario WHERE DNI = ?");
-        $stmtUser->execute([$dni]);
-        $idUsuario = $stmtUser->fetchColumn();
-
-        if (!$idUsuario) {
-            http_response_code(404);
-            echo json_encode([
-                'success' => false,
-                'message' => 'Usuario no encontrado.'
-            ]);
-            exit;
-        }
-        $_SESSION['user_id'] = $idUsuario; 
-    }
-
-    // 2. --- Leer y validar entrada JSON ---
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        echo json_encode(['success' => false, 'message' => 'Método no permitido. Use POST.']);
-        exit;
-    }
-    
+    // --- OBTENER DATOS DEL POST ---
     $input = json_decode(file_get_contents('php://input'), true);
-
-    if (json_last_error() !== JSON_ERROR_NONE || (!isset($input['id_producto']) && !isset($input['id_carrito']))) {
-        http_response_code(400); // Solicitud incorrecta
-        echo json_encode([
-            'success' => false,
-            'message' => 'Datos incompletos. Se requiere id_producto o id_carrito.'
-        ]);
-        exit;
+    
+    if (!$input) {
+        // Fallback para form-data tradicional
+        $idItemCarrito = $_POST['id_item'] ?? null;
+        $idProducto = $_POST['id_producto'] ?? null;
+        $accion = $_POST['accion'] ?? 'eliminar'; // 'eliminar' o 'reducir'
+    } else {
+        $idItemCarrito = $input['id_item'] ?? null;
+        $idProducto = $input['id_producto'] ?? null;
+        $accion = $input['accion'] ?? 'eliminar';
     }
 
-    // Preferimos eliminar por Id_Carrito si está disponible, es más directo y seguro.
-    $idItemCarrito = $input['id_carrito'] ?? null;
-    $idProducto = $input['id_producto'] ?? null;
+    // --- BUSCAR CARRITO VIRTUAL PENDIENTE DEL USUARIO ---
+    $stmtCarrito = $pdo->prepare("
+        SELECT id_venta 
+        FROM venta_unificada 
+        WHERE id_usuario = ? 
+        AND tipo_venta = 'virtual' 
+        AND Estado = 'Pendiente'
+        LIMIT 1
+    ");
+    $stmtCarrito->execute([$idUsuario]);
+    $carrito = $stmtCarrito->fetch(PDO::FETCH_ASSOC);
 
+    if (!$carrito) {
+        throw new Exception('No hay carrito activo');
+    }
 
-    // 3. --- Eliminar el ítem ---
+    $idVenta = $carrito['id_venta'];
 
-    // La eliminación debe asegurar que solo se elimine ítems del usuario logueado.
+    $pdo->beginTransaction();
+
     if ($idItemCarrito) {
-        $sqlDelete = "DELETE FROM carrito WHERE Id_Carrito = ? AND id_usuario = ?";
-        $params = [(int)$idItemCarrito, $idUsuario];
+        // Eliminar por ID específico del detalle_carrito
+        $stmtEliminar = $pdo->prepare("
+            DELETE FROM detalle_carrito 
+            WHERE Id_Detalle_Carrito = ? 
+            AND Id_Venta = ?
+        ");
+        $resultado = $stmtEliminar->execute([$idItemCarrito, $idVenta]);
+        
+        if ($stmtEliminar->rowCount() === 0) {
+            throw new Exception('Item no encontrado en el carrito');
+        }
+        
+        $mensaje = "Item eliminado del carrito";
+        
     } elseif ($idProducto) {
-        // Si se elimina por Id_Producto, elimina TODAS las filas de ese producto para el usuario.
-        $sqlDelete = "DELETE FROM carrito WHERE Id_Producto = ? AND id_usuario = ?";
-        $params = [(int)$idProducto, $idUsuario];
+        if ($accion === 'reducir') {
+            // Reducir cantidad en 1
+            $stmtCheck = $pdo->prepare("
+                SELECT Id_Detalle_Carrito, Cantidad 
+                FROM detalle_carrito 
+                WHERE Id_Venta = ? AND Id_Producto = ?
+            ");
+            $stmtCheck->execute([$idVenta, $idProducto]);
+            $item = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$item) {
+                throw new Exception('Producto no encontrado en el carrito');
+            }
+            
+            if ($item['Cantidad'] <= 1) {
+                // Si cantidad es 1 o menos, eliminar completamente
+                $stmtEliminar = $pdo->prepare("
+                    DELETE FROM detalle_carrito 
+                    WHERE Id_Detalle_Carrito = ?
+                ");
+                $stmtEliminar->execute([$item['Id_Detalle_Carrito']]);
+                $mensaje = "Producto eliminado del carrito";
+            } else {
+                // Reducir cantidad
+                $stmtReducir = $pdo->prepare("
+                    UPDATE detalle_carrito 
+                    SET Cantidad = Cantidad - 1 
+                    WHERE Id_Detalle_Carrito = ?
+                ");
+                $stmtReducir->execute([$item['Id_Detalle_Carrito']]);
+                $mensaje = "Cantidad reducida";
+            }
+        } else {
+            // Eliminar todas las unidades del producto
+            $stmtEliminar = $pdo->prepare("
+                DELETE FROM detalle_carrito 
+                WHERE Id_Venta = ? AND Id_Producto = ?
+            ");
+            $resultado = $stmtEliminar->execute([$idVenta, $idProducto]);
+            
+            if ($stmtEliminar->rowCount() === 0) {
+                throw new Exception('Producto no encontrado en el carrito');
+            }
+            
+            $mensaje = "Producto eliminado del carrito";
+        }
     } else {
-         http_response_code(400);
-         echo json_encode(['success' => false, 'message' => 'ID de eliminación no válido.']);
-         exit;
+        throw new Exception('ID de eliminación no válido');
     }
 
-    $stmtDelete = $pdo->prepare($sqlDelete);
-    $stmtDelete->execute($params);
-    $filasAfectadas = $stmtDelete->rowCount();
+    // --- ACTUALIZAR TOTAL DEL CARRITO ---
+    $stmtTotal = $pdo->prepare("
+        UPDATE venta_unificada 
+        SET Total_Venta = (
+            SELECT COALESCE(SUM(Total), 0) 
+            FROM detalle_carrito 
+            WHERE Id_Venta = ?
+        )
+        WHERE id_venta = ?
+    ");
+    $stmtTotal->execute([$idVenta, $idVenta]);
 
+    // --- VERIFICAR SI EL CARRITO QUEDÓ VACÍO ---
+    $stmtCount = $pdo->prepare("
+        SELECT COUNT(*) as items_count,
+               COALESCE(SUM(Total), 0) as total_carrito
+        FROM detalle_carrito 
+        WHERE Id_Venta = ?
+    ");
+    $stmtCount->execute([$idVenta]);
+    $totales = $stmtCount->fetch(PDO::FETCH_ASSOC);
 
-    // 4. --- Respuesta Final ---
-    if ($filasAfectadas > 0) {
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'message' => 'Ítem(s) eliminado(s) del carrito correctamente.',
-            'filas_eliminadas' => $filasAfectadas
-        ]);
-    } else {
-        http_response_code(404); // No encontrado
-        echo json_encode([
-            'success' => false,
-            'message' => 'El ítem especificado no se encontró en el carrito del usuario.',
-            'filas_eliminadas' => 0
-        ]);
+    // Si el carrito quedó vacío, opcionalmente podemos eliminarlo
+    if ($totales['items_count'] == 0) {
+        $stmtEliminarCarrito = $pdo->prepare("
+            DELETE FROM venta_unificada 
+            WHERE id_venta = ? AND tipo_venta = 'virtual' AND Estado = 'Pendiente'
+        ");
+        $stmtEliminarCarrito->execute([$idVenta]);
+        $mensaje .= " - Carrito vacío eliminado";
+    }
+
+    $pdo->commit();
+
+    echo json_encode([
+        'success' => true,
+        'message' => $mensaje,
+        'items_en_carrito' => (int)$totales['items_count'],
+        'total_carrito' => (float)$totales['total_carrito']
+    ]);
+
+} catch (Exception $e) {
+    if (isset($pdo)) {
+        $pdo->rollBack();
     }
     
-} catch (Throwable $e) {
-    // 5. --- Manejo de Errores ---
-    error_log("Error en eliminar_item.php: " . $e->getMessage());
-    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error interno al eliminar el ítem.',
-        'debug' => $e->getMessage()
+        'message' => $e->getMessage()
     ]);
 }
 ?>

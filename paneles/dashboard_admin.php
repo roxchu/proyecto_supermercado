@@ -21,7 +21,7 @@ try {
     $stmt_stock_count = $pdo->query("SELECT COUNT(*) FROM producto WHERE Stock < 20");
     $low_stock_count = $stmt_stock_count->fetchColumn();
 
-    $stmt_sales_count = $pdo->query("SELECT COUNT(*) FROM venta WHERE fecha_venta >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+    $stmt_sales_count = $pdo->query("SELECT COUNT(*) FROM venta_unificada WHERE fecha_venta >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $sales_count = $stmt_sales_count->fetchColumn();
 
 
@@ -38,27 +38,35 @@ try {
     $stmt_categorias = $pdo->query("SELECT * FROM categoria ORDER BY Nombre_Categoria");
     $categorias = $stmt_categorias->fetchAll(PDO::FETCH_ASSOC);
 
-    // --- 3. LEER PRODUCTOS Y SUS IMÁGENES SECUNDARIAS ---
+    // --- 3. LEER PRODUCTOS Y SUS IMÁGENES ---
     
-    // Obtenemos todas las imágenes secundarias (orden > 1)
-    $stmt_imagenes = $pdo->query("SELECT Id_Producto, url_imagen FROM producto_imagenes WHERE orden > 1 ORDER BY orden");
+    // Obtenemos todas las imágenes (principales y secundarias)
+    $stmt_imagenes = $pdo->query("SELECT Id_Producto, url_imagen, orden FROM producto_imagenes ORDER BY orden");
+    $imagenes_principales_map = [];
     $imagenes_secundarias_map = [];
+    
     foreach ($stmt_imagenes->fetchAll(PDO::FETCH_ASSOC) as $img) {
-        $imagenes_secundarias_map[$img['Id_Producto']][] = $img['url_imagen'];
+        if ($img['orden'] == 1) {
+            // Imagen principal
+            $imagenes_principales_map[$img['Id_Producto']] = $img['url_imagen'];
+        } else {
+            // Imágenes secundarias
+            $imagenes_secundarias_map[$img['Id_Producto']][] = $img['url_imagen'];
+        }
     }
 
-    // Obtenemos los productos
-    $stmt_productos = $pdo->query("SELECT p.Id_Producto, p.imagen_url, p.Nombre_Producto, p.precio_actual, p.precio_anterior, p.Stock, p.Descripcion, p.Id_Categoria, c.Nombre_Categoria 
+    // Obtenemos los productos (sin imagen_url ya que ahora usamos producto_imagenes)
+    $stmt_productos = $pdo->query("SELECT p.Id_Producto, p.codigo_producto, p.Nombre_Producto, p.precio_actual, p.precio_anterior, p.Stock, p.Descripcion, p.Id_Categoria, c.Nombre_Categoria 
                                    FROM producto p 
                                    LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria 
                                    ORDER BY p.Id_Producto");
     $productos = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);
 
-    // Añadimos las imágenes secundarias a cada array de producto
+    // Añadimos las imágenes a cada array de producto
     foreach ($productos as $i => $producto) {
         $prod_id = $producto['Id_Producto'];
-        // Aseguramos que imagen_url (principal) no sea null para el JS
-        $productos[$i]['imagen_url'] = $producto['imagen_url'] ?? ''; 
+        // Agregamos la imagen principal desde la tabla producto_imagenes
+        $productos[$i]['imagen_url'] = $imagenes_principales_map[$prod_id] ?? 'https://via.placeholder.com/250x160'; 
         $productos[$i]['imagenes_secundarias'] = $imagenes_secundarias_map[$prod_id] ?? [];
     }
 

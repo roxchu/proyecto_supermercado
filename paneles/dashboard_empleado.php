@@ -22,16 +22,16 @@ $nombre_usuario = $_SESSION['nombre'] ?? $_SESSION['nombre_usuario'] ?? 'Usuario
 try {
     $sql = "SELECT 
                 v.id_venta, 
-                v.fecha_venta, 
-                v.Total_Venta,  
-                v.Estado,
+                vu.fecha_venta, 
+                vu.Total_Venta,  
+                vu.Estado,
                 -- Seleccionamos el nombre del cliente desde la tabla 'usuario'
                 u.nombre_usuario AS nombre_cliente 
-            FROM venta v
-            JOIN usuario u ON v.id_cliente = u.id_usuario 
+            FROM venta_unificada vu
+            JOIN usuario u ON vu.id_usuario = u.id_usuario 
             
-            WHERE v.Estado = 'Pendiente' 
-            ORDER BY v.fecha_venta ASC
+            WHERE vu.Estado = 'Pendiente' 
+            ORDER BY vu.fecha_venta ASC
             LIMIT 10";
             
     $stmt_ventas = $pdo->query($sql);

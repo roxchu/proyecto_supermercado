@@ -407,6 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // CARRUSEL Y CARGA DE PRODUCTOS
   // ---------------------------
   function inicializarCarrusel() {
+    console.log('🎠 Inicializando carrusel...');
+    
     let track = document.getElementById('carrusel-dinamico-container') || document.querySelector('.carousel-track');
     if (!track) {
       console.warn('Carousel: track no encontrado.');
@@ -417,13 +419,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnPrev = container ? container.querySelector('.prev') : document.querySelector('.prev');
     const btnNext = container ? container.querySelector('.next') : document.querySelector('.next');
 
-    track.style.overflowX = track.style.overflowX || 'auto';
-    track.style.scrollBehavior = track.style.scrollBehavior || 'smooth';
+    console.log('Carrusel elementos encontrados:', {
+      track: !!track,
+      container: !!container,
+      btnPrev: !!btnPrev,
+      btnNext: !!btnNext
+    });
 
-    const firstCard = track.querySelector('.producto-card') || track.firstElementChild;
-    const gap = parseFloat(getComputedStyle(track).gap || 0);
-    const cardWidth = firstCard ? Math.ceil(firstCard.getBoundingClientRect().width + gap) : 270;
-    const step = cardWidth || 270;
+    // Configurar estilos del track
+    track.style.display = 'flex';
+    track.style.overflowX = 'auto';
+    track.style.scrollBehavior = 'smooth';
+    track.style.gap = '1rem';
+
+    // Calcular ancho de desplazamiento
+    const calcularStep = () => {
+      const firstCard = track.querySelector('.producto-card') || track.firstElementChild;
+      if (!firstCard) return 270;
+      
+      const cardRect = firstCard.getBoundingClientRect();
+      const gap = parseFloat(getComputedStyle(track).gap || '16');
+      return Math.ceil(cardRect.width + gap);
+    };
 
     function clearHandler(el, key) {
       if (!el) return;
@@ -434,15 +451,28 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
+    // Configurar botón siguiente
     if (btnNext) {
       clearHandler(btnNext, '__carouselNext');
-      const handlerNext = () => track.scrollBy({ left: step, behavior: 'smooth' });
+      const handlerNext = (e) => {
+        e.preventDefault();
+        const step = calcularStep();
+        track.scrollBy({ left: step, behavior: 'smooth' });
+        console.log('Scroll siguiente:', step);
+      };
       btnNext.addEventListener('click', handlerNext);
       btnNext.__carouselNext = handlerNext;
     }
+
+    // Configurar botón anterior
     if (btnPrev) {
       clearHandler(btnPrev, '__carouselPrev');
-      const handlerPrev = () => track.scrollBy({ left: -step, behavior: 'smooth' });
+      const handlerPrev = (e) => {
+        e.preventDefault();
+        const step = calcularStep();
+        track.scrollBy({ left: -step, behavior: 'smooth' });
+        console.log('Scroll anterior:', -step);
+      };
       btnPrev.addEventListener('click', handlerPrev);
       btnPrev.__carouselPrev = handlerPrev;
     }
@@ -453,17 +483,33 @@ document.addEventListener('DOMContentLoaded', function() {
       btn.setAttribute('tabindex', '0');
       btn.style.cursor = 'pointer';
       btn.addEventListener('keyup', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') btn.click();
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          btn.click();
+        }
       });
     });
 
+    // Actualizar estado de botones
     function actualizarEstadoBotones() {
       if (!track) return;
-      if (btnNext) btnNext.disabled = (track.scrollLeft + track.clientWidth >= track.scrollWidth - 1);
-      if (btnPrev) btnPrev.disabled = (track.scrollLeft <= 1);
+      const isAtStart = track.scrollLeft <= 1;
+      const isAtEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+      
+      if (btnPrev) {
+        btnPrev.disabled = isAtStart;
+        btnPrev.style.opacity = isAtStart ? '0.5' : '1';
+      }
+      if (btnNext) {
+        btnNext.disabled = isAtEnd;
+        btnNext.style.opacity = isAtEnd ? '0.5' : '1';
+      }
     }
+
     track.addEventListener('scroll', () => requestAnimationFrame(actualizarEstadoBotones));
-    actualizarEstadoBotones();
+    setTimeout(actualizarEstadoBotones, 100);
+    
+    console.log('✅ Carrusel inicializado correctamente');
   }
 
   function cargarProductos() {

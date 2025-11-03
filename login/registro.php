@@ -74,9 +74,8 @@ try {
 
     $user_id = $pdo->lastInsertId();
 
-    // Insertar en cliente
-    $stmt = $pdo->prepare("INSERT INTO cliente (id_cliente) VALUES (:id)");
-    $stmt->execute(['id' => $user_id]);
+    // Los clientes ahora son solo usuarios con rol 'cliente' (id_rol = 4)
+    // No necesitamos insertar en tabla cliente separada
 
     $pdo->commit();
 
