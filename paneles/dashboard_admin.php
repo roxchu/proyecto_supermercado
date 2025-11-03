@@ -169,7 +169,6 @@ try {
 
         <section id="section-roles" class="content-section">
             <h2>Gestionar Roles</h2>
-            <button class="btn btn-primary float-right" data-modal="modal-rol"><i class="fas fa-plus"></i> Agregar Rol</button>
             <div class="table-container">
                 <table>
                     <thead>
@@ -280,24 +279,6 @@ try {
         </div>
     </div>
 
-    <div id="modal-rol" class="modal-bg" style="display: none;">
-        <div class="modal-content">
-            <h3 id="modal-rol-titulo">Agregar Rol</h3>
-            <form id="form-rol">
-                <input type="hidden" id="rol-id" name="id_rol">
-                <input type="hidden" id="rol-action" name="action" value="add_role">
-                
-                <label for="rol-nombre">Nombre del Rol:</label>
-                <input type="text" id="rol-nombre" name="nombre_rol" class="full-width-input" required>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-cancel-modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <div id="modal-producto" class="modal-bg" style="display: none;">
         <div class="modal-content large-modal">
             <h3 id="modal-producto-titulo">Agregar Producto</h3>
@@ -393,26 +374,6 @@ try {
                         modal.querySelector('#edit-user-id').value = userId;
                         modal.querySelector('#user-name').value = userName;
                         modal.querySelector('#user-role').value = userRolId;
-                    }
-
-                    // Lógica para el modal de ROL (Agregar/Editar)
-                    if (modalId === 'modal-rol') {
-                        const modalTitle = modal.querySelector('#modal-rol-titulo');
-                        const form = modal.querySelector('#form-rol');
-                        
-                        if (this.classList.contains('btn-edit-rol')) {
-                            // MODO EDITAR ROL
-                            modalTitle.innerText = 'Editar Rol';
-                            form.querySelector('#rol-id').value = this.getAttribute('data-id');
-                            form.querySelector('#rol-nombre').value = this.getAttribute('data-nombre');
-                            form.querySelector('#rol-action').value = 'update_role';
-                        } else {
-                            // MODO AGREGAR ROL
-                            modalTitle.innerText = 'Agregar Rol';
-                            form.reset();
-                            form.querySelector('#rol-id').value = '';
-                            form.querySelector('#rol-action').value = 'add_role';
-                        }
                     }
 
                     // Lógica específica para el modal de PRODUCTO
