@@ -33,10 +33,14 @@
                     </button>
                 </div>
 
+        
                 <div class="search-bar">
-                    <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos">
-                    <button type="button"><i class="fas fa-search"></i></button>
-                </div>
+                 <input type="text" id="buscarProducto" placeholder="Buscar productos..." aria-label="Buscar productos">
+                 <button type="button" id="btnBuscar"><i class="fas fa-search"></i></button>
+             </div>
+
+             <!-- Contenedor donde mostraremos los resultados -->
+             <div id="resultadoBusqueda"></div>
 
                 <div class="user-actions">
                     <a href="#" id="link-gestion" class="employee-only" style="display:none;" title="Gestión">
