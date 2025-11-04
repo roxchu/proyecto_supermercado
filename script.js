@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let usuarioActual = null;
   const loginModal = document.getElementById('loginModal');
   const loginLink = document.getElementById('login-link');
-  const logoutLink = document.getElementById('logout-link');
+  const logoutLink = document.getElementById('logoutLink');
   const closeModal = loginModal?.querySelector('.close-btn');
   const loginForm = document.getElementById('login-form-dni');
   const registerForm = document.getElementById('register-form');
@@ -143,24 +143,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const mt = document.getElementById('modal-title');
     if (mt) mt.textContent = 'Iniciar Sesión';
   });
-
-  // ---------------------------
-  // LOGOUT
-  // ---------------------------
-  logoutLink?.addEventListener('click', (e) => {
-    e.preventDefault();
-    fetch(BASE + 'login/logout.php', { method: 'GET', credentials: 'same-origin' })
-      .then(() => {
-        mostrarNotificacion('Sesión cerrada correctamente', 'success');
-        // Pasamos null para limpiar la interfaz
-        actualizarInterfaz(null, null); 
-        setTimeout(() => window.location.reload(), 700);
-      })
-      .catch(err => {
-        console.error('Error al cerrar sesión:', err);
-        mostrarNotificacion('Error al cerrar sesión', 'error');
-      });
+  
+ // ---------------------------
+ // LOGOUT
+ // ---------------------------
+ logoutLink?.addEventListener('click', async (e) => { 
+   // Paso 1: Evitar la acción por defecto del enlace (crucial)
+   e.preventDefault();
+  
+  try {
+    // Paso 2: Llamar a logout.php de forma asíncrona
+    const response = await fetch(BASE + 'login/logout.php', { 
+      method: 'POST', 
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
   });
+
+    // Manejo de errores HTTP (ej. 500, 404)
+    if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+    }
+    
+    // Convertir la respuesta a JSON
+    const result = await response.json();
+
+    // Paso 3: Verificar el JSON y actuar
+    if (result.success) {
+      mostrarNotificacion('Sesión cerrada correctamente', 'success');
+      actualizarInterfaz(null, null); 
+      
+      // ******************************************************
+      // * SOLUCIÓN CLAVE: Forzar la redirección limpia
+      // ******************************************************
+      setTimeout(() => {
+        window.location.href = BASE + 'index.html'; 
+      }, 700);
+      
+    } else {
+      throw new Error(result.message || 'Fallo al cerrar sesión en el servidor.');
+    }
+
+  } catch (err) {
+    // Manejo de errores de red o de lógica
+    console.error('Error al cerrar sesión:', err);
+    mostrarNotificacion('Error al cerrar sesión: ' + err.message, 'error');
+  }
+ });
+ 
 
   // ---------------------------
   // ACTUALIZAR INTERFAZ SEGÚN ROL (Lógica Central de Visibilidad)
