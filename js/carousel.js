@@ -239,6 +239,56 @@ class CarouselManager {
     }
 
     /**
+     * Carga productos filtrados por categoría
+     */
+    async loadProductsByCategory(categoria = '') {
+        if (!this.track) return;
+
+        try {
+            console.log('🏷️ Cargando productos por categoría:', categoria);
+            
+            // Construir URL con parámetro de categoría
+            let url = SUPERMERCADO_CONFIG.BASE_URL + SUPERMERCADO_CONFIG.API_ENDPOINTS.PRODUCTOS;
+            if (categoria && categoria.trim() !== '') {
+                url += `?categoria=${encodeURIComponent(categoria)}`;
+            }
+            
+            const response = await fetch(url, {
+                cache: 'no-store',
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const html = await response.text();
+            this.processProductsHTML(html);
+            
+            // Actualizar el título de la sección
+            this.updateSectionTitle(categoria);
+            
+        } catch (error) {
+            console.error('Error al cargar productos por categoría:', error);
+            this.showError();
+        }
+    }
+
+    /**
+     * Actualiza el título de la sección según la categoría
+     */
+    updateSectionTitle(categoria) {
+        const titleElement = document.querySelector('.main-content h2');
+        if (titleElement) {
+            if (categoria && categoria.trim() !== '') {
+                titleElement.innerHTML = `<i class="fas fa-filter"></i> ${categoria}`;
+            } else {
+                titleElement.innerHTML = `Productos destacados`;
+            }
+        }
+    }
+
+    /**
      * Procesa el HTML de productos
      */
     processProductsHTML(html) {

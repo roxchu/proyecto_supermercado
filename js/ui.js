@@ -131,20 +131,33 @@ class UIManager {
      */
     async filterByCategory(categoria) {
         try {
-            mostrarNotificacion(`Filtrando por: ${categoria}`, 'info');
+            // Manejo especial para "Ver todos los productos"
+            if (!categoria || categoria.trim() === '') {
+                mostrarNotificacion('Mostrando todos los productos destacados', 'info');
+            } else {
+                mostrarNotificacion(`Filtrando por: ${categoria}`, 'info');
+            }
             
-            // Aquí iría la lógica de filtrado
-            // Por ahora, solo mostramos una notificación
-            console.log('🏷️ Filtrar por categoría:', categoria);
+            // Cerrar el menú lateral
+            this.closeSideMenu();
             
-            // Simular carga
-            setTimeout(() => {
-                mostrarNotificacion(`Mostrando productos de ${categoria}`, 'success');
-            }, 1000);
+            // Cargar productos filtrados por categoría
+            if (window.carouselManager) {
+                await window.carouselManager.loadProductsByCategory(categoria);
+                
+                if (!categoria || categoria.trim() === '') {
+                    mostrarNotificacion('✅ Mostrando productos destacados', 'success');
+                } else {
+                    mostrarNotificacion(`✅ Mostrando productos de ${categoria}`, 'success');
+                }
+            } else {
+                console.warn('CarouselManager no disponible');
+                mostrarNotificacion('Error: Sistema de productos no disponible', 'error');
+            }
             
         } catch (error) {
             console.error('Error al filtrar por categoría:', error);
-            mostrarNotificacion('Error al filtrar productos', 'error');
+            mostrarNotificacion('❌ Error al filtrar productos', 'error');
         }
     }
 
