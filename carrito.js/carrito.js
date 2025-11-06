@@ -53,19 +53,22 @@
 
     async function verificarSesion() {
         try {
+            console.log('🔐 Verificando sesión...');
             const resp = await fetch("login/check_session.php", {
                 credentials: "include", 
             });
             const data = await resp.json();
+            console.log('🔐 Datos de sesión:', data);
 
             sesionActiva = !!(data.logged_in || data.user_id || data.id_usuario); 
+            console.log('🔐 Sesión activa:', sesionActiva);
 
             botonesSesion.style.display = sesionActiva ? "none" : "flex";
             accionesCarrito.style.display = sesionActiva ? "flex" : "none";
 
             return sesionActiva;
         } catch (err) {
-            console.error("Error al verificar la sesión:", err);
+            console.error("❌ Error al verificar la sesión:", err);
             botonesSesion.style.display = "flex"; 
             accionesCarrito.style.display = "none";
             return false;
@@ -73,6 +76,8 @@
     }
 
     async function cargarCarrito() {
+        console.log('🛒 Cargando carrito, sesión activa:', sesionActiva);
+        
         if (!sesionActiva) {
             listaCarrito.innerHTML = `<li class="vacio">Inicia sesión para ver tu carrito.</li>`;
             totalCarrito.textContent = formatter.format(0);
@@ -84,6 +89,7 @@
         listaCarrito.innerHTML = `<li class="cargando">Cargando carrito...</li>`;
 
         try {
+            console.log('📡 Solicitando carrito desde obtener_carrito.php');
             const resp = await fetch("carrito/obtener_carrito.php", {
                 credentials: "include",
             });
@@ -93,25 +99,30 @@
             }
 
             const data = await resp.json();
+            console.log('📦 Respuesta del carrito:', data);
+            
             listaCarrito.innerHTML = "";
             let total = 0;
 
             // Modificación para manejar la nueva estructura de respuesta
             if (!data.success || !data.items || data.items.length === 0) {
+                console.log('🛒 Carrito vacío o sin productos');
                 listaCarrito.innerHTML = `<li class="vacio">Tu carrito está vacío</li>`;
                 totalCarrito.textContent = formatter.format(0);
                 if (cartCount) cartCount.textContent = "0";
                 return;
             }
             
+            console.log(`🛍️ Mostrando ${data.items.length} productos en el carrito`);
+            
             // Usar la nueva estructura de datos
             data.items.forEach((prod) => {
+                console.log('📦 Procesando producto:', prod);
                 const idCarrito = prod.Id_Carrito;
                 const nombre = prod.nombre_producto || `Producto #${prod.Id_Producto}`;
                 const precio = parseFloat(prod.Precio_Unitario_Momento) || 0;
                 const cantidad = parseInt(prod.Cantidad) || 0;
                 const subtotal = parseFloat(prod.Total) || 0;
-                const imagen = prod.imagen_producto || '';
 
                 const li = document.createElement("li");
                 li.classList.add("carrito-item");
@@ -120,7 +131,6 @@
                 
                 li.innerHTML = `
                     <div class="item-contenido">
-                        ${imagen ? `<img src="${escapeHtml(imagen)}" alt="${escapeHtml(nombre)}" class="item-imagen">` : ''}
                         <div class="item-detalles">
                             <div class="item-nombre">${escapeHtml(nombre)}</div>
                             <div class="item-info">
@@ -170,17 +180,29 @@
         const btn = e.target.closest(".agregar-carrito, .boton-agregar, #btn-agregar-carrito");
         if (!btn || cargando) return;
 
+        console.log('🛒 Botón de agregar al carrito clickeado');
+
         const productoDiv = btn.closest(".producto");
         const idProducto = productoDiv?.dataset.id;
-        if (!idProducto) return;
+        
+        console.log('🆔 ID del producto:', idProducto);
+        console.log('📦 Div del producto:', productoDiv);
+        
+        if (!idProducto) {
+            console.error('❌ No se encontró ID del producto');
+            return;
+        }
 
         const selectCantidad = productoDiv.querySelector("select[name=cantidad]"); 
         const cantidad = selectCantidad ? parseInt(selectCantidad.value) || 1 : 1;
+        
+        console.log('📊 Cantidad a agregar:', cantidad);
 
         cargando = true;
         btn.disabled = true;
 
         try {
+            console.log('📡 Enviando producto al carrito...');
             const resp = await fetch("carrito/agregar_carrito.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -189,18 +211,22 @@
             });
 
             const data = await resp.json();
+            console.log('✅ Respuesta del servidor:', data);
 
             if (resp.status === 401 || data.message?.includes("sesión")) {
+                console.warn('⚠️ Usuario no autenticado');
                 alert("Debes iniciar sesión para agregar productos.");
             } else if (data.success || data.exito) {
+                console.log('✅ Producto agregado exitosamente');
                 btn.textContent = "¡Agregado!";
                 setTimeout(() => btn.textContent = "Agregar al carrito", 1000); 
                 await cargarCarrito(); 
             } else {
+                console.error('❌ Error al agregar:', data);
                 alert(`Error: ${data.message || "No se pudo agregar el producto."}`);
             }
         } catch (err) {
-            console.error("Error al agregar producto:", err);
+            console.error("❌ Error al agregar producto:", err);
             alert("Error de conexión al agregar producto.");
         } finally {
             cargando = false;
@@ -282,7 +308,25 @@
         window.location.href = "direcciones/direcciones.php";
     });
 
+    // Event listener para cambios de sesión
+    document.addEventListener('sessionChanged', async function(event) {
+        console.log('🔄 Sesión cambió, actualizando carrito...', event.detail);
+        await verificarSesion();
+        await cargarCarrito();
+    });
+
+    // Verificar sesión periódicamente
+    setInterval(async () => {
+        const sesionAnterior = sesionActiva;
+        await verificarSesion();
+        if (sesionAnterior !== sesionActiva) {
+            console.log('🔄 Cambio de sesión detectado, recargando carrito');
+            await cargarCarrito();
+        }
+    }, 5000); // Cada 5 segundos
+
     (async function inicializarCarrito() {
+        console.log('🚀 Inicializando carrito...');
         await verificarSesion();
         if (sesionActiva) {
             await cargarCarrito();

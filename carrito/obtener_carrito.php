@@ -24,8 +24,7 @@ try {
             c.Cantidad,
             c.Precio_Unitario_Momento,
             c.Total,
-            p.Nombre as nombre_producto,
-            p.Imagen as imagen_producto
+            p.Nombre_Producto as nombre_producto
         FROM carrito c
         JOIN producto p ON c.Id_Producto = p.Id_Producto
         WHERE c.id_usuario = ?
