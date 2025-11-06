@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-10-2025 a las 04:46:57
+-- Tiempo de generación: 06-11-2025 a las 18:44:04
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -35,6 +35,14 @@ CREATE TABLE `carrito` (
   `Cantidad` int(11) NOT NULL DEFAULT 1,
   `Total` decimal(10,2) GENERATED ALWAYS AS (`Cantidad` * `Precio_Unitario_Momento`) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `carrito`
+--
+
+INSERT INTO `carrito` (`Id_Carrito`, `id_usuario`, `Id_Producto`, `Precio_Unitario_Momento`, `Cantidad`) VALUES
+(1, 2, 2, 8900.00, 1),
+(2, 2, 3, 1250.00, 8);
 
 -- --------------------------------------------------------
 
@@ -162,7 +170,6 @@ CREATE TABLE `producto` (
   `Nombre_Producto` varchar(200) NOT NULL,
   `Descripcion` varchar(500) NOT NULL,
   `Stock` int(11) NOT NULL DEFAULT 0,
-  `imagen_url` varchar(500) DEFAULT 'https://via.placeholder.com/250x160',
   `precio_actual` decimal(10,2) NOT NULL DEFAULT 0.00,
   `precio_anterior` decimal(10,2) DEFAULT NULL,
   `es_destacado` tinyint(1) DEFAULT 0,
@@ -174,25 +181,25 @@ CREATE TABLE `producto` (
 -- Volcado de datos para la tabla `producto`
 --
 
-INSERT INTO `producto` (`Id_Producto`, `Id_Categoria`, `Nombre_Producto`, `Descripcion`, `Stock`, `imagen_url`, `precio_actual`, `precio_anterior`, `es_destacado`, `etiqueta_especial`, `descuento_texto`) VALUES
-(1, 1, 'Manzanas Rojas Premium', 'Manzanas rojas dulces y crujientes, importadas. Ideales para comer solas o en ensaladas.', 150, 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400', 2500.00, 3200.00, 1, 'EXCLUSIVO ONLINE', '22% OFF'),
-(2, 2, 'Pollo Entero Fresco', 'Pollo entero de granja, sin menudos. Peso aproximado 2kg. Perfecto para asar.', 45, 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400', 8900.00, 10500.00, 1, NULL, '15% OFF'),
-(3, 3, 'Leche Entera La Serenísima 1L', 'Leche entera UAT fortificada con vitaminas A y D. Larga vida.', 200, 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400', 1250.00, NULL, 1, 'LARGA VIDA', NULL),
-(4, 5, 'Coca Cola Sabor Original 2.25L', 'Gaseosa Coca Cola sabor original en botella retornable de 2.25 litros.', 80, 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400', 1850.00, 2100.00, 1, NULL, '12% OFF'),
-(5, 6, 'Arroz Integral Gallo Oro 1kg', 'Arroz integral de grano largo tipo 00000. No se pasa ni se pega.', 120, 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400', 1680.00, NULL, 1, NULL, NULL),
-(6, 4, 'Pan Francés x6 unidades', 'Pan francés recién horneado del día, crocante por fuera, tierno por dentro.', 60, 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400', 2200.00, 2800.00, 0, 'OFERTA DEL DÍA', '21% OFF'),
-(7, 1, 'Tomates Perita x 1kg', 'Tomates perita frescos ideales para salsas y ensaladas. Aproximadamente 6-8 tomates por kg.', 95, 'https://images.unsplash.com/photo-1546470427-227a9a593cf4?w=400', 1500.00, 1800.00, 0, NULL, '17% OFF'),
-(8, 2, 'Carne Picada Especial 500g', 'Carne picada especial con bajo contenido graso. Ideal para hamburguesas o salsas.', 35, 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=400', 4200.00, NULL, 0, NULL, NULL),
-(9, 3, 'Yogur Entero Sancor Frutilla Pack x12', 'Pack económico de 12 yogures enteros sabor frutilla Sancor.', 0, 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400', 3600.00, 4200.00, 0, NULL, '14% OFF'),
-(10, 5, 'Agua Mineral Villavicencio 2L', 'Agua mineral sin gas botella 2 litros', 150, 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400', 850.00, NULL, 1, 'LARGA VIDA', NULL),
-(11, 6, 'Fideos Matarazzo 500g', 'Fideos secos tirabuzón de sémola', 180, 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=400', 980.00, 1200.00, 1, NULL, '18% OFF'),
-(12, 4, 'Medialunas x12 unidades', 'Medialunas de manteca recién horneadas', 40, 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400', 3200.00, NULL, 1, 'EXCLUSIVO ONLINE', NULL),
-(13, 1, 'Bananas x1kg', 'Bananas frescas de Ecuador', 300, 'https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=400', 1200.00, NULL, 0, NULL, NULL),
-(14, 1, 'Lechuga Criolla', 'Lechuga criolla fresca', 80, 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=400', 900.00, NULL, 0, NULL, NULL),
-(15, 2, 'Milanesas de Pollo x6', 'Milanesas de pollo empanadas pack x6', 25, 'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=400', 5600.00, NULL, 0, NULL, NULL),
-(16, 3, 'Queso Cremoso Mendicrim', 'Queso cremoso untable 300g', 65, 'https://images.unsplash.com/photo-1452195100486-9cc805987862?w=400', 2800.00, NULL, 0, NULL, NULL),
-(17, 5, 'Jugo Naranja Baggio 1L', 'Jugo de naranja con pulpa', 95, 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400', 1450.00, NULL, 0, NULL, NULL),
-(18, 6, 'Aceite Girasol Cocinero 900ml', 'Aceite de girasol puro', 110, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400', 2300.00, NULL, 0, NULL, NULL);
+INSERT INTO `producto` (`Id_Producto`, `Id_Categoria`, `Nombre_Producto`, `Descripcion`, `Stock`, `precio_actual`, `precio_anterior`, `es_destacado`, `etiqueta_especial`, `descuento_texto`) VALUES
+(1, 1, 'Manzanas Rojas Premium', 'Manzanas rojas dulces y crujientes, importadas. Ideales para comer solas o en ensaladas.', 150, 2500.00, 3200.00, 1, 'EXCLUSIVO ONLINE', '22% OFF'),
+(2, 2, 'Pollo Entero Fresco', 'Pollo entero de granja, sin menudos. Peso aproximado 2kg. Perfecto para asar.', 45, 8900.00, 10500.00, 1, NULL, '15% OFF'),
+(3, 3, 'Leche Entera La Serenísima 1L', 'Leche entera UAT fortificada con vitaminas A y D. Larga vida.', 200, 1250.00, NULL, 1, 'LARGA VIDA', NULL),
+(4, 5, 'Coca Cola Sabor Original 2.25L', 'Gaseosa Coca Cola sabor original en botella retornable de 2.25 litros.', 80, 1850.00, 2100.00, 1, NULL, '12% OFF'),
+(5, 6, 'Arroz Integral Gallo Oro 1kg', 'Arroz integral de grano largo tipo 00000. No se pasa ni se pega.', 120, 1680.00, NULL, 1, NULL, NULL),
+(6, 4, 'Pan Francés x6 unidades', 'Pan francés recién horneado del día, crocante por fuera, tierno por dentro.', 60, 2200.00, 2800.00, 0, 'OFERTA DEL DÍA', '21% OFF'),
+(7, 1, 'Tomates Perita x 1kg', 'Tomates perita frescos ideales para salsas y ensaladas. Aproximadamente 6-8 tomates por kg.', 95, 1500.00, 1800.00, 0, NULL, '17% OFF'),
+(8, 2, 'Carne Picada Especial 500g', 'Carne picada especial con bajo contenido graso. Ideal para hamburguesas o salsas.', 35, 4200.00, NULL, 0, NULL, NULL),
+(9, 3, 'Yogur Entero Sancor Frutilla Pack x12', 'Pack económico de 12 yogures enteros sabor frutilla Sancor.', 0, 3600.00, 4200.00, 0, NULL, '14% OFF'),
+(10, 5, 'Agua Mineral Villavicencio 2L', 'Agua mineral sin gas botella 2 litros', 150, 850.00, NULL, 1, 'LARGA VIDA', NULL),
+(11, 6, 'Fideos Matarazzo 500g', 'Fideos secos tirabuzón de sémola', 180, 980.00, 1200.00, 1, NULL, '18% OFF'),
+(12, 4, 'Medialunas x12 unidades', 'Medialunas de manteca recién horneadas', 40, 3200.00, NULL, 1, 'EXCLUSIVO ONLINE', NULL),
+(13, 1, 'Bananas x1kg', 'Bananas frescas de Ecuador', 300, 1200.00, NULL, 0, NULL, NULL),
+(14, 1, 'Lechuga Criolla', 'Lechuga criolla fresca', 80, 900.00, NULL, 0, NULL, NULL),
+(15, 2, 'Milanesas de Pollo x6', 'Milanesas de pollo empanadas pack x6', 25, 5600.00, NULL, 0, NULL, NULL),
+(16, 3, 'Queso Cremoso Mendicrim', 'Queso cremoso untable 300g', 65, 2800.00, NULL, 0, NULL, NULL),
+(17, 5, 'Jugo Naranja Baggio 1L', 'Jugo de naranja con pulpa', 95, 1450.00, NULL, 0, NULL, NULL),
+(18, 6, 'Aceite Girasol Cocinero 900ml', 'Aceite de girasol puro', 110, 2300.00, NULL, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -204,7 +211,7 @@ CREATE TABLE `producto_imagenes` (
   `Id_Imagen` int(11) NOT NULL,
   `Id_Producto` int(11) NOT NULL,
   `url_imagen` varchar(500) NOT NULL,
-  `orden` int(11) DEFAULT 0 COMMENT 'Para ordenar las imágenes, 0 o 1 para la principal'
+  `orden` int(11) DEFAULT 0 COMMENT 'Para ordenar las imágenes, 1 para la principal'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
 
 --
@@ -217,7 +224,22 @@ INSERT INTO `producto_imagenes` (`Id_Imagen`, `Id_Producto`, `url_imagen`, `orde
 (3, 1, 'https://images.unsplash.com/photo-1610399313110-89e4c198e3b0?w=400', 3),
 (4, 2, 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400', 1),
 (5, 2, 'https://images.unsplash.com/photo-1626071499700-1de1c474b789?w=400', 2),
-(6, 4, 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400', 1);
+(6, 3, 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400', 1),
+(7, 4, 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400', 1),
+(8, 5, 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400', 1),
+(9, 6, 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400', 1),
+(10, 7, 'https://images.unsplash.com/photo-1546470427-227a9a593cf4?w=400', 1),
+(11, 8, 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=400', 1),
+(12, 9, 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400', 1),
+(13, 10, 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400', 1),
+(14, 11, 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=400', 1),
+(15, 12, 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400', 1),
+(16, 13, 'https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=400', 1),
+(17, 14, 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=400', 1),
+(18, 15, 'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=400', 1),
+(19, 16, 'https://images.unsplash.com/photo-1452195100486-9cc805987862?w=400', 1),
+(20, 17, 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400', 1),
+(21, 18, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400', 1);
 
 -- --------------------------------------------------------
 
@@ -319,7 +341,9 @@ CREATE TABLE `venta` (
 -- Indices de la tabla `carrito`
 --
 ALTER TABLE `carrito`
-  ADD PRIMARY KEY (`Id_Carrito`);
+  ADD PRIMARY KEY (`Id_Carrito`),
+  ADD KEY `FK_Carrito_Usuario` (`id_usuario`),
+  ADD KEY `FK_Carrito_Producto` (`Id_Producto`);
 
 --
 -- Indices de la tabla `categoria`
@@ -419,7 +443,7 @@ ALTER TABLE `venta`
 -- AUTO_INCREMENT de la tabla `carrito`
 --
 ALTER TABLE `carrito`
-  MODIFY `Id_Carrito` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_Carrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `categoria`
@@ -455,7 +479,7 @@ ALTER TABLE `producto`
 -- AUTO_INCREMENT de la tabla `producto_imagenes`
 --
 ALTER TABLE `producto_imagenes`
-  MODIFY `Id_Imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `Id_Imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT de la tabla `producto_opiniones`
@@ -481,6 +505,41 @@ ALTER TABLE `usuario`
 ALTER TABLE `venta`
   MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `carrito`
+--
+ALTER TABLE `carrito`
+  ADD CONSTRAINT `FK_Carrito_Producto` FOREIGN KEY (`Id_Producto`) REFERENCES `producto` (`Id_Producto`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FK_Carrito_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `producto`
+--
+ALTER TABLE `producto`
+  ADD CONSTRAINT `FK_Producto_Categoria` FOREIGN KEY (`Id_Categoria`) REFERENCES `categoria` (`Id_Categoria`);
+
+--
+-- Filtros para la tabla `producto_imagenes`
+--
+ALTER TABLE `producto_imagenes`
+  ADD CONSTRAINT `FK_ProductoImagen_Producto` FOREIGN KEY (`Id_Producto`) REFERENCES `producto` (`Id_Producto`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `producto_opiniones`
+--
+ALTER TABLE `producto_opiniones`
+  ADD CONSTRAINT `FK_Opinion_Producto` FOREIGN KEY (`Id_Producto`) REFERENCES `producto` (`Id_Producto`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FK_Opinion_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `usuario`
+--
+ALTER TABLE `usuario`
+  ADD CONSTRAINT `FK_Usuario_Rol` FOREIGN KEY (`id_rol`) REFERENCES `rol` (`id_rol`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

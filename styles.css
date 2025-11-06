@@ -532,6 +532,7 @@ input, textarea, select {
     background: var(--color-blanco);
     padding: var(--espacio-lg);
     box-shadow: var(--sombra-md);
+    margin: var(--espacio-lg) 0;
 }
 
 .carousel-track {
@@ -542,6 +543,9 @@ input, textarea, select {
     padding: var(--espacio-sm) 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
+    min-height: 400px;
+    align-items: stretch;
 }
 
 .carousel-track::-webkit-scrollbar {
@@ -553,7 +557,7 @@ input, textarea, select {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     color: var(--color-blanco);
     border: none;
     width: 50px;
@@ -561,16 +565,23 @@ input, textarea, select {
     border-radius: var(--radio-full);
     font-size: var(--texto-xl);
     cursor: pointer;
-    z-index: 10;
+    z-index: 1000;
     transition: all var(--transicion-rapida);
     display: flex;
     align-items: center;
     justify-content: center;
+    user-select: none;
+    pointer-events: auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .carrusel-btn:hover {
     background: rgba(0, 0, 0, 0.9);
     transform: translateY(-50%) scale(1.1);
+}
+
+.carrusel-btn:active {
+    transform: translateY(-50%) scale(0.95);
 }
 
 .carrusel-btn.prev {
@@ -581,7 +592,7 @@ input, textarea, select {
     right: 10px;
 }
 
-/* Tarjeta de producto */
+/* Tarjeta de producto en carrusel */
 .producto-card {
     background: var(--color-blanco);
     border-radius: var(--radio-lg);
@@ -590,10 +601,12 @@ input, textarea, select {
     transition: all var(--transicion-normal);
     position: relative;
     width: 280px;
+    min-width: 280px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     height: 420px;
+    scroll-snap-align: start;
 }
 
 .producto-card:hover {
@@ -1308,6 +1321,7 @@ footer {
     
     .producto-card {
         width: 200px;
+        min-width: 200px;
         height: 340px;
     }
     
@@ -1317,6 +1331,25 @@ footer {
     
     .carrusel-container {
         padding: var(--espacio-md);
+        margin: var(--espacio-md) 0;
+    }
+    
+    .carousel-track {
+        gap: var(--espacio-md);
+    }
+    
+    .carrusel-btn {
+        width: 35px;
+        height: 35px;
+        font-size: var(--texto-md);
+    }
+    
+    .carrusel-btn.prev {
+        left: 5px;
+    }
+    
+    .carrusel-btn.next {
+        right: 5px;
     }
     
     .main-content h2 {
@@ -1559,10 +1592,6 @@ button, a, input, select, textarea {
 .carrusel-slide-link {
     text-decoration: none;
     color: inherit;
-}
-
-.carrusel-slide {
-    /* Alias para producto-card */
 }
 
 .etiqueta {

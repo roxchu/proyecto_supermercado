@@ -57,36 +57,34 @@ try {
 }
 ?>
 
-<div class="carousel-track" id="carruselProductos">
-    <?php if (empty($productos)): ?>
-        <p style="text-align:center; color: #888; width: 100%;">No hay productos en esta categoría.</p>
-    <?php else: ?>
-        <?php foreach ($productos as $producto): ?>
-            <a href="mostrar.php?id=<?= $producto['id'] ?>" class="carrusel-slide-link" style="text-decoration: none; color: inherit;">
-                <article class="producto-card carrusel-slide">
-                    <?php if ($producto['etiqueta_especial']): ?>
-                        <span class="etiqueta-caracteristica-verde"><?= htmlspecialchars($producto['etiqueta_especial']) ?></span>
-                    <?php endif; ?>
+<?php if (empty($productos)): ?>
+    <p style="text-align:center; color: #888; width: 100%;">No hay productos en esta categoría.</p>
+<?php else: ?>
+    <?php foreach ($productos as $producto): ?>
+        <a href="mostrar.php?id=<?= $producto['id'] ?>" class="carrusel-slide-link" style="text-decoration: none; color: inherit;">
+            <article class="producto-card carrusel-slide">
+                <?php if ($producto['etiqueta_especial']): ?>
+                    <span class="etiqueta-caracteristica-verde"><?= htmlspecialchars($producto['etiqueta_especial']) ?></span>
+                <?php endif; ?>
 
-                    <img src="<?= htmlspecialchars($producto['imagen_url']) ?>"
-                         alt="<?= htmlspecialchars($producto['nombre']) ?>"
-                         class="producto-imagen"
-                         onerror="this.src='https://via.placeholder.com/250x160?text=Sin+Imagen'">
+                <img src="<?= htmlspecialchars($producto['imagen_url']) ?>"
+                     alt="<?= htmlspecialchars($producto['nombre']) ?>"
+                     class="producto-imagen"
+                     onerror="this.src='https://via.placeholder.com/250x160?text=Sin+Imagen'">
 
-                    <div class="producto-info">
-                        <h3><?= htmlspecialchars($producto['nombre']) ?></h3>
-                        <p class="precio-final">$<?= number_format($producto['precio_actual'], 2, ',', '.') ?></p>
+                <div class="producto-info">
+                    <h3><?= htmlspecialchars($producto['nombre']) ?></h3>
+                    <p class="precio-final">$<?= number_format($producto['precio_actual'], 2, ',', '.') ?></p>
 
-                        <div class="producto" data-id="<?= $producto['id'] ?>" data-nombre="<?= htmlspecialchars($producto['nombre']) ?>">
-                            <button class="boton-agregar"
-                                    onclick="event.stopPropagation();" 
-                                    <?= ($producto['stock'] <= 0) ? 'disabled' : '' ?>>
-                                <?= ($producto['stock'] > 0) ? 'Agregar' : 'Sin Stock' ?>
-                            </button>
-                        </div>
+                    <div class="producto" data-id="<?= $producto['id'] ?>" data-nombre="<?= htmlspecialchars($producto['nombre']) ?>">
+                        <button class="boton-agregar"
+                                onclick="event.stopPropagation();" 
+                                <?= ($producto['stock'] <= 0) ? 'disabled' : '' ?>>
+                            <?= ($producto['stock'] > 0) ? 'Agregar' : 'Sin Stock' ?>
+                        </button>
                     </div>
-                </article>
-            </a>
-        <?php endforeach; ?>
-    <?php endif; ?>
-</div>
+                </div>
+            </article>
+        </a>
+    <?php endforeach; ?>
+<?php endif; ?>

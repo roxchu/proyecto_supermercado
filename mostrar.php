@@ -41,6 +41,27 @@ if ($producto_id !== null) {
 
         $producto = $stmt_producto->fetch();
 
+        // --- Obtener todas las imágenes del producto ---
+        $imagenes_producto = [];
+        if ($producto) {
+            $sql_imagenes = "SELECT url_imagen, orden FROM producto_imagenes WHERE Id_Producto = ? ORDER BY orden";
+            $stmt_imagenes = $pdo->prepare($sql_imagenes);
+            if ($stmt_imagenes) {
+                $stmt_imagenes->bindParam(1, $producto_id, PDO::PARAM_INT);
+                $stmt_imagenes->execute();
+                $imagenes_producto = $stmt_imagenes->fetchAll();
+                
+                // Debug: mostrar información sobre las imágenes
+                error_log("Producto ID: $producto_id, Imágenes encontradas: " . count($imagenes_producto));
+            }
+            
+            // Si no hay imágenes, usar placeholder
+            if (empty($imagenes_producto)) {
+                $imagenes_producto = [['url_imagen' => 'https://via.placeholder.com/400x400?text=Sin+Imagen', 'orden' => 1]];
+                error_log("No se encontraron imágenes para el producto $producto_id, usando placeholder");
+            }
+        }
+
         if ($producto) {
             $categoria_nombre = $producto['Nombre_Categoria'] ?? 'Sin categoría';
 
@@ -81,11 +102,220 @@ $page_title = $producto ? htmlspecialchars($producto['Nombre_Producto']) . ' - S
 $base_path = ''; // Ruta base para los archivos CSS/JS
 
 // Estilos adicionales específicos para esta página
-$additional_styles = '<link rel="stylesheet" href="css/mostrar-producto.css">';
+$additional_styles = '<link rel="stylesheet" href="css/mostrar-producto.css">
+<style>
+/* Mini carrusel de imágenes del producto */
+.mini-carrusel-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.mini-carrusel-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.mini-carrusel-track {
+    display: flex;
+    transition: transform 0.3s ease;
+    width: 100%;
+}
+
+.mini-carrusel-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    flex-shrink: 0;
+    display: none;
+}
+
+.mini-carrusel-image.active {
+    display: block;
+}
+
+.mini-carrusel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.9);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.mini-carrusel-btn:hover {
+    background: rgba(255,255,255,1);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.mini-carrusel-btn.prev {
+    left: 10px;
+}
+
+.mini-carrusel-btn.next {
+    right: 10px;
+}
+
+.mini-carrusel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ddd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: #ff6b35;
+    transform: scale(1.2);
+}
+
+.dot:hover {
+    background: #ff8c42;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mini-carrusel-image {
+        height: 300px;
+    }
+    
+    .mini-carrusel-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+    
+    .mini-carrusel-btn.prev {
+        left: 5px;
+    }
+    
+    .mini-carrusel-btn.next {
+        right: 5px;
+    }
+}
+</style>';
 
 // Scripts adicionales específicos para esta página
 $additional_scripts = '
 <script>
+    // --- Script para el Mini Carrusel de Imágenes ---
+    document.addEventListener(\'DOMContentLoaded\', function() {
+        const images = document.querySelectorAll(\'.mini-carrusel-image\');
+        const dots = document.querySelectorAll(\'.dot\');
+        const prevBtn = document.getElementById(\'mini-prev\');
+        const nextBtn = document.getElementById(\'mini-next\');
+        let currentIndex = 0;
+
+        function showImage(index) {
+            // Ocultar todas las imágenes
+            images.forEach(img => img.classList.remove(\'active\'));
+            dots.forEach(dot => dot.classList.remove(\'active\'));
+            
+            // Mostrar la imagen actual
+            if (images[index]) {
+                images[index].classList.add(\'active\');
+            }
+            if (dots[index]) {
+                dots[index].classList.add(\'active\');
+            }
+            
+            currentIndex = index;
+        }
+
+        function nextImage() {
+            const nextIndex = (currentIndex + 1) % images.length;
+            showImage(nextIndex);
+        }
+
+        function prevImage() {
+            const prevIndex = (currentIndex - 1 + images.length) % images.length;
+            showImage(prevIndex);
+        }
+
+        // Event listeners para botones
+        if (nextBtn) {
+            nextBtn.addEventListener(\'click\', nextImage);
+        }
+        
+        if (prevBtn) {
+            prevBtn.addEventListener(\'click\', prevImage);
+        }
+
+        // Event listeners para dots
+        dots.forEach((dot, index) => {
+            dot.addEventListener(\'click\', () => showImage(index));
+        });
+
+        // Navegación con teclado
+        document.addEventListener(\'keydown\', (e) => {
+            if (e.target.tagName === \'INPUT\' || e.target.tagName === \'TEXTAREA\') return;
+            
+            if (e.key === \'ArrowLeft\') {
+                e.preventDefault();
+                prevImage();
+            } else if (e.key === \'ArrowRight\') {
+                e.preventDefault();
+                nextImage();
+            }
+        });
+
+        // Touch/swipe support
+        let startX = 0;
+        let endX = 0;
+        const carruselWrapper = document.querySelector(\'.mini-carrusel-wrapper\');
+        
+        if (carruselWrapper) {
+            carruselWrapper.addEventListener(\'touchstart\', (e) => {
+                startX = e.touches[0].clientX;
+            });
+
+            carruselWrapper.addEventListener(\'touchend\', (e) => {
+                endX = e.changedTouches[0].clientX;
+                handleSwipe();
+            });
+
+            function handleSwipe() {
+                const threshold = 50;
+                const diff = startX - endX;
+                
+                if (Math.abs(diff) > threshold) {
+                    if (diff > 0) {
+                        nextImage();
+                    } else {
+                        prevImage();
+                    }
+                }
+            }
+        }
+
+        // Auto-slide (opcional, cada 5 segundos)
+        if (images.length > 1) {
+            setInterval(nextImage, 5000);
+        }
+    });
+
     // --- Script para las Reseñas ---
     document.addEventListener(\'DOMContentLoaded\', function() {
         const formResena = document.getElementById(\'form-resena\');
@@ -328,9 +558,40 @@ include 'header.php';
 
             <div class="producto-principal">
                 <div class="producto-imagen">
-                    <img id="imagen-principal"
-                        src="<?= htmlspecialchars($producto['imagen_principal'] ?: 'https://via.placeholder.com/400x400?text=Sin+Imagen') ?>"
-                        alt="<?= htmlspecialchars($producto['Nombre_Producto']) ?>">
+                    <!-- Debug: Mostrar información sobre las imágenes -->
+                    <!-- <?= "Producto ID: $producto_id, Total imágenes: " . count($imagenes_producto) ?> -->
+                    
+                    <?php if (count($imagenes_producto) > 1): ?>
+                        <!-- Mini carrusel de imágenes -->
+                        <div class="mini-carrusel-container">
+                            <button class="mini-carrusel-btn prev" id="mini-prev">‹</button>
+                            <div class="mini-carrusel-wrapper">
+                                <div class="mini-carrusel-track" id="mini-carrusel-track">
+                                    <?php foreach ($imagenes_producto as $index => $imagen): ?>
+                                        <img class="mini-carrusel-image <?= $index === 0 ? 'active' : '' ?>" 
+                                             src="<?= htmlspecialchars($imagen['url_imagen']) ?>"
+                                             alt="<?= htmlspecialchars($producto['Nombre_Producto']) ?> - Imagen <?= $index + 1 ?>"
+                                             data-index="<?= $index ?>">
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <button class="mini-carrusel-btn next" id="mini-next">›</button>
+                        </div>
+                        
+                        <!-- Indicadores de puntos -->
+                        <div class="mini-carrusel-dots">
+                            <?php foreach ($imagenes_producto as $index => $imagen): ?>
+                                <span class="dot <?= $index === 0 ? 'active' : '' ?>" 
+                                      data-index="<?= $index ?>"></span>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <!-- Imagen única -->
+                        <img id="imagen-principal"
+                            src="<?= htmlspecialchars($imagenes_producto[0]['url_imagen'] ?? 'https://via.placeholder.com/400x400?text=Sin+Imagen') ?>"
+                            alt="<?= htmlspecialchars($producto['Nombre_Producto']) ?>">
+                        <!-- Debug: Solo una imagen disponible -->
+                    <?php endif; ?>
                 </div>
 
                 <div class="producto-detalles">
