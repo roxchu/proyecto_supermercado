@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../carrito/db.php'; // conexión $pdo
+require '../../../config/database.php'; // conexión $pdo
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_cliente = $_SESSION['user_id'] ?? $_SESSION['id_usuario'] ?? $_SESSION['dni'] ?? null;

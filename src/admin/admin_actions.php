@@ -2,7 +2,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-include '../login/control_acceso.php';
+include '../auth/control_acceso.php';
 
 // Solo permite admin para CUALQUIER acción en este archivo
 verificar_rol('admin');

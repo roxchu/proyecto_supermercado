@@ -2,8 +2,8 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once __DIR__ . '/../login/control_acceso.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/control_acceso.php';
+require_once __DIR__ . '/../../config/database.php';
 
 
 // SOLO permite admin

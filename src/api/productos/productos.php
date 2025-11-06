@@ -60,7 +60,7 @@ try {
         <p style="text-align:center; color: #888; width: 100%;">No hay productos en esta categoría.</p>
     <?php else: ?>
         <?php foreach ($productos as $producto): ?>
-            <a href="mostrar.php?id=<?= $producto['id'] ?>" class="carrusel-slide-link" style="text-decoration: none; color: inherit;">
+            <a href="../../../mostrar.php?id=<?= $producto['id'] ?>" class="carrusel-slide-link" style="text-decoration: none; color: inherit;">
                 <article class="producto-card carrusel-slide">
                     <?php if ($producto['etiqueta_especial']): ?>
                         <span class="etiqueta-caracteristica-verde"><?= htmlspecialchars($producto['etiqueta_especial']) ?></span>

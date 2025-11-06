@@ -13,12 +13,12 @@ if (session_status() === PHP_SESSION_NONE) {
 // 2. Requerir el control y la conexión a la base de datos
 echo '<pre>';
 echo "Ruta actual: " . __DIR__ . PHP_EOL;
-echo "Buscando: " . __DIR__ . '/../carrito/db.php' . PHP_EOL;
-echo file_exists(__DIR__ . '/../carrito/db.php') ? '✅ Existe' : '❌ No existe';
+echo "Buscando: " . __DIR__ . '/../../config/database.php' . PHP_EOL;
+echo file_exists(__DIR__ . '/../../config/database.php') ? '✅ Existe' : '❌ No existe';
 echo '</pre>';
 // exit;   <-- quitá esto cuando termines de probar
 
-require_once __DIR__ . '/../carrito/db.php';
+require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../login/verificar_rol.php';
 // 3. ÚNICA LLAMADA Y DEFINITIVA para verificar el rol
 // Permite el acceso a 'admin' Y 'empleado'.

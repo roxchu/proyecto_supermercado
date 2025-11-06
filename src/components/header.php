@@ -7,7 +7,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= isset($page_title) ? htmlspecialchars($page_title) : 'Supermercado Online' ?></title>
-    <link rel="stylesheet" href="<?= isset($base_path) ? $base_path : '' ?>styles.css" />
+    <link rel="stylesheet" href="<?= isset($base_path) ? $base_path : '' ?>assets/css/main.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <?php if (isset($additional_styles)): ?>

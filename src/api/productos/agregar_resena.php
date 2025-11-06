@@ -13,7 +13,7 @@ header('Content-Type: application/json; charset=utf-8');
 session_start();
 
 // Incluir conexión a la base de datos
-require __DIR__ . '/carrito/db.php';
+require __DIR__ . '/../../../config/database.php';
 
 // Verificar que es una petición POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

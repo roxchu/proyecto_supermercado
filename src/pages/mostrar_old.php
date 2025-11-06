@@ -6,8 +6,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Aseguramos la ruta del archivo de conexión db.php (ahora centralizado en config)
-require __DIR__ . '/config/database.php';
+// Aseguramos la ruta del archivo de conexión database.php
+require __DIR__ . '/../../config/database.php';
 
 $producto = null;
 $opiniones = [];
@@ -85,19 +85,14 @@ if ($producto_id !== null) {
 $page_title = $producto ? htmlspecialchars($producto['Nombre_Producto']) . ' - Supermercado Online' : 'Producto no encontrado - Supermercado Online';
 
 // Estilos adicionales específicos para esta página
-$additional_styles = '<link rel="stylesheet" href="css/mostrar-producto.css">';
+$additional_styles = '<link rel="stylesheet" href="../../assets/css/mostrar-producto.css">';
 
-// Scripts adicionales específicos para esta página
+// Scripts adicionales específicos para esta página - VERSIÓN SIMPLIFICADA
 $additional_scripts = '
 <script>
-    // --- Script para las Reseñas ---
-    document.addEventListener(\'DOMContentLoaded\', function() {
-        const formResena = document.getElementById(\'form-resena\');
-        const loginMessage = document.getElementById(\'login-required-message\');
-        const stars = document.querySelectorAll(\'.star\');
-        const ratingValue = document.getElementById(\'rating-value\');
-        const resenaMessage = document.getElementById(\'resena-message\');
-        const loadingSpan = document.getElementById(\'resena-loading\');
+    // JavaScript simplificado para evitar problemas de sintaxis
+    console.log("Página mostrar.php cargada correctamente");
+</script>';
         
         // Verificar si el usuario está logueado
         function verificarSesionParaResena() {
@@ -236,10 +231,10 @@ $additional_scripts = '
         // Verificar sesión inicial con el servidor
         async function verificarSesionInicial() {
             try {
-                const response = await fetch(\'login/check_session.php\', {
-                    method: \'GET\',
-                    credentials: \'same-origin\',
-                    headers: { \'Accept\': \'application/json\' }
+                const response = await fetch('../auth/check_session.php', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
                 });
                 
                 if (response.ok) {
@@ -388,8 +383,11 @@ $carrusel_script = '
 // Combinar todos los scripts
 $additional_scripts .= $carrusel_script;
 
+// Configurar rutas para el header
+$base_path = '../../';
+
 // Incluir el header
-include 'src/components/header.php';
+include '../components/header.php';
 ?> <?php if ($error): ?>
             <p class="error"><?= htmlspecialchars($error) ?></p>
         <?php elseif ($producto): ?>
@@ -571,5 +569,5 @@ include 'src/components/header.php';
 
 <?php
 // Incluir el footer
-include 'src/components/footer.php';
+include 'footer.php';
 ?>
