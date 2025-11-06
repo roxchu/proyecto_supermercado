@@ -89,29 +89,29 @@
             });
             
             if (!resp.ok) {
-                const errorData = await resp.json();
-                throw new Error(errorData.message || `Error HTTP: ${resp.status}`);
+                throw new Error(`Error HTTP: ${resp.status}`);
             }
 
             const data = await resp.json();
             listaCarrito.innerHTML = "";
             let total = 0;
 
-            if (!data.success || !data.carrito || data.carrito.length === 0) {
+            // Modificación para manejar la nueva estructura de respuesta
+            if (!data.success || !data.items || data.items.length === 0) {
                 listaCarrito.innerHTML = `<li class="vacio">Tu carrito está vacío</li>`;
                 totalCarrito.textContent = formatter.format(0);
                 if (cartCount) cartCount.textContent = "0";
                 return;
             }
             
-            total = data.subtotal_global || 0; 
-            
-            data.carrito.forEach((prod) => {
+            // Usar la nueva estructura de datos
+            data.items.forEach((prod) => {
                 const idCarrito = prod.Id_Carrito;
-                const nombre = prod.nombre || `Producto #${prod.Id_Producto}`;
+                const nombre = prod.nombre_producto || `Producto #${prod.Id_Producto}`;
                 const precio = parseFloat(prod.Precio_Unitario_Momento) || 0;
                 const cantidad = parseInt(prod.Cantidad) || 0;
-                const subtotal = parseFloat(prod.Total) || 0; 
+                const subtotal = parseFloat(prod.Total) || 0;
+                const imagen = prod.imagen_producto || '';
 
                 const li = document.createElement("li");
                 li.classList.add("carrito-item");
@@ -119,24 +119,30 @@
                 li.dataset.idProducto = prod.Id_Producto;
                 
                 li.innerHTML = `
-                    <div class="item-nombre">${escapeHtml(nombre)}</div>
-                    <div class="item-info">
-                        <span class="cantidad">${cantidad} x ${formatter.format(precio)}</span>
-                        <span class="subtotal"><strong>${formatter.format(subtotal)}</strong></span>
-                        <button class="eliminar" data-id="${idCarrito}" title="Eliminar producto">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                    <div class="item-contenido">
+                        ${imagen ? `<img src="${escapeHtml(imagen)}" alt="${escapeHtml(nombre)}" class="item-imagen">` : ''}
+                        <div class="item-detalles">
+                            <div class="item-nombre">${escapeHtml(nombre)}</div>
+                            <div class="item-info">
+                                <span class="cantidad">${cantidad} x ${formatter.format(precio)}</span>
+                                <span class="subtotal"><strong>${formatter.format(subtotal)}</strong></span>
+                                <button class="eliminar" data-id="${idCarrito}" title="Eliminar producto">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 `;
                 listaCarrito.appendChild(li);
             });
 
-            totalCarrito.textContent = formatter.format(total);
-            if (cartCount) cartCount.textContent = data.carrito.length.toString();
+            // Usar el total calculado del servidor
+            totalCarrito.textContent = formatter.format(data.total || 0);
+            if (cartCount) cartCount.textContent = data.items.length.toString();
 
         } catch (err) {
             console.error("Error al cargar el carrito:", err);
-            listaCarrito.innerHTML = `<li class="error">Error al cargar el carrito</li>`;
+            listaCarrito.innerHTML = `<li class="error">Error al cargar el carrito: ${err.message}</li>`;
         } finally {
             cargando = false;
         }

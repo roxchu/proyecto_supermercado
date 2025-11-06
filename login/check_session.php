@@ -4,6 +4,12 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
+// Redirigir a login.php si no hay un usuario autenticado
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
 // --- Lógica de Comprobación de Sesión ---
 
 if (isset($_SESSION['rol']) && isset($_SESSION['user_id'])) {
