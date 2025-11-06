@@ -43,28 +43,31 @@
              <div id="resultadoBusqueda"></div>
 
                 <div class="user-actions">
-                    <a href="#" id="link-gestion" class="employee-only" style="display:none;" title="Gestión">
+                    
+                    <a href="<?= isset($base_path) ? $base_path : '' ?>paneles/dashboard_empleado.php" id="link-gestion" class="employee-only action-link" style="display:none;" title="Panel de Gestión de Pedidos">
                         <i class="fas fa-truck-loading"></i>
-                        <span>Gestión</span>
+                        <span class="action-text">Gestión</span>
                     </a>
-                    <a href="<?= isset($base_path) ? $base_path : '' ?>paneles/dashboard_admin.php" id="link-admin" class="admin-only" style="display:none;" title="Administración">
+                    
+                    <a href="<?= isset($base_path) ? $base_path : '' ?>paneles/dashboard_admin.php" id="link-admin" class="admin-only action-link" style="display:none;" title="Administración del Sistema">
                         <i class="fas fa-tools"></i>
-                        <span>Admin</span>
+                        <span class="action-text">Admin</span>
                     </a>
 
-                    <a href="#" id="login-link" title="Iniciar sesión">
+                    <a href="#" id="login-link" class="action-link" title="Iniciar sesión">
                         <i class="fas fa-user"></i>
-                        <span>Iniciar sesión</span>
+                        <span class="action-text">Iniciar sesión</span>
                     </a>
 
-                    <div id="user-info" style="display:none;">
-                        <span id="user-greeting"></span>
-                        <a href="#" id="logoutLink" title="Cerrar sesión">
+                    <div id="user-info" class="user-info-container" style="display:none;">
+                        <span id="user-greeting" class="user-greeting"></span>
+                        <a href="#" id="logoutLink" class="action-link" title="Cerrar sesión">
                             <i class="fas fa-sign-out-alt"></i>
+                            <span class="action-text">Salir</span>
                         </a>
                     </div>
 
-                    <div class="cart" title="Mi Carrito">
+                    <div class="cart action-link" title="Mi Carrito">
                         <i class="fas fa-shopping-cart"></i>
                         <span id="cart-count">0</span>
                     </div>
@@ -83,14 +86,16 @@
             <ul>
                 <li><a href="<?= isset($base_path) ? $base_path : '' ?>index.html" class="side-link"><i class="fas fa-home"></i> Inicio</a></li>
                 <li><a href="#" class="side-link"><i class="fas fa-tags"></i> Ofertas</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-cocktail"></i> Bebidas</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-soap"></i> Limpieza</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-carrot"></i> Frutas y Verduras</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-cookie-bite"></i> Panadería</a></li>
-                <li><a href="#" class="side-link"><i class="fas fa-utensils"></i> Congelados</a></li>
+                <li><a href="#" class="side-link" data-categoria="Bebidas"><i class="fas fa-cocktail"></i>Bebidas</a></li>
+                <li><a href="#" class="side-link" data-categoria="Limpieza"><i class="fas fa-soap"></i> Limpieza</a></li>
+                <li><a href="#" class="side-link" data-categoria="Frutas y Verduras"><i class="fas fa-carrot"></i> Frutas y Verduras</a></li>
+                <li><a href="#" class="side-link" data-categoria="Panadería"><i class="fas fa-cookie-bite"></i> Panadería</a></li>
+                <li><a href="#" class="side-link" data-categoria="Congelados"><i class="fas fa-utensils"></i> Congelados</a></li>
 
-                <li><a href="#" class="side-link employee-only" style="display:none;"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
-                <li><a href="#" class="side-link admin-only" style="display:none;"><i class="fas fa-cog"></i> Panel de admin</a></li>
+                
+                <li class="employee-only" style="display:none;"><a href="<?= isset($base_path) ? $base_path : '' ?>paneles/dashboard_empleado.php" class="side-link"><i class="fas fa-boxes"></i> Gestión de stock</a></li>
+                
+                <li class="admin-only" style="display:none;"><a href="<?= isset($base_path) ? $base_path : '' ?>paneles/dashboard_admin.php" class="side-link"><i class="fas fa-cog"></i> Panel de admin</a></li>
             </ul>
         </nav>
     </aside>
@@ -124,55 +129,20 @@
 
     <main class="main-content container">
 
-    <!-- Test simple del menú lateral -->
-    <script>
-        // Test inmediato para el menú lateral
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔍 Testing menu lateral...');
-            
-            const btnCategorias = document.getElementById('btn-categorias');
-            const sideMenu = document.getElementById('side-menu');
-            const menuOverlay = document.getElementById('menu-overlay');
-            const btnCloseMenu = document.getElementById('btn-close-menu');
-            
-            console.log('Elementos encontrados:');
-            console.log('- btnCategorias:', btnCategorias ? '✅' : '❌');
-            console.log('- sideMenu:', sideMenu ? '✅' : '❌');
-            console.log('- menuOverlay:', menuOverlay ? '✅' : '❌');
-            console.log('- btnCloseMenu:', btnCloseMenu ? '✅' : '❌');
-            
-            if (btnCategorias) {
-                btnCategorias.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('🎯 Click en categorías detectado!');
-                    
-                    if (sideMenu) {
-                        sideMenu.classList.add('open');
-                        console.log('📂 Menú abierto');
-                    }
-                    if (menuOverlay) {
-                        menuOverlay.classList.add('active');
-                        console.log('🌚 Overlay activado');
-                    }
-                });
-                console.log('✅ Event listener de categorías agregado');
-            }
-            
-            // Función para cerrar menú
-            function cerrarMenu() {
-                console.log('❌ Cerrando menú...');
-                if (sideMenu) sideMenu.classList.remove('open');
-                if (menuOverlay) menuOverlay.classList.remove('active');
-            }
-            
-            if (btnCloseMenu) {
-                btnCloseMenu.addEventListener('click', cerrarMenu);
-                console.log('✅ Event listener de cerrar agregado');
-            }
-            
-            if (menuOverlay) {
-                menuOverlay.addEventListener('click', cerrarMenu);
-                console.log('✅ Event listener de overlay agregado');
-            }
-        });
-    </script>
+    <!-- Ventana modal de error -->
+    <div id="modalError" class="modal-error">
+        <div class="modal-contenido">
+            <p id="mensajeError"></p>
+            <button id="cerrarModal">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Scripts principales -->
+    <script src="<?= isset($base_path) ? $base_path : '' ?>script.js"></script>
+    <script src="<?= isset($base_path) ? $base_path : '' ?>catalogo/catalogo.js"></script>
+    <script src="<?= isset($base_path) ? $base_path : '' ?>buscador/buscador.js"></script>
+    <script src="<?= isset($base_path) ? $base_path : '' ?>carrito.js/carrito.js"></script>
+    
+    <?php if (isset($additional_scripts)): ?>
+        <?= $additional_scripts ?>
+    <?php endif; ?>

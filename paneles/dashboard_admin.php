@@ -21,8 +21,16 @@ try {
     $stmt_stock_count = $pdo->query("SELECT COUNT(*) FROM producto WHERE Stock < 20");
     $low_stock_count = $stmt_stock_count->fetchColumn();
 
-    $stmt_sales_count = $pdo->query("SELECT COUNT(*) FROM venta WHERE fecha_venta >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
-    $sales_count = $stmt_sales_count->fetchColumn();
+    // Verificar si la tabla venta existe antes de consultarla
+    $stmt_check_venta = $pdo->query("SHOW TABLES LIKE 'venta'");
+    $venta_exists = $stmt_check_venta->rowCount() > 0;
+    
+    if ($venta_exists) {
+        $stmt_sales_count = $pdo->query("SELECT COUNT(*) FROM venta WHERE fecha_venta >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+        $sales_count = $stmt_sales_count->fetchColumn();
+    } else {
+        $sales_count = 0; // No hay ventas si la tabla no existe
+    }
 
 
     // --- 2. LEER DATOS PARA LAS TABLAS ---
@@ -47,14 +55,15 @@ try {
         $imagenes_secundarias_map[$img['Id_Producto']][] = $img['url_imagen'];
     }
 
-    // Obtenemos los productos
-    $stmt_productos = $pdo->query("SELECT p.Id_Producto, p.imagen_url, p.Nombre_Producto, p.precio_actual, p.precio_anterior, p.Stock, p.Descripcion, p.Id_Categoria, c.Nombre_Categoria 
+    // Obtenemos los productos con imagen principal de producto_imagenes
+    $stmt_productos = $pdo->query("SELECT p.Id_Producto, 
+                                          COALESCE(pi.url_imagen, 'https://via.placeholder.com/250x160?text=Sin+Imagen') AS imagen_url,
+                                          p.Nombre_Producto, p.precio_actual, p.precio_anterior, p.Stock, p.Descripcion, p.Id_Categoria, c.Nombre_Categoria 
                                    FROM producto p 
-                                   LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria 
+                                   LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+                                   LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
                                    ORDER BY p.Id_Producto");
-    $productos = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);
-
-    // Añadimos las imágenes secundarias a cada array de producto
+    $productos = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);    // Añadimos las imágenes secundarias a cada array de producto
     foreach ($productos as $i => $producto) {
         $prod_id = $producto['Id_Producto'];
         // Aseguramos que imagen_url (principal) no sea null para el JS

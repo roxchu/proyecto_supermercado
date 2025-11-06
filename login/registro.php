@@ -83,14 +83,14 @@ try {
     // Iniciar sesión automática
     $_SESSION['logged_in'] = true;
     $_SESSION['user_id'] = $user_id;
-    $_SESSION['rol'] = 'cliente';
+    $_SESSION['rol'] = 'client';
     $_SESSION['nombre'] = $nombre;
 
     echo json_encode([
         'success' => true,
         'message' => 'Registro exitoso. ¡Bienvenido!',
         'nombre' => $nombre,
-        'rol' => 'cliente'
+        'rol' => 'client'
     ]);
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();

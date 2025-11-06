@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . '/carrito/db.php'; // conexión correcta a la BD
+require __DIR__ . '/../carrito/db.php'; // conexión correcta a la BD
 
 try {
     if (!isset($_GET['termino']) || trim($_GET['termino']) === '') {
@@ -12,15 +12,16 @@ try {
 
     $stmt = $pdo->prepare("
         SELECT 
-            Id_Producto AS id,
-            Nombre_Producto AS nombre,
-            Descripcion AS descripcion,
-            imagen_url AS imagen,
-            precio_actual AS precio,
-            Stock AS stock
-        FROM producto
-        WHERE Nombre_Producto LIKE ?
-        ORDER BY Nombre_Producto ASC
+            p.Id_Producto AS id,
+            p.Nombre_Producto AS nombre,
+            p.Descripcion AS descripcion,
+            COALESCE(pi.url_imagen, 'https://via.placeholder.com/250x160?text=Sin+Imagen') AS imagen,
+            p.precio_actual AS precio,
+            p.Stock AS stock
+        FROM producto p
+        LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
+        WHERE p.Nombre_Producto LIKE ?
+        ORDER BY p.Nombre_Producto ASC
     ");
     $stmt->execute([$termino]);
     $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);

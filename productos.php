@@ -23,10 +23,12 @@ try {
     if ($categoria) {
         $stmt = $pdo->prepare("
             SELECT p.Id_Producto AS id, p.Nombre_Producto AS nombre, p.Descripcion AS descripcion,
-                   p.imagen_url, p.precio_actual, p.precio_anterior, p.etiqueta_especial,
+                   COALESCE(pi.url_imagen, 'https://via.placeholder.com/250x160?text=Sin+Imagen') AS imagen_url, 
+                   p.precio_actual, p.precio_anterior, p.etiqueta_especial,
                    p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria
             FROM producto p
             LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+            LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
             WHERE c.Nombre_Categoria = ?
             ORDER BY p.Id_Producto
         ");
@@ -35,10 +37,12 @@ try {
         // Modo por defecto (productos destacados)
         $stmt = $pdo->query("
             SELECT p.Id_Producto AS id, p.Nombre_Producto AS nombre, p.Descripcion AS descripcion,
-                   p.imagen_url, p.precio_actual, p.precio_anterior, p.etiqueta_especial,
+                   COALESCE(pi.url_imagen, 'https://via.placeholder.com/250x160?text=Sin+Imagen') AS imagen_url, 
+                   p.precio_actual, p.precio_anterior, p.etiqueta_especial,
                    p.descuento_texto, p.Stock AS stock, c.Nombre_Categoria AS categoria
             FROM producto p
             LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+            LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
             WHERE p.es_destacado = 1
             ORDER BY p.Id_Producto
             LIMIT 12

@@ -25,10 +25,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
 // 2. Si el ID es válido, buscar el producto y sus opiniones
 if ($producto_id !== null) {
-    // --- Obtener datos del producto ---
-    $sql_producto = "SELECT p.*, c.Nombre_Categoria
+    // --- Obtener datos del producto con imagen principal de producto_imagenes ---
+    $sql_producto = "SELECT p.*, c.Nombre_Categoria,
+                            COALESCE(pi.url_imagen, 'https://via.placeholder.com/400x400?text=Sin+Imagen') AS imagen_principal
                      FROM producto p
                      LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+                     LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
                      WHERE p.Id_Producto = ?";
 
     $stmt_producto = $pdo->prepare($sql_producto);
@@ -76,6 +78,7 @@ if ($producto_id !== null) {
 
 // Variables para el header
 $page_title = $producto ? htmlspecialchars($producto['Nombre_Producto']) . ' - Supermercado Online' : 'Producto no encontrado - Supermercado Online';
+$base_path = ''; // Ruta base para los archivos CSS/JS
 
 // Estilos adicionales específicos para esta página
 $additional_styles = '<link rel="stylesheet" href="css/mostrar-producto.css">';
@@ -326,7 +329,7 @@ include 'header.php';
             <div class="producto-principal">
                 <div class="producto-imagen">
                     <img id="imagen-principal"
-                        src="<?= htmlspecialchars($producto['imagen_url'] ?: 'https://via.placeholder.com/400x400') ?>"
+                        src="<?= htmlspecialchars($producto['imagen_principal'] ?: 'https://via.placeholder.com/400x400?text=Sin+Imagen') ?>"
                         alt="<?= htmlspecialchars($producto['Nombre_Producto']) ?>">
                 </div>
 

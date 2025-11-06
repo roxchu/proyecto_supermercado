@@ -212,12 +212,12 @@ CREATE TABLE `producto_imagenes` (
 --
 
 INSERT INTO `producto_imagenes` (`Id_Imagen`, `Id_Producto`, `url_imagen`, `orden`) VALUES
-(0, 1, 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400', 1),
-(0, 1, 'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=400', 2),
-(0, 1, 'https://images.unsplash.com/photo-1610399313110-89e4c198e3b0?w=400', 3),
-(0, 2, 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400', 1),
-(0, 2, 'https://images.unsplash.com/photo-1626071499700-1de1c474b789?w=400', 2),
-(0, 4, 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400', 1);
+(1, 1, 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400', 1),
+(2, 1, 'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=400', 2),
+(3, 1, 'https://images.unsplash.com/photo-1610399313110-89e4c198e3b0?w=400', 3),
+(4, 2, 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400', 1),
+(5, 2, 'https://images.unsplash.com/photo-1626071499700-1de1c474b789?w=400', 2),
+(6, 4, 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400', 1);
 
 -- --------------------------------------------------------
 
@@ -239,11 +239,11 @@ CREATE TABLE `producto_opiniones` (
 --
 
 INSERT INTO `producto_opiniones` (`Id_Opinion`, `Id_Producto`, `id_usuario`, `Calificacion`, `Comentario`, `Fecha_Opinion`) VALUES
-(0, 1, 6, 5, '¡Excelentes manzanas! Muy frescas y crujientes. Llegaron rápido.', '2025-10-24 00:00:48'),
-(0, 1, 7, 4, 'Buenas manzanas, aunque un poco caras para mi gusto.', '2025-10-24 00:00:48'),
-(0, 1, 8, 5, 'Las mejores que probé en mucho tiempo.', '2025-10-24 00:00:48'),
-(0, 2, 6, 5, 'El pollo estaba perfecto para el horno. Buen tamaño y sabor.', '2025-10-24 00:00:48'),
-(0, 4, 7, 3, 'Es Coca Cola, no hay mucho que decir. Llegó bien fría.', '2025-10-24 00:00:48');
+(1, 1, 6, 5, '¡Excelentes manzanas! Muy frescas y crujientes. Llegaron rápido.', '2025-10-24 00:00:48'),
+(2, 1, 7, 4, 'Buenas manzanas, aunque un poco caras para mi gusto.', '2025-10-24 00:00:48'),
+(3, 1, 8, 5, 'Las mejores que probé en mucho tiempo.', '2025-10-24 00:00:48'),
+(4, 2, 6, 5, 'El pollo estaba perfecto para el horno. Buen tamaño y sabor.', '2025-10-24 00:00:48'),
+(5, 4, 7, 3, 'Es Coca Cola, no hay mucho que decir. Llegó bien fría.', '2025-10-24 00:00:48');
 
 -- --------------------------------------------------------
 
@@ -373,6 +373,21 @@ ALTER TABLE `producto`
   ADD KEY `FK_Producto_Categoria` (`Id_Categoria`);
 
 --
+-- Indices de la tabla `producto_imagenes`
+--
+ALTER TABLE `producto_imagenes`
+  ADD PRIMARY KEY (`Id_Imagen`),
+  ADD KEY `FK_ProductoImagen_Producto` (`Id_Producto`);
+
+--
+-- Indices de la tabla `producto_opiniones`
+--
+ALTER TABLE `producto_opiniones`
+  ADD PRIMARY KEY (`Id_Opinion`),
+  ADD KEY `FK_Opinion_Producto` (`Id_Producto`),
+  ADD KEY `FK_Opinion_Usuario` (`id_usuario`);
+
+--
 -- Indices de la tabla `rol`
 --
 ALTER TABLE `rol`
@@ -437,10 +452,35 @@ ALTER TABLE `producto`
   MODIFY `Id_Producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
+-- AUTO_INCREMENT de la tabla `producto_imagenes`
+--
+ALTER TABLE `producto_imagenes`
+  MODIFY `Id_Imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT de la tabla `producto_opiniones`
+--
+ALTER TABLE `producto_opiniones`
+  MODIFY `Id_Opinion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
 -- AUTO_INCREMENT de la tabla `rol`
 --
 ALTER TABLE `rol`
   MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de la tabla `usuario`
+--
+ALTER TABLE `usuario`
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT de la tabla `venta`
+--
+ALTER TABLE `venta`
+  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

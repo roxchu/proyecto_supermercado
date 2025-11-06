@@ -57,21 +57,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
 
     if ($usuario) {
         // --- 1. NORMALIZACIÓN DEL ROL ---
-        $rol_normalizado = strtolower($usuario['nombre_rol']); // Obtiene 'employee' o 'admin'
+        $rol_normalizado = strtolower($usuario['nombre_rol']); // Obtiene 'admin', 'empleado' o 'client'
 
-        // CORRECCIÓN CLAVE: Mapear 'employee' a 'empleado' (Español)
+        // CORRECCIÓN CLAVE: Mapear según la tabla rol actual
         if ($usuario['id_rol'] == 1 || $rol_normalizado === 'admin') {
             $rol_final = 'admin';
-        } elseif ($usuario['id_rol'] == 2 || $rol_normalizado === 'employee') {
-            $rol_final = 'empleado'; // <-- ROL UNIFICADO EN ESPAÑOL
+        } elseif ($usuario['id_rol'] == 2 || $rol_normalizado === 'empleado') {
+            $rol_final = 'empleado';
         } else {
-            $rol_final = 'cliente'; // Asume rol 3 es cliente
+            $rol_final = 'client'; // Asume rol 3 es client (según tu tabla)
         }
 
         // --- 2. Éxito: Configurar la sesión con el rol normalizado ---
         $_SESSION['logged_in'] = true;
         $_SESSION['user_id'] = $usuario['id_usuario'];
-        $_SESSION['rol'] = $rol_final; // Usamos 'empleado'
+        $_SESSION['rol'] = $rol_final;
         $_SESSION['nombre'] = $usuario['nombre_usuario'];
         $_SESSION['id_rol'] = $usuario['id_rol'];
         $_SESSION['dni'] = (string)$dni;
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
         echo json_encode([
             'success' => true,
             'message' => 'Inicio de sesión exitoso.',
-            'rol' => $rol_final, // Devolver 'empleado' al JS
+            'rol' => $rol_final,
             'nombre' => $usuario['nombre_usuario'],
             'redirect' => $redirect_url
         ]);
