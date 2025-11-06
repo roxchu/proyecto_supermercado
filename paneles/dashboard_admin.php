@@ -11,6 +11,7 @@ verificar_rol('admin');
 
 try {
     // --- 1. LEER DATOS PARA EL DASHBOARD (MÉTRICAS) ---
+    // NOTA: Se asume que las tablas 'usuario', 'producto', 'rol' y 'categoria' están en MINÚSCULAS
     $stmt_user_count = $pdo->query("SELECT COUNT(*) FROM usuario");
     $user_count = $stmt_user_count->fetchColumn();
 
@@ -46,16 +47,9 @@ try {
     $stmt_categorias = $pdo->query("SELECT * FROM categoria ORDER BY Nombre_Categoria");
     $categorias = $stmt_categorias->fetchAll(PDO::FETCH_ASSOC);
 
-    // --- 3. LEER PRODUCTOS Y SUS IMÁGENES SECUNDARIAS ---
+    // --- 3. LEER PRODUCTOS (SOLO IMAGEN PRINCIPAL) ---
     
-    // Obtenemos todas las imágenes secundarias (orden > 1)
-    $stmt_imagenes = $pdo->query("SELECT Id_Producto, url_imagen FROM producto_imagenes WHERE orden > 1 ORDER BY orden");
-    $imagenes_secundarias_map = [];
-    foreach ($stmt_imagenes->fetchAll(PDO::FETCH_ASSOC) as $img) {
-        $imagenes_secundarias_map[$img['Id_Producto']][] = $img['url_imagen'];
-    }
-
-    // Obtenemos los productos con imagen principal de producto_imagenes
+    // Obtenemos los productos con imagen principal de producto_imagenes (orden = 1)
     $stmt_productos = $pdo->query("SELECT p.Id_Producto, 
                                           COALESCE(pi.url_imagen, 'https://via.placeholder.com/250x160?text=Sin+Imagen') AS imagen_url,
                                           p.Nombre_Producto, p.precio_actual, p.precio_anterior, p.Stock, p.Descripcion, p.Id_Categoria, c.Nombre_Categoria 
@@ -63,12 +57,11 @@ try {
                                    LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
                                    LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
                                    ORDER BY p.Id_Producto");
-    $productos = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);    // Añadimos las imágenes secundarias a cada array de producto
+    $productos = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);    
+    
+    // Aseguramos que la URL exista en el array de PHP para el JSON (sólo principal)
     foreach ($productos as $i => $producto) {
-        $prod_id = $producto['Id_Producto'];
-        // Aseguramos que imagen_url (principal) no sea null para el JS
         $productos[$i]['imagen_url'] = $producto['imagen_url'] ?? ''; 
-        $productos[$i]['imagenes_secundarias'] = $imagenes_secundarias_map[$prod_id] ?? [];
     }
 
 } catch (PDOException $e) {
@@ -178,7 +171,6 @@ try {
 
         <section id="section-roles" class="content-section">
             <h2>Gestionar Roles</h2>
-            <button class="btn btn-primary float-right" data-modal="modal-rol"><i class="fas fa-plus"></i> Agregar Rol</button>
             <div class="table-container">
                 <table>
                     <thead>
@@ -200,13 +192,7 @@ try {
                                         data-nombre="<?php echo htmlspecialchars($rol['nombre_rol']); ?>">
                                     <i class="fas fa-pencil-alt"></i>
                                 </button>
-                                <button class="btn btn-delete btn-delete-item"
-                                        data-id="<?php echo $rol['id_rol']; ?>"
-                                        data-tipo="rol"
-                                        data-nombre="<?php echo htmlspecialchars($rol['nombre_rol']); ?>">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
+                                </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -340,16 +326,11 @@ try {
                 </select>
                 
                 <hr>
-                <h4>Imágenes del Producto</h4>
+                <h4>Imagen Principal</h4>
                 
-                <label for="prod-img-principal">Imagen Principal (URL de tabla 'producto'):</label>
+                <label for="prod-img-principal">URL de Imagen:</label>
                 <input type="url" id="prod-img-principal" name="imagen_url_principal" class="full-width-input" placeholder="https://..." required>
                 
-                <label>Imágenes Secundarias (URLs de tabla 'producto_imagenes'):</label>
-                <div id="lista-imagenes-secundarias">
-                </div>
-                <button type="button" id="add-image-url" class="btn"><i class="fas fa-plus"></i> Añadir URL</button>
-
                 <div class="modal-actions">
                     <button type="button" class="btn btn-cancel-modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar Producto</button>
@@ -366,9 +347,7 @@ try {
         const modalButtons = document.querySelectorAll('[data-modal]');
         const cancelButtons = document.querySelectorAll('.btn-cancel-modal');
         const modalProducto = document.getElementById('modal-producto');
-        const imageListContainer = modalProducto.querySelector('#lista-imagenes-secundarias');
-        const addImageBtn = document.getElementById('add-image-url');
-
+        
         // Navegación de la Sidebar
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
@@ -416,7 +395,7 @@ try {
                             form.querySelector('#rol-nombre').value = this.getAttribute('data-nombre');
                             form.querySelector('#rol-action').value = 'update_role';
                         } else {
-                            // MODO AGREGAR ROL
+                            // MODO AGREGAR ROL (ya no existe el botón de agregar rol)
                             modalTitle.innerText = 'Agregar Rol';
                             form.reset();
                             form.querySelector('#rol-id').value = '';
@@ -428,9 +407,6 @@ try {
                     if (modalId === 'modal-producto') {
                         const modalTitle = modal.querySelector('#modal-producto-titulo');
                         const form = modal.querySelector('#form-producto');
-                        
-                        // Limpiar imágenes secundarias anteriores
-                        imageListContainer.innerHTML = '';
                         
                         if (this.classList.contains('btn-edit-producto')) {
                             // MODO EDITAR: Rellenar el formulario
@@ -446,13 +422,6 @@ try {
                             form.querySelector('#prod-stock').value = data.Stock;
                             form.querySelector('#prod-categoria').value = data.Id_Categoria;
                             form.querySelector('#prod-img-principal').value = data.imagen_url;
-
-                            // Cargar imágenes secundarias existentes
-                            if (data.imagenes_secundarias && data.imagenes_secundarias.length > 0) {
-                                data.imagenes_secundarias.forEach(url => {
-                                    addDynamicImageUrl(url);
-                                });
-                            }
 
                         } else {
                             // MODO AGREGAR: Limpiar el formulario
@@ -473,40 +442,6 @@ try {
                 this.closest('.modal-bg').style.display = 'none';
             });
         });
-
-        // --- Lógica del Modal de Producto (Imágenes) ---
-
-        // Función para añadir un campo de URL
-        function addDynamicImageUrl(url = '') {
-            const count = imageListContainer.children.length + 2;
-            const newImageGroup = document.createElement('div');
-            newImageGroup.className = 'image-url-group';
-            
-            // Usamos name="imagenes_secundarias[]" para que PHP lo reciba como un array
-            newImageGroup.innerHTML = `
-                <input type="url" name="imagenes_secundarias[]" class="full-width-input" value="${url}" placeholder="https://... (URL Imagen ${count})">
-                <button type="button" class="btn btn-delete remove-image-url"><i class="fas fa-times"></i></button>
-            `;
-            imageListContainer.appendChild(newImageGroup);
-        }
-
-        // Botón "Añadir URL"
-        if (addImageBtn) {
-            addImageBtn.addEventListener('click', function() {
-                addDynamicImageUrl(); // Añade un campo vacío
-            });
-        }
-
-        // Delegación de eventos para botones "Eliminar URL"
-        if (imageListContainer) {
-            imageListContainer.addEventListener('click', function(e) {
-                const removeButton = e.target.closest('.remove-image-url');
-                if (removeButton) {
-                    removeButton.parentElement.remove();
-                }
-            });
-        }
-
 
         // -----------------------------------------------------------------
         // LÓGICA DE ENVÍO DE FORMULARIOS (SUBMIT) Y DELETE
@@ -536,6 +471,7 @@ try {
                 }
             } catch (error) {
                 console.error('Error en el fetch:', error);
+                // Aquí 'error.message' puede ser el error de JSON.parse o el mensaje del 'throw new Error'
                 alert('Error: ' + error.message);
             }
         }
@@ -567,12 +503,17 @@ try {
             });
         }
 
-        // 4. Manejador para TODOS los botones de ELIMINAR
+        // 4. Manejador para TODOS los botones de ELIMINAR (Solo Usuario y Producto)
         document.querySelectorAll('.btn-delete-item').forEach(button => {
             button.addEventListener('click', async function() {
                 const id = this.getAttribute('data-id');
                 const tipo = this.getAttribute('data-tipo');
                 const nombre = this.getAttribute('data-nombre');
+
+                if (tipo === 'rol') {
+                    alert('La eliminación de roles está deshabilitada por motivos de seguridad.');
+                    return;
+                }
 
                 if (confirm(`¿Está seguro que desea eliminar "${nombre}" (Tipo: ${tipo}, ID: ${id})?`)) {
                     const formData = new FormData();

@@ -4,8 +4,11 @@ error_reporting(E_ALL);
 
 include '../login/control_acceso.php';
 
-// Solo permite admin para CUALQUIER acción en este archivo
+// SOLO permite admin para CUALQUIER acción en este archivo
 verificar_rol('admin');
+
+// Incluimos la conexión a la base de datos, que faltaba.
+require_once __DIR__ . '/../carrito/db.php'; 
 
 // Verificamos que sea una petición POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -57,17 +60,16 @@ try {
             $tipo = $_POST['tipo'];
             
             $sql = "";
-            $id_column = "";
 
             if ($tipo == 'usuario') {
                 $sql = "DELETE FROM usuario WHERE id_usuario = ?";
-            } elseif ($tipo == 'rol') {
-                // OJO: Deberías tener cuidado con borrar roles que están en uso.
-                // Esta query simple fallará si hay 'foreign key constraints'.
-                // Una mejor lógica sería verificar si el rol está en uso primero.
+            } 
+            // *** MODIFICACIÓN ***: Se eliminó el case 'rol' para evitar su eliminación
+            /* elseif ($tipo == 'rol') {
                 $sql = "DELETE FROM rol WHERE id_rol = ?";
-            } elseif ($tipo == 'producto') {
-                // Al borrar un producto, también borramos sus imágenes secundarias
+            } */
+            elseif ($tipo == 'producto') {
+                // Al borrar un producto, también borramos sus imágenes (principal y secundarias si existieran)
                 $pdo->beginTransaction();
                 $stmt_img = $pdo->prepare("DELETE FROM producto_imagenes WHERE Id_Producto = ?");
                 $stmt_img->execute([$id]);
@@ -99,43 +101,43 @@ try {
             $precio_anterior = !empty($_POST['precio_anterior']) ? $_POST['precio_anterior'] : null;
             $stock = $_POST['stock'];
             $id_categoria = $_POST['id_categoria'];
-            $imagen_principal = $_POST['imagen_url_principal']; // URL principal
-            $imagenes_secundarias = $_POST['imagenes_secundarias'] ?? []; // Array de URLs
+            
+            // Solo se usa la imagen principal
+            $imagen_principal = $_POST['imagen_url_principal']; 
 
             $pdo->beginTransaction();
 
             if ($id_producto) {
                 // --- MODO UPDATE (EDITAR) ---
+                // Se elimina 'imagen_url' de la tabla 'producto' para resolver el error SQL 1054
                 $sql_prod = "UPDATE producto 
                              SET Nombre_Producto = ?, Descripcion = ?, precio_actual = ?, 
-                                 precio_anterior = ?, Stock = ?, Id_Categoria = ?, imagen_url = ?
+                                 precio_anterior = ?, Stock = ?, Id_Categoria = ?
                              WHERE Id_Producto = ?";
                 $stmt_prod = $pdo->prepare($sql_prod);
-                $stmt_prod->execute([$nombre, $descripcion, $precio_actual, $precio_anterior, $stock, $id_categoria, $imagen_principal, $id_producto]);
+                $stmt_prod->execute([$nombre, $descripcion, $precio_actual, $precio_anterior, $stock, $id_categoria, $id_producto]);
                 $message = 'Producto actualizado.';
             } else {
                 // --- MODO INSERT (CREAR) ---
-                $sql_prod = "INSERT INTO producto (Nombre_Producto, Descripcion, precio_actual, precio_anterior, Stock, Id_Categoria, imagen_url) 
-                             VALUES (?, ?, ?, ?, ?, ?, ?)";
+                // Se elimina 'imagen_url' de la tabla 'producto' para resolver el error SQL 1054
+                $sql_prod = "INSERT INTO producto (Nombre_Producto, Descripcion, precio_actual, precio_anterior, Stock, Id_Categoria) 
+                             VALUES (?, ?, ?, ?, ?, ?)";
                 $stmt_prod = $pdo->prepare($sql_prod);
-                $stmt_prod->execute([$nombre, $descripcion, $precio_actual, $precio_anterior, $stock, $id_categoria, $imagen_principal]);
+                $stmt_prod->execute([$nombre, $descripcion, $precio_actual, $precio_anterior, $stock, $id_categoria]);
                 $id_producto = $pdo->lastInsertId(); // Obtenemos el ID del nuevo producto
                 $message = 'Producto creado.';
             }
 
-            // --- GESTIÓN DE IMÁGENES SECUNDARIAS (TABLA producto_imagenes) ---
-            // 1. Borramos todas las imágenes secundarias existentes (orden > 1) para este producto
-            $stmt_delete_imgs = $pdo->prepare("DELETE FROM producto_imagenes WHERE Id_Producto = ? AND orden > 1");
-            $stmt_delete_imgs->execute([$id_producto]);
-
-            // 2. Insertamos las nuevas imágenes secundarias
-            $stmt_insert_img = $pdo->prepare("INSERT INTO producto_imagenes (Id_Producto, url_imagen, orden) VALUES (?, ?, ?)");
-            $orden = 2; // Empezamos desde el orden 2
-            foreach ($imagenes_secundarias as $url) {
-                if (!empty($url)) {
-                    $stmt_insert_img->execute([$id_producto, $url, $orden]);
-                    $orden++;
-                }
+            // --- GESTIÓN DE IMAGEN PRINCIPAL (TABLA producto_imagenes con orden = 1) ---
+            
+            // 1. Borramos la imagen principal existente (orden = 1) para este producto
+            $stmt_delete_img = $pdo->prepare("DELETE FROM producto_imagenes WHERE Id_Producto = ? AND orden = 1");
+            $stmt_delete_img->execute([$id_producto]);
+            
+            // 2. Insertamos la nueva imagen principal (si hay URL)
+            if (!empty($imagen_principal)) {
+                $stmt_insert_img = $pdo->prepare("INSERT INTO producto_imagenes (Id_Producto, url_imagen, orden) VALUES (?, ?, 1)");
+                $stmt_insert_img->execute([$id_producto, $imagen_principal]);
             }
             
             // Si todo salió bien, confirmamos la transacción
