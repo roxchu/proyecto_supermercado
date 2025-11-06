@@ -540,6 +540,137 @@ ALTER TABLE `producto_opiniones`
 --
 ALTER TABLE `usuario`
   ADD CONSTRAINT `FK_Usuario_Rol` FOREIGN KEY (`id_rol`) REFERENCES `rol` (`id_rol`);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `metodo_pago`
+--
+
+CREATE TABLE `metodo_pago` (
+  `id_metodo` int(11) NOT NULL,
+  `nombre` varchar(50) NOT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
+  `activo` tinyint(1) DEFAULT 1,
+  `fecha_creacion` timestamp DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `metodo_pago`
+--
+
+INSERT INTO `metodo_pago` (`id_metodo`, `nombre`, `descripcion`, `activo`) VALUES
+(1, 'Efectivo', 'Pago contra entrega en efectivo', 1),
+(2, 'Transferencia Bancaria', 'Transferencia a cuenta bancaria', 1),
+(3, 'Tarjeta de Débito', 'Pago con tarjeta de débito', 1),
+(4, 'Tarjeta de Crédito', 'Pago con tarjeta de crédito', 1),
+(5, 'Mercado Pago', 'Pago a través de Mercado Pago', 1),
+(6, 'Billetera Virtual', 'Otros medios de pago digital', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `pedido`
+--
+
+CREATE TABLE `pedido` (
+  `id_pedido` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_metodo_pago` int(11) NOT NULL,
+  `subtotal` decimal(10,2) NOT NULL,
+  `costo_envio` decimal(10,2) DEFAULT 0.00,
+  `total_final` decimal(10,2) NOT NULL,
+  `direccion_entrega` text NOT NULL,
+  `telefono_contacto` varchar(20) DEFAULT NULL,
+  `observaciones` text DEFAULT NULL,
+  `estado` enum('pendiente','confirmado','en_preparacion','enviado','entregado','cancelado') DEFAULT 'pendiente',
+  `fecha_pedido` timestamp DEFAULT current_timestamp(),
+  `fecha_entrega_estimada` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `pedido_detalle`
+--
+
+CREATE TABLE `pedido_detalle` (
+  `id_detalle` int(11) NOT NULL,
+  `id_pedido` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio_unitario` decimal(10,2) NOT NULL,
+  `subtotal` decimal(10,2) GENERATED ALWAYS AS (`cantidad` * `precio_unitario`) STORED
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Índices para tablas volcadas
+--
+
+--
+-- Indices de la tabla `metodo_pago`
+--
+ALTER TABLE `metodo_pago`
+  ADD PRIMARY KEY (`id_metodo`);
+
+--
+-- Indices de la tabla `pedido`
+--
+ALTER TABLE `pedido`
+  ADD PRIMARY KEY (`id_pedido`),
+  ADD KEY `FK_Pedido_Usuario` (`id_usuario`),
+  ADD KEY `FK_Pedido_MetodoPago` (`id_metodo_pago`);
+
+--
+-- Indices de la tabla `pedido_detalle`
+--
+ALTER TABLE `pedido_detalle`
+  ADD PRIMARY KEY (`id_detalle`),
+  ADD KEY `FK_Detalle_Pedido` (`id_pedido`),
+  ADD KEY `FK_Detalle_Producto` (`id_producto`);
+
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `metodo_pago`
+--
+ALTER TABLE `metodo_pago`
+  MODIFY `id_metodo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT de la tabla `pedido`
+--
+ALTER TABLE `pedido`
+  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `pedido_detalle`
+--
+ALTER TABLE `pedido_detalle`
+  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Filtros para las tablas volcadas
+--
+
+--
+-- Filtros para la tabla `pedido`
+--
+ALTER TABLE `pedido`
+  ADD CONSTRAINT `FK_Pedido_MetodoPago` FOREIGN KEY (`id_metodo_pago`) REFERENCES `metodo_pago` (`id_metodo`),
+  ADD CONSTRAINT `FK_Pedido_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`);
+
+--
+-- Filtros para la tabla `pedido_detalle`
+--
+ALTER TABLE `pedido_detalle`
+  ADD CONSTRAINT `FK_Detalle_Pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedido` (`id_pedido`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FK_Detalle_Producto` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`Id_Producto`);
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -4,12 +4,7 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-// Redirigir a login.php si no hay un usuario autenticado
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
-
+// NO redirigir - solo devolver el estado de la sesión para AJAX
 // --- Lógica de Comprobación de Sesión ---
 
 if (isset($_SESSION['rol']) && isset($_SESSION['user_id'])) {
@@ -22,6 +17,7 @@ if (isset($_SESSION['rol']) && isset($_SESSION['user_id'])) {
     
     $response = [
         'logged_in' => true,
+        'user_id' => $_SESSION['user_id'],
         'nombre' => $nombre,
         'rol' => $rol,
         'id_rol' => $_SESSION['id_rol'] ?? null

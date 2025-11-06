@@ -1,8 +1,9 @@
 <?php
 session_start();
-// Tu comprobación de sesión original.
+
+// Verificar que el usuario esté logueado
 if (!isset($_SESSION['user_id']) && !isset($_SESSION['dni'])) {
-    header("Location: ../login/login.php");
+    header("Location: /proyecto_supermercado/login/login.php");
     exit;
 }
 
@@ -48,9 +49,9 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
 
     .main-container {
       display: flex;
-      gap: 2rem;
+      gap: 1.5rem;
       width: 100%;
-      max-width: 1200px; /* Aumentamos el ancho para dos columnas */
+      max-width: 1400px; /* Aumentamos para tres columnas */
       animation: fadeIn 0.5s ease-in-out;
     }
 
@@ -182,7 +183,136 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
       color: var(--azul-oscuro);
     }
 
+    /* Estilos para el resumen del pedido */
+    .resumen-container {
+      background-color: var(--blanco);
+      border-radius: 16px;
+      box-shadow: var(--sombra);
+      overflow: hidden;
+      min-width: 350px;
+      max-width: 400px;
+      height: fit-content;
+      position: sticky;
+      top: 2rem;
+    }
+
+    .resumen-header {
+      background-color: #28a745;
+      color: var(--blanco);
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .resumen-content {
+      padding: 1.5rem;
+    }
+
+    .producto-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--gris-claro);
+    }
+
+    .producto-item:last-child {
+      border-bottom: none;
+    }
+
+    .producto-info {
+      flex: 1;
+    }
+
+    .producto-nombre {
+      font-weight: 600;
+      color: var(--texto);
+      font-size: 0.9rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .producto-cantidad {
+      color: #666;
+      font-size: 0.8rem;
+    }
+
+    .producto-precio {
+      font-weight: 600;
+      color: var(--azul);
+    }
+
+    .subtotal-row, .envio-row, .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      font-weight: 600;
+    }
+
+    .envio-row {
+      color: #28a745;
+      border-bottom: 1px solid var(--gris-claro);
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .total-row {
+      font-size: 1.2rem;
+      color: var(--azul);
+      border-top: 2px solid var(--azul);
+      padding-top: 1rem;
+    }
+
+    .btn-finalizar {
+      width: 100%;
+      background-color: #ff6b35;
+      color: white;
+      border: none;
+      padding: 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: all 0.2s;
+    }
+
+    .btn-finalizar:hover {
+      background-color: #e55a2b;
+      transform: scale(1.02);
+    }
+
+    .btn-finalizar:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .cargando {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .error-carrito {
+      text-align: center;
+      padding: 2rem;
+      color: #dc3545;
+      background-color: #f8d7da;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
     /* Responsive */
+    @media (max-width: 1200px) {
+      .main-container {
+        flex-direction: column;
+      }
+      .resumen-container {
+        min-width: auto;
+        max-width: none;
+        position: static;
+      }
+    }
+
     @media (max-width: 900px) {
       .main-container {
         flex-direction: column;
@@ -206,7 +336,7 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
       <!-- Formulario de Dirección -->
       <!-- Este formulario envía a guardar_direccion.php -->
       <!-- TODOS los campos 'name' se han mantenido idénticos -->
-      <form action="guardar_direccion.php" method="POST">
+      <form id="direccion-form" action="guardar_direccion.php" method="POST">
         <!-- Campo oculto para el ID de usuario -->
         <input type="hidden" name="id_usuario" value="<?php echo $id_usuario_sesion; ?>">
 
@@ -255,7 +385,7 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
       <!-- Formulario de Método de Pago -->
       <!-- Este formulario envía a guardarmetododepago.php -->
       <!-- Los campos 'name' coinciden con tu tabla SQL 'metodo_pago_usuario' -->
-      <form action="guardarmetododepago.php" method="POST">
+      <form id="pago-form" action="guardarmetododepago.php" method="POST">
         <!-- Campo oculto para el ID de usuario -->
         <input type="hidden" name="id_usuario" value="<?php echo $id_usuario_sesion; ?>">
 
@@ -286,16 +416,34 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
           
         </div>
 
+        </form>
+    </div>
+
+    <!-- COLUMNA 3: RESUMEN DEL PEDIDO -->
+    <div class="resumen-container">
+      <div class="resumen-header">
+        <h3><i class="fas fa-shopping-cart"></i> Resumen del Pedido</h3>
+      </div>
+      <div class="resumen-content" id="resumen-content">
+        <div class="cargando">Cargando productos...</div>
+      </div>
     </div>
 
   </div>
 
   <div class="volver-container">
-    <a href="../index.html"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
+    <a href="/proyecto_supermercado/index.html"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Configurar carrito de prueba
+      setupCarritoPrueba();
+      
+      // Cargar resumen del pedido
+      setTimeout(cargarResumenPedido, 1000); // Dar tiempo para que se configure el carrito
+
+      // Lógica del método de pago
       const tipoMetodoSelect = document.getElementById('tipo_metodo');
       const camposTarjetaContainer = document.getElementById('campos-tarjeta');
       
@@ -330,6 +478,158 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
         }
       });
     });
+
+    // Función para configurar carrito de prueba
+    async function setupCarritoPrueba() {
+      try {
+        const response = await fetch('/proyecto_supermercado/direcciones/setup_carrito.php');
+        const text = await response.text();
+        console.log('Carrito configurado:', text);
+      } catch (error) {
+        console.error('Error configurando carrito:', error);
+      }
+    }
+
+    // Funciones para el resumen del pedido
+    async function cargarResumenPedido() {
+      try {
+        const response = await fetch('/proyecto_supermercado/carrito/obtener_carrito.php');
+        const data = await response.json();
+        
+        if (data.success) {
+          mostrarResumenPedido(data.productos);
+        } else {
+          mostrarErrorCarrito();
+        }
+      } catch (error) {
+        console.error('Error al cargar el carrito:', error);
+        mostrarErrorCarrito();
+      }
+    }
+
+    function mostrarResumenPedido(productos) {
+      const resumenContent = document.getElementById('resumen-content');
+      
+      if (!productos || productos.length === 0) {
+        resumenContent.innerHTML = '<div class="error-carrito">No hay productos en el carrito</div>';
+        return;
+      }
+
+      let subtotal = 0;
+      let html = '';
+
+      productos.forEach(producto => {
+        const precioTotal = parseFloat(producto.precio || producto.precio_actual) * parseInt(producto.cantidad || producto.Cantidad);
+        subtotal += precioTotal;
+        
+        html += `
+          <div class="producto-item">
+            <div class="producto-info">
+              <div class="producto-nombre">${producto.nombre}</div>
+              <div class="producto-cantidad">Cantidad: ${producto.cantidad || producto.Cantidad}</div>
+            </div>
+            <div class="producto-precio">$${precioTotal.toFixed(2)}</div>
+          </div>
+        `;
+      });
+
+      const envio = 0; // Envío gratis
+      const total = subtotal + envio;
+
+      html += `
+        <div class="subtotal-row">
+          <span>Subtotal:</span>
+          <span>$${subtotal.toFixed(2)}</span>
+        </div>
+        <div class="envio-row">
+          <span>Envío:</span>
+          <span>GRATIS</span>
+        </div>
+        <div class="total-row">
+          <span>Total:</span>
+          <span>$${total.toFixed(2)}</span>
+        </div>
+        <button type="button" class="btn-finalizar" onclick="finalizarCompra()">
+          Finalizar Compra
+        </button>
+      `;
+
+      resumenContent.innerHTML = html;
+    }
+
+    function mostrarErrorCarrito() {
+      const resumenContent = document.getElementById('resumen-content');
+      resumenContent.innerHTML = '<div class="error-carrito">Error al cargar el carrito</div>';
+    }
+
+    function finalizarCompra() {
+      // Validar formularios
+      const direccionForm = document.getElementById('direccion-form');
+      const pagoSelect = document.getElementById('tipo_metodo');
+      
+      if (!direccionForm.checkValidity()) {
+        alert('Por favor completa todos los campos de dirección');
+        direccionForm.reportValidity();
+        return;
+      }
+      
+      if (!pagoSelect.value) {
+        alert('Por favor selecciona un método de pago');
+        pagoSelect.focus();
+        return;
+      }
+
+      // Procesar la compra
+      procesarCompra();
+    }
+
+    async function procesarCompra() {
+      const btnFinalizar = document.querySelector('.btn-finalizar');
+      btnFinalizar.disabled = true;
+      btnFinalizar.textContent = 'Procesando...';
+
+      try {
+        const formData = new FormData();
+        
+        // Obtener datos del formulario de dirección
+        const direccionForm = document.getElementById('direccion-form');
+        new FormData(direccionForm).forEach((value, key) => {
+          formData.append(key, value);
+        });
+
+        // Obtener método de pago
+        formData.append('tipo_metodo', document.getElementById('tipo_metodo').value);
+        
+        // Si es tarjeta, agregar datos de tarjeta
+        const tipoMetodo = document.getElementById('tipo_metodo').value;
+        if (tipoMetodo === 'Tarjeta de crédito' || tipoMetodo === 'Tarjeta de débito') {
+          formData.append('nombre_titular', document.getElementById('nombre_titular').value);
+          formData.append('numero_tarjeta', document.getElementById('numero_tarjeta').value);
+          formData.append('vencimiento', document.getElementById('vencimiento').value);
+        }
+
+        const response = await fetch('procesar_compra.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Redirigir a página de éxito
+          window.location.href = 'compra_exitosa.php';
+        } else {
+          alert('Error al procesar la compra: ' + result.message);
+          btnFinalizar.disabled = false;
+          btnFinalizar.textContent = 'Finalizar Compra';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error al procesar la compra');
+        btnFinalizar.disabled = false;
+        btnFinalizar.textContent = 'Finalizar Compra';
+      }
+    }
   </script>
 
 </body>

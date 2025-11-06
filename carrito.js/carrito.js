@@ -54,7 +54,7 @@
     async function verificarSesion() {
         try {
             console.log('🔐 Verificando sesión...');
-            const resp = await fetch("login/check_session.php", {
+            const resp = await fetch("/proyecto_supermercado/login/check_session.php", {
                 credentials: "include", 
             });
             const data = await resp.json();
@@ -90,7 +90,13 @@
 
         try {
             console.log('📡 Solicitando carrito desde obtener_carrito.php');
-            const resp = await fetch("carrito/obtener_carrito.php", {
+            
+            // Usar ruta absoluta desde la raíz del proyecto
+            const obtenerCarritoUrl = "/proyecto_supermercado/carrito/obtener_carrito.php";
+            
+            console.log('🔗 URL para obtener carrito:', obtenerCarritoUrl);
+            
+            const resp = await fetch(obtenerCarritoUrl, {
                 credentials: "include",
             });
             
@@ -104,25 +110,35 @@
             listaCarrito.innerHTML = "";
             let total = 0;
 
-            // Modificación para manejar la nueva estructura de respuesta
-            if (!data.success || !data.items || data.items.length === 0) {
-                console.log('🛒 Carrito vacío o sin productos');
+            // Validar la respuesta y extraer productos de manera segura
+            if (!data || !data.success) {
+                console.log('❌ Error en la respuesta o carrito no exitoso');
+                listaCarrito.innerHTML = `<li class="vacio">Error al cargar el carrito</li>`;
+                totalCarrito.textContent = formatter.format(0);
+                if (cartCount) cartCount.textContent = "0";
+                return;
+            }
+
+            const productos = data.productos || data.items || [];
+            
+            if (!Array.isArray(productos) || productos.length === 0) {
+                console.log('🛒 Carrito vacío o sin productos válidos');
                 listaCarrito.innerHTML = `<li class="vacio">Tu carrito está vacío</li>`;
                 totalCarrito.textContent = formatter.format(0);
                 if (cartCount) cartCount.textContent = "0";
                 return;
             }
             
-            console.log(`🛍️ Mostrando ${data.items.length} productos en el carrito`);
+            console.log(`🛍️ Mostrando ${productos.length} productos en el carrito`);
             
             // Usar la nueva estructura de datos
-            data.items.forEach((prod) => {
+            productos.forEach((prod) => {
                 console.log('📦 Procesando producto:', prod);
                 const idCarrito = prod.Id_Carrito;
-                const nombre = prod.nombre_producto || `Producto #${prod.Id_Producto}`;
-                const precio = parseFloat(prod.Precio_Unitario_Momento) || 0;
-                const cantidad = parseInt(prod.Cantidad) || 0;
-                const subtotal = parseFloat(prod.Total) || 0;
+                const nombre = prod.nombre || prod.nombre_producto || `Producto #${prod.Id_Producto}`;
+                const precio = parseFloat(prod.Precio_Unitario_Momento) || parseFloat(prod.precio) || 0;
+                const cantidad = parseInt(prod.Cantidad) || parseInt(prod.cantidad) || 0;
+                const subtotal = parseFloat(prod.Total) || (precio * cantidad) || 0;
 
                 const li = document.createElement("li");
                 li.classList.add("carrito-item");
@@ -146,13 +162,17 @@
                 listaCarrito.appendChild(li);
             });
 
-            // Usar el total calculado del servidor
-            totalCarrito.textContent = formatter.format(data.total || 0);
-            if (cartCount) cartCount.textContent = data.items.length.toString();
+            // Usar el total calculado del servidor o calcular localmente
+            const totalFinal = data.total || total;
+            totalCarrito.textContent = formatter.format(totalFinal);
+            if (cartCount) cartCount.textContent = productos.length.toString();
 
         } catch (err) {
             console.error("Error al cargar el carrito:", err);
+            console.error("Stack trace:", err.stack);
             listaCarrito.innerHTML = `<li class="error">Error al cargar el carrito: ${err.message}</li>`;
+            totalCarrito.textContent = formatter.format(0);
+            if (cartCount) cartCount.textContent = "0";
         } finally {
             cargando = false;
         }
@@ -203,7 +223,13 @@
 
         try {
             console.log('📡 Enviando producto al carrito...');
-            const resp = await fetch("carrito/agregar_carrito.php", {
+            
+            // Usar ruta absoluta desde la raíz del proyecto
+            const agregarCarritoUrl = "/proyecto_supermercado/carrito/agregar_carrito.php";
+            
+            console.log('🔗 URL para agregar:', agregarCarritoUrl);
+            
+            const resp = await fetch(agregarCarritoUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include", 
@@ -305,7 +331,7 @@
     });
 
     btnPagar.addEventListener("click", () => {
-        window.location.href = "direcciones/direcciones.php";
+        window.location.href = "/proyecto_supermercado/direcciones/direcciones.php";
     });
 
     // Event listener para cambios de sesión

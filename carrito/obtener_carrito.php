@@ -24,14 +24,15 @@ try {
             c.Cantidad,
             c.Precio_Unitario_Momento,
             c.Total,
-            p.Nombre_Producto as nombre_producto
+            p.Nombre_Producto as nombre,
+            p.precio_actual as precio
         FROM carrito c
         JOIN producto p ON c.Id_Producto = p.Id_Producto
         WHERE c.id_usuario = ?
     ");
 
     $stmt->execute([$idUsuario]);
-    $items = $stmt->fetchAll();
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Calcular total del carrito
     $total = 0;
@@ -41,9 +42,9 @@ try {
 
     echo json_encode([
         'success' => true,
-        'items' => $items,
+        'productos' => $items,
         'total' => $total
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
 } catch (Exception $e) {
     error_log("Error en obtener_carrito.php: " . $e->getMessage());
@@ -51,7 +52,7 @@ try {
     echo json_encode([
         'success' => false,
         'message' => 'Error al obtener el carrito: ' . $e->getMessage()
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }
 
 exit;
