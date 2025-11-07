@@ -10,9 +10,36 @@ try {
 
     $termino = trim($_GET['termino']);
     $terminoBusqueda = '%' . $termino . '%';
+    
+    // Para búsquedas más flexibles, también dividimos en palabras
+    $palabras = explode(' ', $termino);
+    $condicionesExtras = [];
+    $parametrosExtras = [];
+    
+    foreach ($palabras as $palabra) {
+        if (strlen(trim($palabra)) >= 2) {
+            $condicionesExtras[] = "(p.Nombre_Producto LIKE ? OR p.Descripcion LIKE ?)";
+            $parametrosExtras[] = '%' . trim($palabra) . '%';
+            $parametrosExtras[] = '%' . trim($palabra) . '%';
+        }
+    }
 
     // Log para debugging
     error_log("Búsqueda: $termino");
+    
+    $condicionBusqueda = "
+        WHERE (p.Nombre_Producto LIKE ? 
+        OR p.Descripcion LIKE ?
+        OR c.Nombre_Categoria LIKE ?)
+    ";
+    
+    $parametrosConsulta = [$terminoBusqueda, $terminoBusqueda, $terminoBusqueda];
+    
+    // Agregar condiciones para palabras individuales si existen
+    if (!empty($condicionesExtras)) {
+        $condicionBusqueda .= " OR " . implode(' OR ', $condicionesExtras);
+        $parametrosConsulta = array_merge($parametrosConsulta, $parametrosExtras);
+    }
 
     $stmt = $pdo->prepare("
         SELECT 
@@ -29,16 +56,17 @@ try {
         FROM producto p
         LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
         LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
-        WHERE p.Nombre_Producto LIKE ? 
-        OR p.Descripcion LIKE ?
-        OR c.Nombre_Categoria LIKE ?
+        $condicionBusqueda
         ORDER BY 
             CASE WHEN p.Nombre_Producto LIKE ? THEN 1 ELSE 2 END,
             p.Nombre_Producto ASC
         LIMIT 20
     ");
     
-    $stmt->execute([$terminoBusqueda, $terminoBusqueda, $terminoBusqueda, $terminoBusqueda]);
+    // Agregar el parámetro para el ORDER BY
+    $parametrosConsulta[] = $terminoBusqueda;
+    
+    $stmt->execute($parametrosConsulta);
     $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Log del resultado
