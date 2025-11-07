@@ -238,15 +238,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Función para agregar productos al carrito con cantidad específica
     async function agregarAlCarrito(productId, cantidad) {
         try {
+            console.log(`🛒 Enviando datos: productId=${productId}, cantidad=${cantidad}`);
+            
+            const requestData = {
+                id_producto: parseInt(productId),
+                cantidad: parseInt(cantidad)
+            };
+            
+            console.log('📦 Datos a enviar:', requestData);
+
             const response = await fetch('/proyecto_supermercado/carrito/agregar_carrito.php', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: `id_producto=${productId}&cantidad=${cantidad}`
+                body: JSON.stringify(requestData)
             });
 
             const data = await response.json();
+            console.log('📨 Respuesta del servidor:', data);
 
             if (data.success) {
                 mostrarMensaje(`✅ ${cantidad} producto(s) agregado(s) al carrito`, 'success');
@@ -259,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mostrarMensaje(`❌ Error: ${data.message || 'No se pudo agregar al carrito'}`);
             }
         } catch (error) {
-            console.error('Error al agregar al carrito:', error);
+            console.error('❌ Error al agregar al carrito:', error);
             mostrarMensaje('❌ Error de conexión al agregar al carrito');
         }
     }
