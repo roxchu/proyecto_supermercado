@@ -538,6 +538,182 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Inicializando aplicación...');
   console.log('BASE detectada:', BASE);
   
+  // ---------------------------
+  // 🛍️ CUADRÍCULA DE PRODUCTOS
+  // ---------------------------
+  
+  async function cargarCuadriculaProductos() {
+    const container = document.getElementById('productos-grid-container');
+    if (!container) {
+      console.log('❌ No se encontró el contenedor de cuadrícula');
+      return;
+    }
+
+    try {
+      console.log('🔄 Cargando productos para cuadrícula...');
+      const response = await fetch(`${BASE}api_productos.php`);
+      const data = await response.json();
+
+      if (data.success && Array.isArray(data.productos)) {
+        mostrarProductosEnCuadricula(data.productos, container);
+        console.log(`✅ ${data.productos.length} productos cargados en cuadrícula`);
+      } else {
+        container.innerHTML = '<p style="text-align:center; color: #e74c3c; grid-column: 1 / -1;">Error al cargar los productos</p>';
+        console.error('❌ Error en respuesta:', data);
+      }
+    } catch (error) {
+      console.error('❌ Error al cargar productos:', error);
+      container.innerHTML = '<p style="text-align:center; color: #e74c3c; grid-column: 1 / -1;">Error de conexión</p>';
+    }
+  }
+
+  function mostrarProductosEnCuadricula(productos, container) {
+    container.innerHTML = productos.map(producto => {
+      const stock = parseInt(producto.stock) || 0;
+      const precio = parseFloat(producto.precio);
+      const precioAnterior = producto.precio_anterior ? parseFloat(producto.precio_anterior) : null;
+      
+      return `
+        <div class="producto-card">
+          ${producto.etiqueta_especial ? `<div class="producto-etiqueta ${producto.etiqueta_especial.toLowerCase()}">${producto.etiqueta_especial}</div>` : ''}
+          
+          <div class="producto-imagen-container">
+            <img src="${producto.imagen || 'https://via.placeholder.com/280x200?text=Sin+Imagen'}" 
+                 alt="${producto.nombre}" 
+                 class="producto-imagen"
+                 onerror="this.src='https://via.placeholder.com/280x200?text=Sin+Imagen'">
+          </div>
+          
+          <div class="producto-info">
+            <h3 class="producto-nombre">${producto.nombre}</h3>
+            <p class="producto-descripcion">${producto.descripcion || ''}</p>
+            
+            <div class="producto-precio-container">
+              <div class="producto-precio">$${precio.toLocaleString('es-AR', {minimumFractionDigits: 2})}</div>
+              ${precioAnterior ? `<div class="producto-precio-anterior">$${precioAnterior.toLocaleString('es-AR', {minimumFractionDigits: 2})}</div>` : ''}
+            </div>
+            
+            <div class="producto-stock ${stock <= 0 ? 'sin-stock' : ''}">
+              ${stock > 0 ? `Stock: ${stock} disponibles` : 'Sin stock'}
+            </div>
+            
+            <div class="producto-acciones">
+              <div class="cantidad-selector">
+                <label>Cantidad:</label>
+                <input type="number" 
+                       min="1" 
+                       max="${stock}" 
+                       value="1" 
+                       class="cantidad-input"
+                       data-product-id="${producto.id}"
+                       ${stock <= 0 ? 'disabled' : ''}
+                       oninput="this.value = Math.max(1, Math.min(${stock}, parseInt(this.value) || 1))">
+              </div>
+              
+              <button class="btn-agregar-carrito" 
+                      data-product-id="${producto.id}" 
+                      data-product-name="${producto.nombre}"
+                      ${stock <= 0 ? 'disabled' : ''}>
+                ${stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
+              </button>
+            </div>
+            
+            <a href="mostrar.php?id=${producto.id}" class="btn-ver-detalle">Ver detalles</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Agregar event listeners para los botones de agregar al carrito
+    container.querySelectorAll('.btn-agregar-carrito').forEach(boton => {
+      boton.addEventListener('click', function() {
+        if (this.disabled) return;
+        
+        const productId = this.getAttribute('data-product-id');
+        const productName = this.getAttribute('data-product-name');
+        const cantidadInput = container.querySelector(`.cantidad-input[data-product-id="${productId}"]`);
+        const cantidad = parseInt(cantidadInput.value) || 1;
+        
+        console.log(`🛒 Agregando ${cantidad} unidad(es) de ${productName} (ID: ${productId})`);
+        agregarProductoAlCarrito(productId, cantidad, productName);
+      });
+    });
+  }
+
+  async function agregarProductoAlCarrito(productId, cantidad, productName) {
+    try {
+      const response = await fetch(`${BASE}carrito/agregar_carrito.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id_producto: parseInt(productId),
+          cantidad: parseInt(cantidad)
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        mostrarNotificacion(`✅ ${cantidad} ${productName} agregado(s) al carrito`, 'success');
+        
+        // Actualizar contador del carrito si existe la función
+        if (typeof actualizarContadorCarrito === 'function') {
+          actualizarContadorCarrito();
+        }
+      } else {
+        mostrarNotificacion(`❌ Error: ${data.message || 'No se pudo agregar al carrito'}`, 'error');
+      }
+    } catch (error) {
+      console.error('❌ Error al agregar al carrito:', error);
+      mostrarNotificacion('❌ Error de conexión al agregar al carrito', 'error');
+    }
+  }
+
+  function mostrarNotificacion(mensaje, tipo = 'info') {
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${tipo === 'success' ? '#27ae60' : tipo === 'error' ? '#e74c3c' : '#3498db'};
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-weight: 600;
+      max-width: 350px;
+      animation: slideInRight 0.3s ease;
+    `;
+    notif.textContent = mensaje;
+    
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+      notif.style.animation = 'slideOutRight 0.3s ease';
+      setTimeout(() => notif.remove(), 300);
+    }, 3000);
+  }
+
+  // Agregar estilos de animación
+  if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+      @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
   // Comprueba sesión y actualiza UI al cargar la página
   console.log('🔐 Verificando sesión...');
   checkSession();
@@ -545,6 +721,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Carga productos y configura carrusel si existe el contenedor
   console.log('🛒 Iniciando carga de productos...');
   cargarProductos();
+  
+  // Cargar cuadrícula de productos
+  console.log('🛍️ Iniciando carga de cuadrícula de productos...');
+  cargarCuadriculaProductos();
   
   // El contador del carrito se actualiza automáticamente en carrito.js
   console.log('✅ Inicialización completada');
