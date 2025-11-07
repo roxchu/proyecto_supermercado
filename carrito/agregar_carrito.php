@@ -1,8 +1,8 @@
 <?php
 /**
  * Script para agregar o actualizar la cantidad de un producto en el carrito del usuario.
- * Utiliza PDO para las operaciones de base de datos.
- * Estilo de conexión y respuesta JSON similar a login.php/registro.php.
+ * Reduce el stock automáticamente - NO renueva automáticamente.
+ * Si stock = 0, el producto no se puede comprar.
  */
 declare(strict_types=1);
 session_start();
@@ -60,27 +60,57 @@ try {
     $idProducto = (int)$input['id_producto'];
     $cantidad = (int)$input['cantidad'];
 
-    // 4. Verificar producto y obtener precio
-    $stmtProducto = $pdo->prepare("SELECT precio_actual FROM producto WHERE Id_Producto = ?");
+    // 4. Verificar producto, obtener precio y stock
+    $stmtProducto = $pdo->prepare("SELECT precio_actual, Stock, Nombre_Producto FROM producto WHERE Id_Producto = ?");
     $stmtProducto->execute([$idProducto]);
-    $precioUnitario = $stmtProducto->fetchColumn();
+    $producto = $stmtProducto->fetch();
 
-    if (!$precioUnitario) {
+    if (!$producto) {
         throw new Exception('Producto no encontrado');
     }
 
-    // 5. Verificar carrito existente
+    $precioUnitario = $producto['precio_actual'];
+    $stockActual = (int)$producto['Stock'];
+    $nombreProducto = $producto['Nombre_Producto'];
+
+    // 5. VERIFICAR SI HAY STOCK DISPONIBLE
+    if ($stockActual <= 0) {
+        throw new Exception("Producto sin stock disponible. El empleado debe renovar el inventario.");
+    }
+
+    if ($stockActual < $cantidad) {
+        throw new Exception("Stock insuficiente. Solo quedan {$stockActual} unidades disponibles.");
+    }
+
+    // 6. Verificar carrito existente
     $stmtCarrito = $pdo->prepare("
-        SELECT Id_Carrito 
+        SELECT Id_Carrito, Cantidad 
         FROM carrito 
         WHERE id_usuario = ? AND Id_Producto = ?
     ");
     $stmtCarrito->execute([$idUsuario, $idProducto]);
     $itemCarrito = $stmtCarrito->fetch();
 
+    // 7. Verificar stock total necesario si ya existe en carrito
+    $cantidadTotalNecesaria = $cantidad;
+    if ($itemCarrito) {
+        $cantidadTotalNecesaria += (int)$itemCarrito['Cantidad'];
+    }
+    
+    if ($stockActual < $cantidadTotalNecesaria) {
+        $cantidadEnCarrito = $itemCarrito ? $itemCarrito['Cantidad'] : 0;
+        throw new Exception("Stock insuficiente. Disponible: {$stockActual}, ya tienes {$cantidadEnCarrito} en el carrito.");
+    }
+
     $pdo->beginTransaction();
 
     try {
+        // 8. REDUCIR STOCK EN LA BASE DE DATOS
+        $nuevoStock = $stockActual - $cantidad;
+        $stmtStock = $pdo->prepare("UPDATE producto SET Stock = ? WHERE Id_Producto = ?");
+        $stmtStock->execute([$nuevoStock, $idProducto]);
+
+        // 9. Actualizar o insertar en carrito
         if ($itemCarrito) {
             // Actualizar cantidad existente
             $stmt = $pdo->prepare("
@@ -100,9 +130,32 @@ try {
         }
 
         $pdo->commit();
+        
+        // 10. Preparar respuesta
+        $mensaje = "Producto agregado al carrito correctamente";
+        $alertaStock = false;
+        
+        if ($nuevoStock <= 0) {
+            $mensaje .= ". ⚠️ PRODUCTO SIN STOCK - Necesita renovación del empleado";
+            $alertaStock = true;
+            
+            // Log para empleados
+            error_log("[STOCK AGOTADO] Producto ID: {$idProducto} ({$nombreProducto}) - Stock: 0 - Fecha: " . date('Y-m-d H:i:s'));
+        } elseif ($nuevoStock <= 5) {
+            $mensaje .= ". ⚠️ Quedan solo {$nuevoStock} unidades";
+            $alertaStock = true;
+        }
+        
         echo json_encode([
             'success' => true,
-            'message' => 'Producto agregado al carrito correctamente'
+            'message' => $mensaje,
+            'stock_info' => [
+                'stock_anterior' => $stockActual,
+                'stock_actual' => $nuevoStock,
+                'stock_agotado' => $nuevoStock <= 0,
+                'stock_bajo' => $nuevoStock <= 5 && $nuevoStock > 0,
+                'alerta_stock' => $alertaStock
+            ]
         ]);
 
     } catch (Exception $e) {

@@ -46,6 +46,109 @@
             .replace(/>/g, "&gt;");
     }
     
+    function mostrarNotificacionStock(mensaje, tipo = 'warning') {
+        // Crear notificación personalizada para stock
+        const notificacion = document.createElement('div');
+        notificacion.className = `notificacion-stock ${tipo}`;
+        
+        let icono = 'fas fa-exclamation-triangle';
+        let colorFondo = '#fff3cd';
+        let colorBorde = '#ffeaa7';
+        let colorTexto = '#856404';
+        
+        if (tipo === 'error') {
+            icono = 'fas fa-times-circle';
+            colorFondo = '#f8d7da';
+            colorBorde = '#f5c6cb';
+            colorTexto = '#721c24';
+        }
+        
+        notificacion.innerHTML = `
+            <div class="notificacion-contenido">
+                <i class="${icono}"></i>
+                <span>${mensaje.replace(/\n/g, '<br>')}</span>
+                <button class="cerrar-notificacion">&times;</button>
+            </div>
+        `;
+        
+        // Estilos para la notificación
+        notificacion.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${colorFondo};
+            border: 1px solid ${colorBorde};
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            max-width: 350px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        
+        const contenido = notificacion.querySelector('.notificacion-contenido');
+        contenido.style.cssText = `
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: ${colorTexto};
+        `;
+        
+        const icono_elem = notificacion.querySelector('i');
+        icono_elem.style.cssText = `
+            color: ${tipo === 'error' ? '#dc3545' : '#f39c12'};
+            font-size: 20px;
+            margin-top: 2px;
+        `;
+        
+        const botonCerrar = notificacion.querySelector('.cerrar-notificacion');
+        botonCerrar.style.cssText = `
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: ${colorTexto};
+            margin-left: auto;
+            padding: 0;
+            line-height: 1;
+        `;
+        
+        // Agregar animación CSS
+        if (!document.querySelector('#notificacion-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'notificacion-styles';
+            styles.textContent = `
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+        
+        document.body.appendChild(notificacion);
+        
+        // Auto cerrar después de 7 segundos para errores, 5 para warnings
+        const tiempoAutoCerrar = tipo === 'error' ? 7000 : 5000;
+        setTimeout(() => {
+            if (notificacion.parentNode) {
+                notificacion.remove();
+            }
+        }, tiempoAutoCerrar);
+        
+        // Cerrar al hacer clic
+        botonCerrar.addEventListener('click', () => {
+            notificacion.remove();
+        });
+    }
+    
     const formatter = new Intl.NumberFormat("es-AR", {
         style: "currency",
         currency: "ARS",
@@ -244,8 +347,27 @@
                 alert("Debes iniciar sesión para agregar productos.");
             } else if (data.success || data.exito) {
                 console.log('✅ Producto agregado exitosamente');
-                btn.textContent = "¡Agregado!";
-                setTimeout(() => btn.textContent = "Agregar al carrito", 1000); 
+                
+                // Mostrar información de stock
+                let mensaje = "¡Producto agregado al carrito!";
+                
+                if (data.stock_info) {
+                    if (data.stock_info.stock_agotado) {
+                        mensaje = "⚠️ Producto agregado. STOCK AGOTADO - El empleado debe renovar el inventario.";
+                        mostrarNotificacionStock(mensaje, 'error');
+                    } else if (data.stock_info.stock_bajo) {
+                        mensaje = `⚠️ Producto agregado. Quedan solo ${data.stock_info.stock_actual} unidades.`;
+                        mostrarNotificacionStock(mensaje, 'warning');
+                    } else {
+                        // Stock normal
+                        btn.textContent = "¡Agregado!";
+                        setTimeout(() => btn.textContent = "Agregar al carrito", 1500);
+                    }
+                } else {
+                    btn.textContent = "¡Agregado!";
+                    setTimeout(() => btn.textContent = "Agregar al carrito", 1500);
+                }
+                
                 await cargarCarrito(); 
             } else {
                 console.error('❌ Error al agregar:', data);

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Empleado - Gestión de Stock</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sin-stock { color: #e74c3c; }
+        .stock-bajo { color: #f39c12; }
+        .stock-medio { color: #3498db; }
+        .stock-alto { color: #27ae60; }
+
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .section-content {
+            padding: 30px;
+        }
+
+        .productos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .producto-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .producto-card.sin-stock {
+            border-color: #e74c3c;
+            background: #fdf2f2;
+        }
+
+        .producto-card.stock-bajo {
+            border-color: #f39c12;
+            background: #fef9e7;
+        }
+
+        .producto-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .producto-imagen {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            float: right;
+            margin-left: 15px;
+        }
+
+        .producto-nombre {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .producto-categoria {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .producto-precio {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+
+        .stock-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stock-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-sin-stock {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .badge-stock-bajo {
+            background: #f39c12;
+            color: white;
+        }
+
+        .renovar-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .input-cantidad {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .loading i {
+            font-size: 2em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .renovar-todos {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            background: #f8f9fa;
+        }
+
+        .no-productos {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .no-productos i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #27ae60;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,123,255,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-user-tie"></i> Panel de Empleado</h1>
+            <p>Gestión de productos sin stock y renovación de inventario</p>
+        </div>
+
+        <div class="alert alert-success" id="alert-success"></div>
+        <div class="alert alert-danger" id="alert-danger"></div>
+        <div class="alert alert-warning" id="alert-warning"></div>
+
+        <!-- Estadísticas -->
+        <div class="stats-container" id="stats-container">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                Cargando estadísticas...
+            </div>
+        </div>
+
+        <!-- Productos sin stock -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-exclamation-circle sin-stock"></i>
+                    Productos sin Stock (0 unidades)
+                </h2>
+                <button class="btn btn-primary" onclick="cargarProductosSinStock()">
+                    <i class="fas fa-sync"></i> Actualizar
+                </button>
+            </div>
+            <div class="section-content">
+                <div id="productos-sin-stock">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Cargando productos sin stock...
+                    </div>
+                </div>
+                <div class="renovar-todos" id="renovar-todos-sin-stock" style="display: none;">
+                    <button class="btn btn-danger" onclick="renovarTodosSinStock()">
+                        <i class="fas fa-sync-alt"></i> Renovar Todos los Productos Sin Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos con stock bajo -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-exclamation-triangle stock-bajo"></i>
+                    Productos con Stock Bajo (1-5 unidades)
+                </h2>
+                <button class="btn btn-warning" onclick="cargarProductosStockBajo()">
+                    <i class="fas fa-sync"></i> Actualizar
+                </button>
+            </div>
+            <div class="section-content">
+                <div id="productos-stock-bajo">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Cargando productos con stock bajo...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón flotante de actualización -->
+    <button class="refresh-btn" onclick="cargarTodo()" title="Actualizar todo">
+        <i class="fas fa-sync"></i>
+    </button>
+
+    <script>
+        class PanelEmpleado {
+            constructor() {
+                this.productosSinStock = [];
+                this.productosStockBajo = [];
+                this.init();
+            }
+
+            init() {
+                this.cargarTodo();
+                // Auto-refresh cada 30 segundos
+                setInterval(() => this.cargarTodo(), 30000);
+            }
+
+            async cargarTodo() {
+                await Promise.all([
+                    this.cargarEstadisticas(),
+                    this.cargarProductosSinStock(),
+                    this.cargarProductosStockBajo()
+                ]);
+            }
+
+            async cargarEstadisticas() {
+                try {
+                    const response = await fetch('/proyecto_supermercado/paneles/empleado_stock.php?accion=resumen_stock');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.mostrarEstadisticas(data.resumen);
+                    }
+                } catch (error) {
+                    console.error('Error al cargar estadísticas:', error);
+                }
+            }
+
+            mostrarEstadisticas(resumen) {
+                document.getElementById('stats-container').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${resumen.total_productos}</div>
+                        <div class="stat-label">Total Productos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number sin-stock">${resumen.sin_stock}</div>
+                        <div class="stat-label">Sin Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number stock-bajo">${resumen.stock_bajo}</div>
+                        <div class="stat-label">Stock Bajo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number stock-medio">${resumen.stock_medio}</div>
+                        <div class="stat-label">Stock Medio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number stock-alto">${resumen.stock_alto}</div>
+                        <div class="stat-label">Stock Alto</div>
+                    </div>
+                `;
+            }
+
+            async cargarProductosSinStock() {
+                try {
+                    const response = await fetch('/proyecto_supermercado/paneles/empleado_stock.php?accion=productos_sin_stock');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.productosSinStock = data.productos_sin_stock;
+                        this.mostrarProductosSinStock();
+                    } else {
+                        this.mostrarError(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error al cargar productos sin stock:', error);
+                    this.mostrarError('Error al cargar productos sin stock');
+                }
+            }
+
+            mostrarProductosSinStock() {
+                const container = document.getElementById('productos-sin-stock');
+                const botonRenovarTodos = document.getElementById('renovar-todos-sin-stock');
+                
+                if (this.productosSinStock.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-productos">
+                            <i class="fas fa-check-circle"></i>
+                            <h3>¡Excelente!</h3>
+                            <p>No hay productos sin stock en este momento</p>
+                        </div>
+                    `;
+                    botonRenovarTodos.style.display = 'none';
+                } else {
+                    container.innerHTML = `
+                        <div class="productos-grid">
+                            ${this.productosSinStock.map(producto => this.crearCardProducto(producto, 'sin-stock')).join('')}
+                        </div>
+                    `;
+                    botonRenovarTodos.style.display = 'block';
+                }
+            }
+
+            async cargarProductosStockBajo() {
+                try {
+                    const response = await fetch('/proyecto_supermercado/paneles/empleado_stock.php?accion=productos_stock_bajo');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.productosStockBajo = data.productos_stock_bajo;
+                        this.mostrarProductosStockBajo();
+                    }
+                } catch (error) {
+                    console.error('Error al cargar productos stock bajo:', error);
+                }
+            }
+
+            mostrarProductosStockBajo() {
+                const container = document.getElementById('productos-stock-bajo');
+                
+                if (this.productosStockBajo.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-productos">
+                            <i class="fas fa-thumbs-up"></i>
+                            <h3>Todo en orden</h3>
+                            <p>No hay productos con stock bajo en este momento</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="productos-grid">
+                            ${this.productosStockBajo.map(producto => this.crearCardProducto(producto, 'stock-bajo')).join('')}
+                        </div>
+                    `;
+                }
+            }
+
+            crearCardProducto(producto, tipo) {
+                const imagen = producto.url_imagen || 'https://via.placeholder.com/60x60?text=Sin+Imagen';
+                const badge = tipo === 'sin-stock' ? 
+                    '<span class="stock-badge badge-sin-stock">Sin Stock</span>' :
+                    `<span class="stock-badge badge-stock-bajo">${producto.Stock} unidades</span>`;
+
+                return `
+                    <div class="producto-card ${tipo}">
+                        <img src="${imagen}" alt="${producto.Nombre_Producto}" class="producto-imagen">
+                        <div class="producto-nombre">${producto.Nombre_Producto}</div>
+                        <div class="producto-categoria">${producto.Nombre_Categoria}</div>
+                        <div class="producto-precio">$${parseFloat(producto.precio_actual).toFixed(2)}</div>
+                        <div class="stock-info">
+                            ${badge}
+                        </div>
+                        <div class="renovar-form">
+                            <input type="number" 
+                                   class="input-cantidad" 
+                                   placeholder="Nueva cantidad" 
+                                   min="1" 
+                                   value="${tipo === 'sin-stock' ? '50' : parseInt(producto.Stock) + 20}"
+                                   id="cantidad-${producto.Id_Producto}">
+                            <button class="btn btn-success" 
+                                    onclick="panelEmpleado.renovarProducto(${producto.Id_Producto}, '${producto.Nombre_Producto}')">
+                                <i class="fas fa-sync"></i> Renovar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            async renovarProducto(idProducto, nombreProducto) {
+                const cantidadInput = document.getElementById(`cantidad-${idProducto}`);
+                const cantidad = parseInt(cantidadInput.value);
+
+                if (!cantidad || cantidad < 0) {
+                    this.mostrarError('Por favor ingrese una cantidad válida');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/proyecto_supermercado/paneles/empleado_renovar_stock.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            accion: 'renovar_producto',
+                            id_producto: idProducto,
+                            cantidad: cantidad
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.mostrarExito(`Stock renovado: ${nombreProducto} ahora tiene ${cantidad} unidades`);
+                        // Recargar después de 2 segundos
+                        setTimeout(() => this.cargarTodo(), 2000);
+                    } else {
+                        this.mostrarError(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.mostrarError('Error al renovar el stock');
+                }
+            }
+
+            async renovarTodosSinStock() {
+                if (this.productosSinStock.length === 0) return;
+
+                if (!confirm(`¿Renovar stock para ${this.productosSinStock.length} productos sin stock?`)) {
+                    return;
+                }
+
+                const productos = this.productosSinStock.map(p => ({
+                    id_producto: p.Id_Producto,
+                    cantidad: 50 // Cantidad por defecto
+                }));
+
+                try {
+                    const response = await fetch('/proyecto_supermercado/paneles/empleado_renovar_stock.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            accion: 'renovar_multiples',
+                            productos: productos
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.mostrarExito(`Stock renovado para ${data.total} productos`);
+                        setTimeout(() => this.cargarTodo(), 2000);
+                    } else {
+                        this.mostrarError(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.mostrarError('Error al renovar el stock');
+                }
+            }
+
+            mostrarExito(mensaje) {
+                this.mostrarAlerta('alert-success', mensaje);
+            }
+
+            mostrarError(mensaje) {
+                this.mostrarAlerta('alert-danger', mensaje);
+            }
+
+            mostrarAdvertencia(mensaje) {
+                this.mostrarAlerta('alert-warning', mensaje);
+            }
+
+            mostrarAlerta(tipo, mensaje) {
+                const alert = document.getElementById(tipo);
+                alert.textContent = mensaje;
+                alert.style.display = 'block';
+                
+                // Auto-ocultar después de 5 segundos
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 5000);
+                
+                // Scroll al top para mostrar la alerta
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // Funciones globales para llamadas desde HTML
+        let panelEmpleado;
+
+        function cargarTodo() {
+            panelEmpleado.cargarTodo();
+        }
+
+        function cargarProductosSinStock() {
+            panelEmpleado.cargarProductosSinStock();
+        }
+
+        function cargarProductosStockBajo() {
+            panelEmpleado.cargarProductosStockBajo();
+        }
+
+        function renovarTodosSinStock() {
+            panelEmpleado.renovarTodosSinStock();
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', () => {
+            panelEmpleado = new PanelEmpleado();
+        });
+    </script>
+</body>
+</html>

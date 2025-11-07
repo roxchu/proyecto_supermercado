@@ -18,7 +18,7 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 
-    // Obtener todos los productos (no solo destacados)
+    // Obtener todos los productos CON STOCK (Stock > 0)
     $stmt = $pdo->query("
         SELECT 
             p.Id_Producto AS id, 
@@ -35,6 +35,7 @@ try {
         FROM producto p
         LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
         LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
+        WHERE p.Stock > 0
         ORDER BY 
             p.es_destacado DESC, 
             p.Id_Producto ASC

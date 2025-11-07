@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Stock - Supermercado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tab-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stock-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            transition: transform 0.2s;
+        }
+
+        .stock-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stock-card.bajo {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .stock-card.medio {
+            border-left: 4px solid #f39c12;
+        }
+
+        .stock-card.alto {
+            border-left: 4px solid #27ae60;
+        }
+
+        .stock-card.agotado {
+            border-left: 4px solid #c0392b;
+            background-color: #fdf2f2;
+        }
+
+        .stock-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-boxes"></i> Gestión de Stock</h1>
+            <p>Panel de control para administrar el inventario del supermercado</p>
+        </div>
+
+        <div class="alert alert-success" id="alert-success"></div>
+        <div class="alert alert-danger" id="alert-danger"></div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="resumen">
+                <i class="fas fa-chart-bar"></i> Resumen
+            </button>
+            <button class="tab" data-tab="productos">
+                <i class="fas fa-list"></i> Todos los Productos
+            </button>
+            <button class="tab" data-tab="bajo">
+                <i class="fas fa-exclamation-triangle"></i> Stock Bajo
+            </button>
+            <button class="tab" data-tab="renovar">
+                <i class="fas fa-sync"></i> Renovar Stock
+            </button>
+        </div>
+
+        <!-- Tab Resumen -->
+        <div class="tab-content active" id="tab-resumen">
+            <div class="stats" id="stats-container">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando estadísticas...
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Productos -->
+        <div class="tab-content" id="tab-productos">
+            <div class="stock-grid" id="productos-grid">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando productos...
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Stock Bajo -->
+        <div class="tab-content" id="tab-bajo">
+            <div class="stock-grid" id="stock-bajo-grid">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando productos con stock bajo...
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Renovar Stock -->
+        <div class="tab-content" id="tab-renovar">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <h3>Renovar Stock Individual</h3>
+                <form id="form-renovar-individual">
+                    <div class="form-group">
+                        <label for="select-producto">Producto:</label>
+                        <select class="form-control" id="select-producto" required>
+                            <option value="">Seleccione un producto...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-cantidad">Nueva cantidad:</label>
+                        <input type="number" class="form-control" id="input-cantidad" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sync"></i> Renovar Stock
+                    </button>
+                </form>
+
+                <hr style="margin: 30px 0;">
+
+                <h3>Renovar Stock por Categoría</h3>
+                <form id="form-renovar-categoria">
+                    <div class="form-group">
+                        <label for="select-categoria">Categoría:</label>
+                        <select class="form-control" id="select-categoria" required>
+                            <option value="">Seleccione una categoría...</option>
+                            <option value="1">Frutas y Verduras</option>
+                            <option value="2">Carnes y Pescados</option>
+                            <option value="3">Lácteos y Huevos</option>
+                            <option value="4">Panadería</option>
+                            <option value="5">Bebidas</option>
+                            <option value="6">Despensa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-cantidad-categoria">Cantidad para productos con stock bajo:</label>
+                        <input type="number" class="form-control" id="input-cantidad-categoria" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-layer-group"></i> Renovar Categoría
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class GestorStockUI {
+            constructor() {
+                this.productos = [];
+                this.initTabs();
+                this.initForms();
+                this.cargarDatos();
+            }
+
+            initTabs() {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.dataset.tab;
+                        this.cambiarTab(tabName);
+                    });
+                });
+            }
+
+            cambiarTab(tabName) {
+                // Actualizar tabs
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+                // Actualizar contenido
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`tab-${tabName}`).classList.add('active');
+
+                // Cargar datos específicos si es necesario
+                if (tabName === 'bajo') {
+                    this.cargarStockBajo();
+                }
+            }
+
+            async cargarDatos() {
+                try {
+                    const response = await fetch('/proyecto_supermercado/carrito/api_stock.php?accion=todos_stocks');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.productos = data.productos;
+                        this.mostrarEstadisticas();
+                        this.mostrarProductos();
+                        this.llenarSelectProductos();
+                    }
+                } catch (error) {
+                    console.error('Error al cargar datos:', error);
+                    this.mostrarError('Error al cargar los datos');
+                }
+            }
+
+            mostrarEstadisticas() {
+                const stats = {
+                    total: this.productos.length,
+                    agotado: this.productos.filter(p => p.nivel_stock === 'agotado').length,
+                    bajo: this.productos.filter(p => p.nivel_stock === 'bajo').length,
+                    medio: this.productos.filter(p => p.nivel_stock === 'medio').length,
+                    alto: this.productos.filter(p => p.nivel_stock === 'alto').length
+                };
+
+                document.getElementById('stats-container').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.total}</div>
+                        <div class="stat-label">Total Productos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #c0392b;">${stats.agotado}</div>
+                        <div class="stat-label">Agotados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #e74c3c;">${stats.bajo}</div>
+                        <div class="stat-label">Stock Bajo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #f39c12;">${stats.medio}</div>
+                        <div class="stat-label">Stock Medio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #27ae60;">${stats.alto}</div>
+                        <div class="stat-label">Stock Alto</div>
+                    </div>
+                `;
+            }
+
+            mostrarProductos() {
+                const grid = document.getElementById('productos-grid');
+                grid.innerHTML = this.productos.map(producto => this.crearCardProducto(producto)).join('');
+            }
+
+            async cargarStockBajo() {
+                try {
+                    const response = await fetch('/proyecto_supermercado/carrito/api_stock.php?accion=stock_bajo');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const grid = document.getElementById('stock-bajo-grid');
+                        if (data.productos_stock_bajo.length === 0) {
+                            grid.innerHTML = '<p style="text-align: center; color: #666;">No hay productos con stock bajo</p>';
+                        } else {
+                            grid.innerHTML = data.productos_stock_bajo.map(producto => this.crearCardProducto(producto)).join('');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error al cargar stock bajo:', error);
+                }
+            }
+
+            crearCardProducto(producto) {
+                return `
+                    <div class="stock-card ${producto.nivel_stock || (producto.Stock <= 0 ? 'agotado' : producto.Stock <= 10 ? 'bajo' : 'alto')}">
+                        <h4>${producto.Nombre_Producto}</h4>
+                        <p><strong>Categoría:</strong> ${producto.Nombre_Categoria}</p>
+                        <p><strong>Stock:</strong> ${producto.Stock} unidades</p>
+                        <p><strong>Precio:</strong> $${parseFloat(producto.precio_actual).toFixed(2)}</p>
+                        <div class="stock-actions">
+                            <button class="btn btn-primary" onclick="gestorStock.renovarProducto(${producto.Id_Producto}, '${producto.Nombre_Producto}')">
+                                <i class="fas fa-sync"></i> Renovar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            llenarSelectProductos() {
+                const select = document.getElementById('select-producto');
+                select.innerHTML = '<option value="">Seleccione un producto...</option>' +
+                    this.productos.map(p => `<option value="${p.Id_Producto}">${p.Nombre_Producto} (Stock: ${p.Stock})</option>`).join('');
+            }
+
+            initForms() {
+                document.getElementById('form-renovar-individual').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const idProducto = document.getElementById('select-producto').value;
+                    const cantidad = document.getElementById('input-cantidad').value;
+                    await this.renovarProductoIndividual(idProducto, cantidad);
+                });
+
+                document.getElementById('form-renovar-categoria').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const idCategoria = document.getElementById('select-categoria').value;
+                    const cantidad = document.getElementById('input-cantidad-categoria').value;
+                    await this.renovarCategoria(idCategoria, cantidad);
+                });
+            }
+
+            async renovarProducto(idProducto, nombreProducto) {
+                const cantidad = prompt(`¿Cuántas unidades desea asignar a "${nombreProducto}"?`, '100');
+                if (cantidad && !isNaN(cantidad) && cantidad > 0) {
+                    await this.renovarProductoIndividual(idProducto, cantidad);
+                }
+            }
+
+            async renovarProductoIndividual(idProducto, cantidad) {
+                try {
+                    const response = await fetch('/proyecto_supermercado/carrito/renovar_stock.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            accion: 'renovar_producto',
+                            id_producto: parseInt(idProducto),
+                            cantidad: parseInt(cantidad)
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.mostrarExito(data.message);
+                        this.cargarDatos();
+                    } else {
+                        this.mostrarError(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.mostrarError('Error al renovar el stock');
+                }
+            }
+
+            async renovarCategoria(idCategoria, cantidad) {
+                try {
+                    const response = await fetch('/proyecto_supermercado/carrito/renovar_stock.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            accion: 'renovar_categoria',
+                            id_categoria: parseInt(idCategoria),
+                            cantidad: parseInt(cantidad)
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.mostrarExito(data.message);
+                        this.cargarDatos();
+                    } else {
+                        this.mostrarError(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.mostrarError('Error al renovar el stock por categoría');
+                }
+            }
+
+            mostrarExito(mensaje) {
+                const alert = document.getElementById('alert-success');
+                alert.textContent = mensaje;
+                alert.style.display = 'block';
+                setTimeout(() => alert.style.display = 'none', 5000);
+            }
+
+            mostrarError(mensaje) {
+                const alert = document.getElementById('alert-danger');
+                alert.textContent = mensaje;
+                alert.style.display = 'block';
+                setTimeout(() => alert.style.display = 'none', 5000);
+            }
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', () => {
+            window.gestorStock = new GestorStockUI();
+        });
+    </script>
+</body>
+</html>
