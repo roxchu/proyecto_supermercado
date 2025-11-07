@@ -25,7 +25,6 @@ try {
                 v.fecha_venta, 
                 v.Total_Venta,  
                 v.Estado,
-                -- Seleccionamos el nombre del cliente desde la tabla 'usuario'
                 u.nombre_usuario AS nombre_cliente 
             FROM venta v
             JOIN usuario u ON v.id_cliente = u.id_usuario 
@@ -51,7 +50,99 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Empleado - Gestión de Pedidos</title>
     <link rel="stylesheet" href="../paneles/dashboard_empleado.css"> 
-</head>
+    
+    <style>
+        /* Estilos para el nuevo widget de stock */
+        .gestion-stock .table-responsive {
+            margin-top: 20px;
+        }
+
+        .gestion-stock table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .gestion-stock th, .gestion-stock td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .gestion-stock th {
+            background-color: #f9f9f9;
+        }
+        
+        /* Input para la cantidad */
+        .input-cantidad {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        /* Botón secundario para "Renovar" */
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .btn-secondary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Stock actual (rojo si es 0) */
+        .stock-actual {
+            font-weight: bold;
+        }
+        .stock-actual.agotado {
+            color: #d9534f; /* Rojo */
+        }
+        .stock-actual.bajo {
+            color: #f0ad4e; /* Naranja */
+        }
+
+        /* Mensajes de feedback */
+        #stock-loading {
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        #stock-message {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 4px;
+            display: none; /* Oculto por defecto */
+        }
+        #stock-message.success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        #stock-message.error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        
+        /* Animación flash para fila actualizada */
+        @keyframes flash-success {
+            0% { background-color: #dff0d8; }
+            100% { background-color: transparent; }
+        }
+        .flash-success {
+            animation: flash-success 1.5s ease-out;
+        }
+    </style>
+    </head>
 <body>
     
     <div class="sidebar">
@@ -60,6 +151,7 @@ try {
         </div>
         <ul>
             <li><a href="dashboard_empleado.php" class="active">Gestión de Pedidos</a></li>
+            <li><a href="#gestion-stock">Gestión de Stock</a></li> 
             <li><a href="../login/logout.php">Cerrar Sesión</a></li>
             <li><a href="../index.html">Volver al Inicio</a></li>
         </ul>
@@ -96,7 +188,7 @@ try {
                             <tr id="venta-<?php echo htmlspecialchars($venta['id_venta']); ?>">
                                 <td><?php echo htmlspecialchars($venta['id_venta']); ?></td>
                                 <td><?php echo htmlspecialchars($venta['nombre_cliente']); ?></td>
-                                <td><?php echo htmlspecialchars(date('d/m/Y', strtotime($venta['Fecha_Venta']))); ?></td>
+                                <td><?php echo htmlspecialchars(date('d/m/Y', strtotime($venta['fecha_venta']))); ?></td>
                                 <td>$<?php echo htmlspecialchars(number_format($venta['Total_Venta'], 2, ',', '.')); ?></td>
                                 <td><span class="status-tag status-<?php echo strtolower(htmlspecialchars($venta['Estado'])); ?>"><?php echo htmlspecialchars($venta['Estado']); ?></span></td>
                                 <td>
@@ -112,7 +204,256 @@ try {
             <?php endif; ?>
         </section>
 
-    </div> 
+        <section class="widget gestion-stock" id="gestion-stock">
+            <h3>Renovar Stock - Productos Agotados</h3>
+            <p>Aquí puedes renovar el stock de productos que están completamente agotados (stock = 0).</p>
 
-</body>
+            <button id="btn-cargar-stock" class="btn-primary">Cargar Productos Sin Stock</button>
+            
+            <div id="stock-loading" style="display:none;">Cargando...</div>
+            <div id="stock-message" class="message"></div>
+            
+            <div id="stock-list-container" class="table-responsive">
+                </div>
+
+        </section>
+        </div> 
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- LÓGICA PARA GESTIÓN DE VENTAS (Tuya) ---
+        // (Aquí iría tu función "procesarVenta" si la tienes en un script)
+        // Ejemplo de cómo podría ser:
+        window.procesarVenta = async function(idVenta, nuevoEstado) {
+             // ... tu lógica de fetch para actualizar la venta ...
+            console.log(`Procesando Venta ID: ${idVenta} a estado: ${nuevoEstado}`);
+            // (Esta es solo una función placeholder)
+        }
+
+
+        // --- LÓGICA PARA GESTIÓN DE STOCK (Nueva) ---
+        
+        const btnCargarStock = document.getElementById('btn-cargar-stock');
+        const stockListContainer = document.getElementById('stock-list-container');
+        const stockLoading = document.getElementById('stock-loading');
+        const stockMessage = document.getElementById('stock-message');
+
+        // 1. Cargar productos al hacer clic en el botón
+        btnCargarStock.addEventListener('click', cargarProductosBajoStock);
+
+        // 2. Función para obtener los productos
+        async function cargarProductosBajoStock() {
+            mostrarCargando(true);
+            mostrarMensaje('', 'success'); // Limpiar mensajes
+            
+            try {
+                // Cargar solo productos con stock = 0 (agotados)
+                const response = await fetch('empleados_actioons.php?action=get_productos_sin_stock&umbral=0');
+                
+                // VERIFICACIÓN CLAVE PARA EVITAR ERROR JSON
+                if (!response.ok) {
+                    // Si el servidor devuelve un error HTTP (403, 500, etc.)
+                    // y el cuerpo no es JSON (es HTML), leemos como texto para evitar el error.
+                    const responseText = await response.text();
+                    
+                    let errorMessage = `HTTP Error ${response.status}: `;
+                    
+                    // Si el texto empieza con "<!DOCTYPE", es HTML (posiblemente la página de login)
+                    if (responseText.startsWith("<!DOCTYPE")) {
+                        errorMessage += "Parece que la sesión ha expirado o no tienes permisos (Respuesta HTML inesperada).";
+                    } else {
+                        // Intentamos parsear como JSON por si es un error 500 con JSON.
+                        try {
+                            const errorData = JSON.parse(responseText);
+                            errorMessage = errorData.message || errorMessage + "Error del servidor.";
+                        } catch (e) {
+                            errorMessage += "Error desconocido o respuesta no JSON.";
+                        }
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                // Si la respuesta fue ok (HTTP 200), asumimos que es JSON válido
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarTablaStock(data.productos);
+                } else {
+                    mostrarMensaje(data.message, 'error');
+                }
+
+            } catch (error) {
+                console.error('Error al cargar stock:', error);
+                // Mostrar el error capturado (ahora más claro)
+                mostrarMensaje('Error de conexión: ' + error.message, 'error');
+            } finally {
+                mostrarCargando(false);
+            }
+        }
+
+        // 3. Función para mostrar la tabla en el HTML
+        function mostrarTablaStock(productos) {
+            stockListContainer.innerHTML = ''; // Limpiar contenedor
+
+            if (productos.length === 0) {
+                stockListContainer.innerHTML = '<p class="success-message">¡Excelente! No hay productos agotados en este momento. ✅</p>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto (ID)</th>
+                            <th>Stock Actual</th>
+                            <th>Nuevo Stock</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            for (const prod of productos) {
+                html += `
+                    <tr data-id="${prod.Id_Producto}">
+                        <td>${prod.Nombre_Producto} (${prod.Id_Producto})</td>
+                        <td>
+                            <span class="stock-actual agotado" id="stock-actual-${prod.Id_Producto}">
+                                ${prod.Stock}
+                            </span>
+                        </td>
+                        <td>
+                            <input type="number" min="1" step="1" class="input-cantidad" placeholder="Ej: 25" required>
+                        </td>
+                        <td>
+                            <button class="btn-secondary btn-renovar">Renovar Stock</button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            html += `</tbody></table>`;
+            stockListContainer.innerHTML = html;
+        }
+
+        // 4. Manejar clics en los botones "Renovar" (Usando delegación de eventos)
+        stockListContainer.addEventListener('click', function(e) {
+            // Solo nos interesa si se hizo clic en un botón "Renovar"
+            if (e.target.classList.contains('btn-renovar')) {
+                const tr = e.target.closest('tr');
+                const idProducto = tr.dataset.id;
+                const input = tr.querySelector('.input-cantidad');
+                const nuevoStock = parseInt(input.value, 10);
+                
+                // Validar el nuevo stock
+                if (!nuevoStock || nuevoStock <= 0) {
+                    mostrarMensaje('Por favor, ingresa un stock válido (mayor a 0).', 'error');
+                    input.focus();
+                    return;
+                }
+
+                // Deshabilitar el botón para evitar doble clic
+                e.target.disabled = true;
+                e.target.textContent = '...';
+
+                // Llamar a la función que actualiza
+                renovarStock(idProducto, nuevoStock, e.target);
+            }
+        });
+
+        // 5. Función para renovar el stock (llamar a la API)
+        async function renovarStock(idProducto, nuevoStock, boton) {
+            try {
+                console.log('🔄 Enviando datos:', {
+                    action: 'establecer_stock',
+                    id_producto: idProducto,
+                    nuevo_stock: nuevoStock
+                });
+                
+                const response = await fetch('empleados_actioons.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'establecer_stock',
+                        id_producto: idProducto,
+                        nuevo_stock: nuevoStock
+                    })
+                });
+                
+                console.log('📨 Response status:', response.status);
+                console.log('📨 Response headers:', response.headers.get('content-type'));
+                
+                // Manejo de error POST similar al GET
+                if (!response.ok) {
+                    const responseText = await response.text();
+                    let errorMessage = `HTTP Error ${response.status}: `;
+
+                    if (responseText.startsWith("<!DOCTYPE")) {
+                        errorMessage += "Parece que la sesión ha expirado o no tienes permisos (Respuesta HTML inesperada).";
+                    } else {
+                        try {
+                            const errorData = JSON.parse(responseText);
+                            errorMessage = errorData.message || errorMessage + "Error del servidor.";
+                        } catch (e) {
+                            errorMessage += "Error desconocido o respuesta no JSON.";
+                        }
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarMensaje(data.message, 'success');
+                    
+                    // Como el producto ya no tiene stock 0, lo removemos de la tabla
+                    const tr = boton.closest('tr');
+                    tr.style.animation = 'flash-success 1.5s ease-out';
+                    
+                    setTimeout(() => {
+                        tr.remove();
+                        
+                        // Si no quedan productos, mostrar mensaje de éxito
+                        const tbody = stockListContainer.querySelector('tbody');
+                        if (!tbody || tbody.children.length === 0) {
+                            stockListContainer.innerHTML = '<p class="success-message">¡Excelente! Ya no hay productos agotados. ✅</p>';
+                        }
+                    }, 1500);
+
+                } else {
+                    mostrarMensaje(data.message, 'error');
+                }
+
+            } catch (error) {
+                console.error('Error al renovar stock:', error);
+                mostrarMensaje('Error de conexión al renovar: ' + error.message, 'error');
+            } finally {
+                // Volver a habilitar el botón
+                boton.disabled = false;
+                boton.textContent = 'Renovar';
+            }
+        }
+        
+        // Funciones auxiliares
+        function mostrarCargando(mostrar) {
+            stockLoading.style.display = mostrar ? 'block' : 'none';
+        }
+
+        function mostrarMensaje(mensaje, tipo = 'success') {
+            stockMessage.textContent = mensaje;
+            stockMessage.className = `message ${tipo}`; // Asigna 'success' o 'error'
+            stockMessage.style.display = mensaje ? 'block' : 'none';
+
+            // Ocultar mensaje después de 5 segundos
+            setTimeout(() => {
+                stockMessage.style.display = 'none';
+            }, 5000);
+        }
+
+    });
+    </script>
+    </body>
 </html>

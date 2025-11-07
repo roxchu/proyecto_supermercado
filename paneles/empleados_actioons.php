@@ -1,129 +1,187 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+/**
+ * Lógica de Acciones para Empleados.
+ * Maneja peticiones AJAX para obtener productos con bajo stock y renovar el stock.
+ */
 
-include '../login/control_acceso.php';
-
+// 1. Configuración y Seguridad
+declare(strict_types=1);
 header('Content-Type: application/json');
+session_start();
 
-// =======================================================
-// 1. VERIFICACIÓN DE SEGURIDAD
-// =======================================================
-if (!isset($_SESSION['user_id']) || $_SESSION['rol'] !== 'empleado') {
-    http_response_code(403); 
-    echo json_encode(['success' => false, 'message' => 'Acceso denegado. Se requiere rol de Empleado.']);
-    exit();
+// Función auxiliar para enviar respuesta JSON
+function sendJsonResponse(bool $success, string $message, array $data = [], int $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode(['success' => $success, 'message' => $message] + $data);
+    exit;
 }
 
-// =======================================================
-// 2. OBTENER ID_EMPLEADO
-// Tu tabla 'venta' usa id_empleado, que se obtiene de la tabla 'empleado' 
-// enlazando con el id_usuario de la sesión.
-// =======================================================
-try {
-    $stmt_empleado = $pdo->prepare("SELECT id_empleado FROM empleado WHERE id_usuario = ?");
-    $stmt_empleado->execute([$_SESSION['user_id']]);
-    $empleado_data = $stmt_empleado->fetch(PDO::FETCH_ASSOC);
+// 2. Verificación de Roles
+// Asegúrate de que las rutas a db.php y verificar_rol.php sean correctas.
+require_once __DIR__ . '/../carrito/db.php';
+require_once __DIR__ . '/../login/verificar_rol.php'; 
 
-    if (!$empleado_data) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'No se encontró el perfil de empleado asociado a este usuario.']);
-        exit();
-    }
-    $id_empleado_actual = $empleado_data['id_empleado'];
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error al obtener ID de empleado: ' . $e->getMessage()]);
-    exit();
+// verififcar_rol(['admin', 'empleado']) garantiza que solo estos roles pueden continuar
+// Si no están definidos, la función debe redirigir o salir con un error 403.
+// Asumiendo que verificar_rol detiene la ejecución si falla:
+try {
+    verificar_rol(['admin', 'empleado']);
+} catch (Exception $e) {
+    // Si la verificación de rol es muy estricta, podemos devolver un error JSON 403
+    sendJsonResponse(false, 'Acceso denegado. Rol insuficiente.', [], 403);
 }
 
+// Obtener la acción solicitada
+$action = $_REQUEST['action'] ?? null; // Puede venir por GET (URL) o POST
 
-$action = $_POST['action'] ?? null;
-$response = ['success' => false, 'message' => 'Acción no válida o no especificada.'];
+// Si no hay acción en $_REQUEST, intentar leerla del JSON del body
+$rawInput = '';
+if (!$action && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $rawInput = file_get_contents('php://input');
+    $input = json_decode($rawInput, true);
+    $action = $input['action'] ?? null;
+}
 
-try {
-    switch ($action) {
+// DEBUG: Log de lo que se recibe
+error_log("=== EMPLEADOS_ACTIOONS DEBUG ===");
+error_log("REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD']);
+error_log("GET params: " . json_encode($_GET));
+error_log("POST params: " . json_encode($_POST));
+error_log("Raw input: " . $rawInput);
+error_log("Action detected: " . ($action ?? 'NULL'));
+
+if (!$action) {
+    sendJsonResponse(false, 'Acción no especificada.', [], 400);
+}
+
+// ----------------------------------------------------
+// --- 1. GET: Obtener productos con bajo stock ---
+// ----------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_productos_sin_stock') {
+    // El umbral se pasa por parámetro GET (e.g., empleados_actions.php?action=...&umbral=5)
+    $umbral = (int)($_GET['umbral'] ?? 5); 
+
+    try {
+        // Consulta: productos con stock menor o igual al umbral
+        $sql = "SELECT Id_Producto, Nombre_Producto, Stock FROM producto WHERE Stock <= :umbral ORDER BY Stock ASC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':umbral', $umbral, PDO::PARAM_INT);
+        $stmt->execute();
         
-        // ---------------------------------------------------
-        // ACCIÓN 1: ACTUALIZAR EL STOCK DE UN PRODUCTO
-        // ---------------------------------------------------
-        case 'update_stock':
-            $producto_id = $_POST['Id_Producto'] ?? null; // Usando Id_Producto
-            $new_stock = $_POST['Stock'] ?? null;         // Usando Stock
-            
-            if ($producto_id && $new_stock !== null && is_numeric($new_stock)) {
-                $sql = "UPDATE producto SET Stock = :Stock WHERE Id_Producto = :Id"; // Nombres ajustados
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute(['Stock' => (int)$new_stock, 'Id' => (int)$producto_id]);
+        $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                if ($stmt->rowCount() > 0) {
-                    $response = ['success' => true, 'message' => 'Stock del producto ID ' . $producto_id . ' actualizado correctamente.'];
-                } else {
-                    $response['message'] = 'No se encontró el producto o el stock no cambió.';
-                }
-            } else {
-                $response['message'] = 'Faltan datos requeridos o son inválidos.';
-            }
-            break;
+        sendJsonResponse(true, 'Productos con bajo stock cargados correctamente.', ['productos' => $productos]);
 
-        // ---------------------------------------------------
-        // ACCIÓN 2: CAMBIAR EL ESTADO DE UNA VENTA (PEDIDO)
-        // ---------------------------------------------------
-        case 'change_order_status':
-            $venta_id = $_POST['id_venta'] ?? null; // Usando id_venta
-            $new_status = $_POST['Estado_Venta'] ?? null; // Usando Estado_Venta
+    } catch (PDOException $e) {
+        error_log("Error al obtener stock: " . $e->getMessage());
+        sendJsonResponse(false, 'Error interno del servidor al consultar la base de datos.', [], 500);
+    }
+} 
 
-            // Estados válidos según tu lógica de negocio
-            $valid_statuses = ['Pendiente', 'Preparando', 'Enviado', 'Entregado', 'Cancelado'];
+// ----------------------------------------------------
+// --- 2. POST: Renovar/Actualizar Stock ---
+// ----------------------------------------------------
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'renovar_stock') {
+    // Leer el cuerpo de la petición (JSON)
+    $input = json_decode(file_get_contents('php://input'), true);
 
-            if ($venta_id && $new_status && in_array($new_status, $valid_statuses)) {
-                $sql = "UPDATE venta SET Estado_Venta = :Estado_Venta, id_empleado = :id_empleado, Fecha_Actualizacion = NOW() WHERE id_venta = :id_venta";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    'Estado_Venta' => $new_status, 
-                    'id_empleado' => $id_empleado_actual, // Usamos el ID de empleado real
-                    'id_venta' => $venta_id
-                ]);
+    $idProducto = (int)($input['id_producto'] ?? 0);
+    $cantidadAgregar = (int)($input['cantidad_agregar'] ?? 0);
 
-                if ($stmt->rowCount() > 0) {
-                    $response = ['success' => true, 'message' => 'Estado de la venta ID ' . $venta_id . ' actualizado a: ' . htmlspecialchars($new_status) . '.'];
-                } else {
-                     $response['message'] = 'No se encontró la venta o el estado no cambió.';
-                }
-            } else {
-                $response['message'] = 'Faltan datos requeridos (ID de venta, estado) o el estado es inválido.';
-            }
-            break;
-
-        // ---------------------------------------------------
-        // ACCIÓN 3: OBTENER UN LISTADO DE VENTAS PENDIENTES
-        // ---------------------------------------------------
-        case 'get_pending_orders':
-             $sql = "SELECT 
-                        v.id_venta, 
-                        v.Fecha_Venta, 
-                        v.Total_Final, 
-                        c.nombre_cliente AS cliente_nombre,
-                        v.Estado_Venta
-                     FROM venta v
-                     JOIN cliente c ON v.id_cliente = c.id_cliente
-                     WHERE v.Estado_Venta IN ('Pendiente', 'Preparando')
-                     ORDER BY v.Fecha_Venta ASC LIMIT 50";
-            
-            $stmt = $pdo->query($sql);
-            $ventas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            $response = ['success' => true, 'data' => $ventas];
-            break;
-            
-        default:
-            $response['message'] = 'Acción solicitada desconocida: ' . htmlspecialchars($action) . '.';
-            break;
+    // Validaciones
+    if ($idProducto <= 0 || $cantidadAgregar <= 0) {
+        sendJsonResponse(false, 'ID de producto o cantidad a agregar inválida.', [], 400);
     }
 
-} catch (PDOException $e) {
-    $response['message'] = 'Error de base de datos: ' . $e->getMessage();
+    try {
+        $pdo->beginTransaction();
+
+        // 1. Actualizar el stock: sumar la nueva cantidad a la existente
+        $sql_update = "UPDATE producto SET Stock = Stock + :cantidad WHERE Id_Producto = :id";
+        $stmt_update = $pdo->prepare($sql_update);
+        $stmt_update->bindParam(':cantidad', $cantidadAgregar, PDO::PARAM_INT);
+        $stmt_update->bindParam(':id', $idProducto, PDO::PARAM_INT);
+        $stmt_update->execute();
+
+        // 2. Obtener el nuevo stock para devolverlo al frontend
+        $sql_select = "SELECT Stock FROM producto WHERE Id_Producto = :id";
+        $stmt_select = $pdo->prepare($sql_select);
+        $stmt_select->bindParam(':id', $idProducto, PDO::PARAM_INT);
+        $stmt_select->execute();
+        $nuevoStock = $stmt_select->fetchColumn();
+        
+        $pdo->commit();
+
+        if ($nuevoStock === false) {
+             sendJsonResponse(false, 'Producto no encontrado después de la actualización.', [], 404);
+        }
+
+        sendJsonResponse(true, 'Stock renovado con éxito. Cantidad agregada: ' . $cantidadAgregar, ['nuevo_stock' => (int)$nuevoStock]);
+
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        error_log("Error al renovar stock: " . $e->getMessage());
+        sendJsonResponse(false, 'Error al actualizar el stock en la base de datos.', [], 500);
+    }
+} 
+
+// ----------------------------------------------------
+// --- 3. POST: Establecer Stock Absoluto (NUEVO) ---
+// ----------------------------------------------------
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'establecer_stock') {
+    // Leer el cuerpo de la petición (JSON) - usar la variable ya leída si existe
+    if (!empty($rawInput)) {
+        $input = json_decode($rawInput, true);
+    } else {
+        $input = json_decode(file_get_contents('php://input'), true);
+    }
+
+    $idProducto = (int)($input['id_producto'] ?? 0);
+    $nuevoStock = (int)($input['nuevo_stock'] ?? 0);
+
+    // Validaciones
+    if ($idProducto <= 0 || $nuevoStock < 0) {
+        sendJsonResponse(false, 'ID de producto inválido o stock no puede ser negativo.', [], 400);
+    }
+
+    try {
+        $pdo->beginTransaction();
+
+        // 1. Verificar que el producto existe
+        $sql_check = "SELECT Nombre_Producto FROM producto WHERE Id_Producto = :id";
+        $stmt_check = $pdo->prepare($sql_check);
+        $stmt_check->bindParam(':id', $idProducto, PDO::PARAM_INT);
+        $stmt_check->execute();
+        $nombreProducto = $stmt_check->fetchColumn();
+
+        if (!$nombreProducto) {
+            $pdo->rollBack();
+            sendJsonResponse(false, 'Producto no encontrado.', [], 404);
+        }
+
+        // 2. Establecer el nuevo stock (valor absoluto)
+        $sql_update = "UPDATE producto SET Stock = :nuevo_stock WHERE Id_Producto = :id";
+        $stmt_update = $pdo->prepare($sql_update);
+        $stmt_update->bindParam(':nuevo_stock', $nuevoStock, PDO::PARAM_INT);
+        $stmt_update->bindParam(':id', $idProducto, PDO::PARAM_INT);
+        $stmt_update->execute();
+
+        $pdo->commit();
+
+        sendJsonResponse(true, "Stock de '{$nombreProducto}' actualizado a {$nuevoStock} unidades.", ['nuevo_stock' => $nuevoStock]);
+
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        error_log("Error al establecer stock: " . $e->getMessage());
+        sendJsonResponse(false, 'Error al actualizar el stock en la base de datos.', [], 500);
+    }
+} 
+
+// ----------------------------------------------------
+// --- Acción desconocida ---
+// ----------------------------------------------------
+else {
+    sendJsonResponse(false, 'Método o acción no permitida.', [], 405);
 }
 
-echo json_encode($response);
 ?>
