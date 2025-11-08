@@ -98,7 +98,7 @@ if ($producto_id !== null) {
 }
 
 // Variables para el header
-$page_title = $producto ? htmlspecialchars($producto['Nombre_Producto']) . ' - Supermercado Online' : 'Producto no encontrado - Supermercado Online';
+$page_title = $producto ? htmlspecialchars($producto['nombre_producto']) . ' - Supermercado Online' : 'Producto no encontrado - Supermercado Online';
 $base_path = ''; // Ruta base para los archivos CSS/JS
 
 // Estilos adicionales específicos para esta página
@@ -570,7 +570,7 @@ include 'header.php';
                                     <?php foreach ($imagenes_producto as $index => $imagen): ?>
                                         <img class="mini-carrusel-image <?= $index === 0 ? 'active' : '' ?>" 
                                              src="<?= htmlspecialchars($imagen['url_imagen']) ?>"
-                                             alt="<?= htmlspecialchars($producto['Nombre_Producto']) ?> - Imagen <?= $index + 1 ?>"
+                                             alt="<?= htmlspecialchars($producto['nombre_producto']) ?> - Imagen <?= $index + 1 ?>"
                                              data-index="<?= $index ?>">
                                     <?php endforeach; ?>
                                 </div>
@@ -589,7 +589,7 @@ include 'header.php';
                         <!-- Imagen única -->
                         <img id="imagen-principal"
                             src="<?= htmlspecialchars($imagenes_producto[0]['url_imagen'] ?? 'https://via.placeholder.com/400x400?text=Sin+Imagen') ?>"
-                            alt="<?= htmlspecialchars($producto['Nombre_Producto']) ?>">
+                            alt="<?= htmlspecialchars($producto['nombre_producto']) ?>">
                         <!-- Debug: Solo una imagen disponible -->
                     <?php endif; ?>
                 </div>
@@ -599,7 +599,7 @@ include 'header.php';
                         <?= htmlspecialchars($categoria_nombre) ?>
                     </div>
 
-                    <h1><?= htmlspecialchars($producto['Nombre_Producto']) ?></h1>
+                    <h1><?= htmlspecialchars($producto['nombre_producto']) ?></h1>
 
                     <div class="producto-precio">
                         <?php if ($producto['precio_anterior'] && $producto['precio_anterior'] > $producto['precio_actual']): ?>
@@ -623,8 +623,8 @@ include 'header.php';
                     <?php endif; ?>
 
                     <div class="producto-stock">
-                        <span class="<?= ($producto['Stock'] > 0) ? '' : 'agotado' ?>">
-                            <?= ($producto['Stock'] > 0) ? 'Stock disponible' : 'Sin stock' ?>
+                        <span class="<?= ($producto['stock'] > 0) ? '' : 'agotado' ?>">
+                            <?= ($producto['stock'] > 0) ? 'stock disponible' : 'Sin stock' ?>
                         </span>
                     </div>
 
@@ -633,24 +633,24 @@ include 'header.php';
                     </div>
 
 
-                    <div class="producto" data-id="<?= $producto['Id_Producto'] ?>" data-nombre="<?= $producto['Nombre_Producto'] ?>">
+                    <div class="producto" data-id="<?= $producto['id_producto'] ?>" data-nombre="<?= $producto['nombre_producto'] ?>">
                         <div class="producto-cantidad admin-only-info" style="display:none;">
                             <label for="cantidad">Cantidad:</label>
-                            <select name="cantidad" id="cantidad" <?= ($producto['Stock'] <= 0) ? 'disabled' : '' ?>>
+                            <select name="cantidad" id="cantidad" <?= ($producto['stock'] <= 0) ? 'disabled' : '' ?>>
                                 <option value="1">1 unidad</option>
-                                <?php if ($producto['Stock'] > 1): ?>
-                                    <?php $max_cantidad = min(10, $producto['Stock']); ?>
+                                <?php if ($producto['stock'] > 1): ?>
+                                    <?php $max_cantidad = min(10, $producto['stock']); ?>
                                     <?php for ($i = 2; $i <= $max_cantidad; $i++): ?>
                                         <option value="<?= $i ?>"><?= $i ?> unidades</option>
                                     <?php endfor; ?>
                                 <?php endif; ?>
                             </select>
-                            <?php if ($producto['Stock'] > 0): ?>
-                                <span class="disponible">(<?= $producto['Stock'] ?> disponibles)</span>
+                            <?php if ($producto['stock'] > 0): ?>
+                                <span class="disponible">(<?= $producto['stock'] ?> disponibles)</span>
                             <?php endif; ?>
                         </div>
                         <div class="producto-acciones">
-                            <?php if ($producto['Stock'] > 0): ?>
+                            <?php if ($producto['stock'] > 0): ?>
                                 <button id="btn-agregar-carrito" class="boton-carrito">Agregar al carrito</button>
                             <?php else: ?>
                                 <button class="boton-sin-stock" disabled>Sin stock</button>
@@ -664,7 +664,7 @@ include 'header.php';
             <!-- Secciones debajo del producto -->
             <div class="producto-descripcion">
                 <h2>Descripción</h2>
-                <p><?= nl2br(htmlspecialchars($producto['Descripcion'])) ?></p>
+                <p><?= nl2br(htmlspecialchars($producto['descripcion'])) ?></p>
             </div>
 
             <div class="producto-opiniones">

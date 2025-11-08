@@ -23,14 +23,17 @@ try {
     $sql = "SELECT 
                 v.id_venta, 
                 v.fecha_venta, 
-                v.Total_Venta,  
-                v.Estado,
+                v.total_venta,  
+                v.estado,
                 u.nombre_usuario AS nombre_cliente 
-            FROM venta v
-            JOIN usuario u ON v.id_cliente = u.id_usuario 
-            
-            WHERE v.Estado = 'Pendiente' 
-            ORDER BY v.fecha_venta ASC
+            FROM 
+                venta v
+            JOIN 
+                usuario u ON v.id_usuario = u.id_usuario -- Usa la nueva FK
+            WHERE 
+                v.estado = 1  -- Se asume que '1' es el ID para el estado 'Pendiente'
+            ORDER BY 
+                v.fecha_venta ASC
             LIMIT 10";
             
     $stmt_ventas = $pdo->query($sql);

@@ -238,7 +238,7 @@
             productos.forEach((prod) => {
                 console.log('📦 Procesando producto:', prod);
                 const idCarrito = prod.Id_Carrito;
-                const nombre = prod.nombre || prod.nombre_producto || `Producto #${prod.Id_Producto}`;
+                const nombre = prod.nombre || prod.nombre_producto || `Producto #${prod.id_producto}`;
                 const precio = parseFloat(prod.Precio_Unitario_Momento) || parseFloat(prod.precio) || 0;
                 const cantidad = parseInt(prod.Cantidad) || parseInt(prod.cantidad) || 0;
                 const subtotal = parseFloat(prod.Total) || (precio * cantidad) || 0;

@@ -61,7 +61,7 @@ try {
     $cantidad = (int)$input['cantidad'];
 
     // 4. Verificar producto, obtener precio y stock
-    $stmtProducto = $pdo->prepare("SELECT precio_actual, Stock, Nombre_Producto FROM producto WHERE Id_Producto = ?");
+    $stmtProducto = $pdo->prepare("SELECT precio_actual, stock, nombre_producto FROM producto WHERE id_producto = ?");
     $stmtProducto->execute([$idProducto]);
     $producto = $stmtProducto->fetch();
 
@@ -70,8 +70,8 @@ try {
     }
 
     $precioUnitario = $producto['precio_actual'];
-    $stockActual = (int)$producto['Stock'];
-    $nombreProducto = $producto['Nombre_Producto'];
+    $stockActual = (int)$producto['stock'];
+    $nombreProducto = $producto['nombre_producto'];
 
     // 5. VERIFICAR SI HAY STOCK DISPONIBLE
     if ($stockActual <= 0) {
@@ -84,9 +84,9 @@ try {
 
     // 6. Verificar carrito existente
     $stmtCarrito = $pdo->prepare("
-        SELECT Id_Carrito, Cantidad 
+        SELECT id_carrito, cantidad 
         FROM carrito 
-        WHERE id_usuario = ? AND Id_Producto = ?
+        WHERE id_usuario = ? AND id_producto = ?
     ");
     $stmtCarrito->execute([$idUsuario, $idProducto]);
     $itemCarrito = $stmtCarrito->fetch();
@@ -94,11 +94,11 @@ try {
     // 7. Verificar stock total necesario si ya existe en carrito
     $cantidadTotalNecesaria = $cantidad;
     if ($itemCarrito) {
-        $cantidadTotalNecesaria += (int)$itemCarrito['Cantidad'];
+        $cantidadTotalNecesaria += (int)$itemCarrito['cantidad'];
     }
     
     if ($stockActual < $cantidadTotalNecesaria) {
-        $cantidadEnCarrito = $itemCarrito ? $itemCarrito['Cantidad'] : 0;
+        $cantidadEnCarrito = $itemCarrito ? $itemCarrito['cantidad'] : 0;
         throw new Exception("Stock insuficiente. Disponible: {$stockActual}, ya tienes {$cantidadEnCarrito} en el carrito.");
     }
 
@@ -106,8 +106,8 @@ try {
 
     try {
         // 8. REDUCIR STOCK EN LA BASE DE DATOS
-        $nuevoStock = $stockActual - $cantidad;
-        $stmtStock = $pdo->prepare("UPDATE producto SET Stock = ? WHERE Id_Producto = ?");
+        $$nuevoStock = $stockActual - $cantidad;
+        $stmtStock = $pdo->prepare("UPDATE producto SET stock = ? WHERE id_producto = ?");
         $stmtStock->execute([$nuevoStock, $idProducto]);
 
         // 9. Actualizar o insertar en carrito
@@ -115,15 +115,15 @@ try {
             // Actualizar cantidad existente
             $stmt = $pdo->prepare("
                 UPDATE carrito 
-                SET Cantidad = Cantidad + ?,
-                    Precio_Unitario_Momento = ? 
-                WHERE Id_Carrito = ?
+                SET cantidad = cantidad + ?,
+                    precio_unitario_momento = ? 
+                WHERE id_carrito = ?
             ");
-            $stmt->execute([$cantidad, $precioUnitario, $itemCarrito['Id_Carrito']]);
+            $stmt->execute([$cantidad, $precioUnitario, $itemCarrito['id_carrito']]);
         } else {
             // Insertar nuevo item
             $stmt = $pdo->prepare("
-                INSERT INTO carrito (id_usuario, Id_Producto, Cantidad, Precio_Unitario_Momento) 
+                INSERT INTO carrito (id_usuario, id_producto, cantidad, precio_unitario_momento) 
                 VALUES (?, ?, ?, ?)
             ");
             $stmt->execute([$idUsuario, $idProducto, $cantidad, $precioUnitario]);

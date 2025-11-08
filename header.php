@@ -141,7 +141,7 @@
     <script src="<?= isset($base_path) ? $base_path : '' ?>script.js"></script>
     <script src="<?= isset($base_path) ? $base_path : '' ?>catalogo/catalogo.js"></script>
     <script src="<?= isset($base_path) ? $base_path : '' ?>buscador/buscador.js"></script>
-    <script src="<?= isset($base_path) ? $base_path : '' ?>carrito.js/carrito.js"></script>
+    <script src="<?= isset($base_path) ? $base_path : '' ?>carrito-java/carrito.js"></script>
     
     <?php if (isset($additional_scripts)): ?>
         <?= $additional_scripts ?>
