@@ -59,6 +59,7 @@ try {
         exit;
     }
 
+
     $pdo->beginTransaction();
 
     // Insertar en usuario
@@ -73,10 +74,6 @@ try {
     ]);
 
     $user_id = $pdo->lastInsertId();
-
-    // Insertar en cliente
-    $stmt = $pdo->prepare("INSERT INTO cliente (id_cliente) VALUES (:id)");
-    $stmt->execute(['id' => $user_id]);
 
     $pdo->commit();
 

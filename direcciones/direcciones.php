@@ -61,13 +61,14 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
     }
 
     .form-container {
-      background-color: var(--blanco);
-      border-radius: 16px;
-      box-shadow: var(--sombra);
-      overflow: hidden;
-      flex: 1; /* Cada contenedor toma la mitad del espacio */
-      display: flex;
-      flex-direction: column;
+  background-color: var(--blanco);
+  border-radius: 16px;
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 2rem 2rem 2rem;
     }
 
     .encabezado {
@@ -75,6 +76,7 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
       color: var(--blanco);
       text-align: center;
       padding: 1.5rem;
+      margin: -2rem -2rem 1.5rem -2rem;
     }
 
     .encabezado h2 {
@@ -84,11 +86,12 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
     }
 
     form {
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem; /* Aumentamos el espacio entre campos */
-      height: 100%; /* Hacemos que el form ocupe el espacio */
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  height: 100%;
+  background: none;
     }
 
     label {
@@ -385,38 +388,38 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
       <!-- Formulario de Método de Pago -->
       <!-- Este formulario envía a guardarmetododepago.php -->
       <!-- Los campos 'name' coinciden con tu tabla SQL 'metodo_pago_usuario' -->
-      <form id="pago-form" action="guardarmetododepago.php" method="POST">
-        <!-- Campo oculto para el ID de usuario -->
-        <input type="hidden" name="id_usuario" value="<?php echo $id_usuario_sesion; ?>">
+      <form id="pago-form" action="guardarmetododepago.php" method="POST" style="display: flex; flex-direction: column; gap: 1.2rem; height: 100%;">
+  <div style="display: flex; flex-direction: column; gap: 1.2rem; flex: 1; background: none;">
+          <!-- Campo oculto para el ID de usuario -->
+          <input type="hidden" name="id_usuario" value="<?php echo $id_usuario_sesion; ?>">
 
-        <label for="alias">Alias del método</label>
-        <input type="text" id="alias" name="alias" placeholder="Ej: Mi Visa, Cuenta principal, Efectivo" required>
+          <label for="alias">Alias del método</label>
+          <input type="text" id="alias" name="alias" placeholder="Ej: Mi Visa, Cuenta principal, Efectivo" required>
 
-        <label for="tipo_metodo">Tipo de método</label>
-        <select id="tipo_metodo" name="tipo_metodo" required>
-          <option value="">Seleccioná un método...</option>
-          <option value="Tarjeta de crédito">Tarjeta de crédito</option>
-          <option value="Tarjeta de débito">Tarjeta de débito</option>
-          <option value="Mercado Pago">Mercado Pago</option>
-          <option value="Transferencia">Transferencia</option>
-          <option value="Efectivo">Efectivo</option>
-        </select>
+          <label for="tipo_metodo">Tipo de método</label>
+          <select id="tipo_metodo" name="tipo_metodo" required>
+            <option value="">Seleccioná un método...</option>
+            <option value="Tarjeta de crédito">Tarjeta de crédito</option>
+            <option value="Tarjeta de débito">Tarjeta de débito</option>
+            <option value="Mercado Pago">Mercado Pago</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Efectivo">Efectivo</option>
+          </select>
 
-        <!-- Campos dinámicos para Tarjeta -->
-        <div class="campos-tarjeta" id="campos-tarjeta">
-          
-          <label for="nombre_titular">Nombre del titular</label>
-          <input type="text" id="nombre_titular" name="nombre_titular" placeholder="Como figura en la tarjeta">
+          <!-- Campos dinámicos para Tarjeta -->
+          <div class="campos-tarjeta" id="campos-tarjeta">
+            <label for="nombre_titular">Nombre del titular</label>
+            <input type="text" id="nombre_titular" name="nombre_titular" placeholder="Como figura en la tarjeta">
 
-          <label for="numero_tarjeta">Número de tarjeta</label>
-          <input type="text" id="numero_tarjeta" name="numero_tarjeta" placeholder="•••• •••• •••• ••••" autocomplete="off">
-          
-          <label for="vencimiento">Vencimiento</label>
-          <input type="text" id="vencimiento" name="vencimiento" placeholder="MM/AAAA">
-          
+            <label for="numero_tarjeta">Número de tarjeta</label>
+            <input type="text" id="numero_tarjeta" name="numero_tarjeta" placeholder="•••• •••• •••• ••••" autocomplete="off">
+
+            <label for="vencimiento">Vencimiento</label>
+            <input type="text" id="vencimiento" name="vencimiento" placeholder="MM/AAAA">
+          </div>
         </div>
-
-        </form>
+        <!-- Puedes agregar aquí un botón de guardar si lo necesitas -->
+      </form>
     </div>
 
     <!-- COLUMNA 3: RESUMEN DEL PEDIDO -->

@@ -1,3 +1,44 @@
+/* Métodos de Pago - Moderno y atractivo */
+.metodos-pago {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+    margin: 2rem 0;
+}
+.metodo-pago-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    min-width: 220px;
+    max-width: 320px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid #f3f3f3;
+}
+.metodo-pago-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+    border-color: #ff6b35;
+}
+.metodo-pago-card img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.08));
+}
+.metodo-pago-card h4 {
+    margin: 0.5rem 0 0.25rem 0;
+    font-size: 1.2rem;
+    color: #222;
+}
+.metodo-pago-card p {
+    color: #666;
+    font-size: 0.98rem;
+    margin-bottom: 0;
+}
 /* =======================================
    🎨 SUPERMERCADO ONLINE - CSS MODERNO 
    ======================================= */

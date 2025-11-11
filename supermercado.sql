@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 08-11-2025 a las 00:01:29
--- Versión del servidor: 10.4.28-MariaDB
--- Versión de PHP: 8.1.17
+-- Tiempo de generación: 11-11-2025 a las 16:14:31
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -42,7 +42,8 @@ CREATE TABLE `carrito` (
 
 INSERT INTO `carrito` (`id_carrito`, `id_usuario`, `id_producto`, `precio_unitario_momento`, `cantidad`) VALUES
 (1, 2, 2, 8900.00, 1),
-(2, 2, 3, 1250.00, 8);
+(2, 2, 3, 1250.00, 8),
+(3, 3, 2, 8900.00, 1);
 
 -- --------------------------------------------------------
 
@@ -223,7 +224,7 @@ CREATE TABLE `producto` (
 
 INSERT INTO `producto` (`id_producto`, `id_categoria`, `nombre_producto`, `descripcion`, `stock`, `precio_actual`, `precio_anterior`, `es_destacado`, `etiqueta_especial`, `descuento_texto`) VALUES
 (1, 1, 'Manzanas Rojas Premium', 'Manzanas rojas dulces y crujientes, importadas. Ideales para comer solas o en ensaladas.', 150, 2500.00, 3200.00, 1, 'EXCLUSIVO ONLINE', '22% OFF'),
-(2, 2, 'Pollo Entero Fresco', 'Pollo entero de granja, sin menudos. Peso aproximado 2kg. Perfecto para asar.', 45, 8900.00, 10500.00, 1, NULL, '15% OFF'),
+(2, 2, 'Pollo Entero Fresco', 'Pollo entero de granja, sin menudos. Peso aproximado 2kg. Perfecto para asar.', 44, 8900.00, 10500.00, 1, NULL, '15% OFF'),
 (3, 3, 'Leche Entera La Serenísima 1L', 'Leche entera UAT fortificada con vitaminas A y D. Larga vida.', 200, 1250.00, NULL, 1, 'LARGA VIDA', NULL),
 (4, 5, 'Coca Cola Sabor Original 2.25L', 'Gaseosa Coca Cola sabor original en botella retornable de 2.25 litros.', 80, 1850.00, 2100.00, 1, NULL, '12% OFF'),
 (5, 6, 'Arroz Integral Gallo Oro 1kg', 'Arroz integral de grano largo tipo 00000. No se pasa ni se pega.', 120, 1680.00, NULL, 1, NULL, NULL),
@@ -369,7 +370,8 @@ CREATE TABLE `venta` (
   `id_direccion` int(11) DEFAULT NULL,
   `fecha_venta` datetime NOT NULL DEFAULT current_timestamp(),
   `total_venta` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `estado` int(11) NOT NULL
+  `estado` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish2_ci;
 
 --
@@ -487,7 +489,8 @@ ALTER TABLE `usuario`
 ALTER TABLE `venta`
   ADD PRIMARY KEY (`id_venta`),
   ADD KEY `FK_Venta_Empleado` (`id_empleado`),
-  ADD KEY `FK_Venta_Direccion` (`id_direccion`);
+  ADD KEY `FK_Venta_Direccion` (`id_direccion`),
+  ADD KEY `FK_Venta_Usuario` (`id_usuario`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -497,7 +500,7 @@ ALTER TABLE `venta`
 -- AUTO_INCREMENT de la tabla `carrito`
 --
 ALTER TABLE `carrito`
-  MODIFY `id_carrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_carrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `categoria`
@@ -657,7 +660,8 @@ ALTER TABLE `usuario`
 --
 ALTER TABLE `venta`
   ADD CONSTRAINT `FK_Venta_Direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`) ON DELETE SET NULL,
-  ADD CONSTRAINT `FK_Venta_Empleado` FOREIGN KEY (`id_empleado`) REFERENCES `empleado` (`id_empleado`) ON DELETE SET NULL;
+  ADD CONSTRAINT `FK_Venta_Empleado` FOREIGN KEY (`id_empleado`) REFERENCES `empleado` (`id_empleado`) ON DELETE SET NULL,
+  ADD CONSTRAINT `FK_Venta_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

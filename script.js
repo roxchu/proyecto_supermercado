@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // * SOLUCIÓN CLAVE: Forzar la redirección limpia
       // ******************************************************
       setTimeout(() => {
-        window.location.href = BASE + 'index.html'; 
+  window.location.href = BASE + 'index.html'; 
       }, 700);
       
     } else {
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (registerMessage) registerMessage.textContent = '';
 
     try {
-      const res = await fetch(BASE + 'login/register.php', {
+  const res = await fetch(BASE + 'login/registro.php', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             
             <div class="producto-stock ${stock <= 0 ? 'sin-stock' : ''}">
-              ${stock > 0 ? `Stock: ${stock} disponibles` : 'Sin stock'}
+              ${stock > 0 ? `Stock: ${stock > 999 ? '999+' : stock} disponibles` : 'Sin stock'}
             </div>
             
             <div class="producto-acciones">

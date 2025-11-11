@@ -105,10 +105,10 @@ try {
     $pdo->beginTransaction();
 
     try {
-        // 8. REDUCIR STOCK EN LA BASE DE DATOS
-        $$nuevoStock = $stockActual - $cantidad;
-        $stmtStock = $pdo->prepare("UPDATE producto SET stock = ? WHERE id_producto = ?");
-        $stmtStock->execute([$nuevoStock, $idProducto]);
+    // 8. REDUCIR STOCK EN LA BASE DE DATOS
+    $nuevoStock = $stockActual - $cantidad;
+    $stmtStock = $pdo->prepare("UPDATE producto SET stock = ? WHERE id_producto = ?");
+    $stmtStock->execute([$nuevoStock, $idProducto]);
 
         // 9. Actualizar o insertar en carrito
         if ($itemCarrito) {

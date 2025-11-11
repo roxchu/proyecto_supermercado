@@ -44,7 +44,7 @@ try {
     $stmt_roles = $pdo->query("SELECT * FROM rol ORDER BY id_rol");
     $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt_categorias = $pdo->query("SELECT * FROM categoria ORDER BY Nombre_Categoria");
+    $stmt_categorias = $pdo->query("SELECT * FROM categoria ORDER BY nombre_categoria");
     $categorias = $stmt_categorias->fetchAll(PDO::FETCH_ASSOC);
 
     // --- 3. LEER PRODUCTOS (SOLO IMAGEN PRINCIPAL) ---
@@ -52,9 +52,9 @@ try {
     // Obtenemos los productos con imagen principal de producto_imagenes (orden = 1)
     $stmt_productos = $pdo->query("SELECT p.Id_Producto, 
                                           COALESCE(pi.url_imagen, 'https://via.placeholder.com/250x160?text=Sin+Imagen') AS imagen_url,
-                                          p.Nombre_Producto, p.precio_actual, p.precio_anterior, p.Stock, p.Descripcion, p.Id_Categoria, c.Nombre_Categoria 
+                                          p.Nombre_Producto, p.precio_actual, p.precio_anterior, p.Stock, p.Descripcion, p.Id_Categoria, c.nombre_categoria 
                                    FROM producto p 
-                                   LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
+                                   LEFT JOIN categoria c ON p.Id_Categoria = c.id_categoria
                                    LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
                                    ORDER BY p.Id_Producto");
     $productos = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);    
@@ -226,7 +226,7 @@ try {
                             <td <?php if ($producto['Stock'] < 20) echo 'class="low-stock-alert"'; ?>>
                                 <?php echo htmlspecialchars($producto['Stock']); ?>
                             </td>
-                            <td><?php echo htmlspecialchars($producto['Nombre_Categoria'] ?? 'N/A'); ?></td>
+                            <td><?php echo htmlspecialchars($producto['nombre_categoria'] ?? 'N/A'); ?></td>
                             <td>
                                 <button class="btn btn-edit btn-edit-producto" 
                                         data-modal="modal-producto"
@@ -319,8 +319,8 @@ try {
                 <select id="prod-categoria" name="id_categoria" class="full-width-input" required>
                     <option value="">Seleccione una categoría...</option>
                     <?php foreach ($categorias as $categoria): ?>
-                        <option value="<?php echo $categoria['Id_Categoria']; ?>">
-                            <?php echo htmlspecialchars($categoria['Nombre_Categoria']); ?>
+                        <option value="<?php echo $categoria['id_categoria']; ?>">
+                            <?php echo htmlspecialchars($categoria['nombre_categoria']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

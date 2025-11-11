@@ -26,12 +26,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 // 2. Si el ID es válido, buscar el producto y sus opiniones
 if ($producto_id !== null) {
     // --- Obtener datos del producto con imagen principal de producto_imagenes ---
-    $sql_producto = "SELECT p.*, c.Nombre_Categoria,
-                            COALESCE(pi.url_imagen, 'https://via.placeholder.com/400x400?text=Sin+Imagen') AS imagen_principal
-                     FROM producto p
-                     LEFT JOIN categoria c ON p.Id_Categoria = c.Id_Categoria
-                     LEFT JOIN producto_imagenes pi ON p.Id_Producto = pi.Id_Producto AND pi.orden = 1
-                     WHERE p.Id_Producto = ?";
+    $sql_producto = "SELECT p.*, c.nombre_categoria,
+                COALESCE(pi.url_imagen, 'https://via.placeholder.com/400x400?text=Sin+Imagen') AS imagen_principal
+            FROM producto p
+            LEFT JOIN categoria c ON p.id_categoria = c.id_categoria
+            LEFT JOIN producto_imagenes pi ON p.id_producto = pi.id_producto AND pi.orden = 1
+            WHERE p.id_producto = ?";
 
     $stmt_producto = $pdo->prepare($sql_producto);
 
@@ -63,7 +63,7 @@ if ($producto_id !== null) {
         }
 
         if ($producto) {
-            $categoria_nombre = $producto['Nombre_Categoria'] ?? 'Sin categoría';
+            $categoria_nombre = $producto['nombre_categoria'] ?? 'Sin categoría';
 
             // Calcular descuento
             if (!empty($producto['precio_anterior']) && $producto['precio_anterior'] > 0 && $producto['precio_anterior'] > $producto['precio_actual']) {
@@ -104,116 +104,99 @@ $base_path = ''; // Ruta base para los archivos CSS/JS
 // Estilos adicionales específicos para esta página
 $additional_styles = '<link rel="stylesheet" href="css/mostrar-producto.css">
 <style>
-/* Mini carrusel de imágenes del producto */
+/* Carrusel de imágenes mejorado */
 .mini-carrusel-container {
     position: relative;
     width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
+    max-width: 520px;
+    margin: 0 auto 1.5rem auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 6px 32px rgba(0,0,0,0.13);
+    overflow: hidden;
 }
-
 .mini-carrusel-wrapper {
     position: relative;
     width: 100%;
     overflow: hidden;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-
 .mini-carrusel-track {
     display: flex;
-    transition: transform 0.3s ease;
+    transition: transform 0.4s cubic-bezier(.4,1.3,.5,1);
     width: 100%;
 }
-
 .mini-carrusel-image {
     width: 100%;
-    height: 400px;
+    height: 420px;
     object-fit: cover;
     flex-shrink: 0;
     display: none;
+    border-radius: 0 0 18px 18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
-
 .mini-carrusel-image.active {
     display: block;
+    animation: fadeinimg 0.5s;
 }
-
+@keyframes fadeinimg {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 .mini-carrusel-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255,255,255,0.9);
+    background: linear-gradient(135deg, #fff 80%, #ff6b35 120%);
     border: none;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    font-size: 18px;
+    font-size: 22px;
+    color: #ff6b35;
     cursor: pointer;
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+    transition: all 0.2s;
 }
-
 .mini-carrusel-btn:hover {
-    background: rgba(255,255,255,1);
-    transform: translateY(-50%) scale(1.1);
+    background: #ff6b35;
+    color: #fff;
+    transform: translateY(-50%) scale(1.12);
 }
-
-.mini-carrusel-btn.prev {
-    left: 10px;
-}
-
-.mini-carrusel-btn.next {
-    right: 10px;
-}
-
+.mini-carrusel-btn.prev { left: 12px; }
+.mini-carrusel-btn.next { right: 12px; }
 .mini-carrusel-dots {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-top: 15px;
+    gap: 10px;
+    margin: 18px 0 0 0;
 }
-
 .dot {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: #ddd;
+    background: #eee;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
-
 .dot.active {
     background: #ff6b35;
-    transform: scale(1.2);
+    transform: scale(1.22);
+    border-color: #ff6b35;
 }
-
 .dot:hover {
     background: #ff8c42;
 }
-
-/* Responsive */
 @media (max-width: 768px) {
-    .mini-carrusel-image {
-        height: 300px;
-    }
-    
-    .mini-carrusel-btn {
-        width: 35px;
-        height: 35px;
-        font-size: 16px;
-    }
-    
-    .mini-carrusel-btn.prev {
-        left: 5px;
-    }
-    
-    .mini-carrusel-btn.next {
-        right: 5px;
-    }
+    .mini-carrusel-image { height: 260px; }
+    .mini-carrusel-btn { width: 36px; height: 36px; font-size: 16px; }
+    .mini-carrusel-btn.prev { left: 4px; }
+    .mini-carrusel-btn.next { right: 4px; }
 }
 </style>';
 
