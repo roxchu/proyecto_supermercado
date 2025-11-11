@@ -932,11 +932,14 @@ input, textarea, select {
     overflow-y: auto;
     margin-bottom: var(--espacio-lg);
     padding-right: var(--espacio-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .carrito-item {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: flex-start;
     padding: var(--espacio-md);
     border-bottom: 1px solid var(--color-gris-200);
@@ -945,6 +948,8 @@ input, textarea, select {
     border-radius: var(--radio-md);
     margin-bottom: var(--espacio-sm);
     transition: all var(--transicion-rapida);
+    width: 100%;
+    max-width: 370px;
 }
 
 .carrito-item:hover {

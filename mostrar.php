@@ -617,7 +617,30 @@ include 'header.php';
 
 
                     <div class="producto" data-id="<?= $producto['id_producto'] ?>" data-nombre="<?= $producto['nombre_producto'] ?>">
-                        <div class="producto-cantidad admin-only-info" style="display:none;">
+                        <div class="producto-cantidad">
+<script>
+// Permitir añadir varias cantidades al carrito para todos los usuarios
+document.addEventListener('DOMContentLoaded', function() {
+    const btnAgregar = document.getElementById('btn-agregar-carrito');
+    const cantidadSelect = document.getElementById('cantidad');
+    if (btnAgregar && cantidadSelect) {
+        btnAgregar.addEventListener('click', function() {
+            const cantidad = parseInt(cantidadSelect.value, 10) || 1;
+            const productoDiv = btnAgregar.closest('.producto');
+            const productoId = productoDiv ? productoDiv.getAttribute('data-id') : null;
+            if (!productoId) return;
+            const formData = new FormData();
+            formData.append('producto_id', productoId);
+            formData.append('cantidad', cantidad);
+            fetch('carrito/agregar_carrito.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+        });
+    }
+});
+</script>
                             <label for="cantidad">Cantidad:</label>
                             <select name="cantidad" id="cantidad" <?= ($producto['stock'] <= 0) ? 'disabled' : '' ?>>
                                 <option value="1">1 unidad</option>
