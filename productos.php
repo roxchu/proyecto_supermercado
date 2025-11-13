@@ -67,10 +67,12 @@ try {
                     <span class="etiqueta-caracteristica-verde"><?= htmlspecialchars($producto['etiqueta_especial']) ?></span>
                 <?php endif; ?>
 
-                <img src="<?= htmlspecialchars($producto['imagen_url']) ?>"
-                     alt="<?= htmlspecialchars($producto['nombre']) ?>"
-                     class="producto-imagen"
-                     onerror="this.src='https://via.placeholder.com/250x160?text=Sin+Imagen'">
+                <div class="producto-imagen" style="width: 100%; height: 200px; overflow: hidden; background: var(--color-gris-100); display: flex; align-items: center; justify-content: center;">
+                    <img src="<?= htmlspecialchars($producto['imagen_url']) ?>"
+                         alt="<?= htmlspecialchars($producto['nombre']) ?>"
+                         style="width: 100%; height: 100%; object-fit: cover; transition: transform var(--transicion-lenta);"
+                         onerror="this.src='https://via.placeholder.com/250x160?text=Sin+Imagen'">
+                </div>
 
                 <div class="producto-info">
                     <h3><?= htmlspecialchars($producto['nombre']) ?></h3>
