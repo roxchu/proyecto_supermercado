@@ -24,20 +24,22 @@ function verificar_rol($rol_requerido) {
 
     $rol_actual = $_SESSION['rol'] ?? null;
     $id_rol_actual = $_SESSION['id_rol'] ?? null;
-    
     // Normalizamos el rol de la sesión a string en minúsculas
-    $rol_actual_lower = strtolower((string)($rol_actual ?? '')); 
+    $rol_actual_lower = strtolower((string)($rol_actual ?? ''));
+
+    // Si el rol es 'owner', lo tratamos como 'admin' para permisos
+    if ($rol_actual_lower === 'owner') {
+        $rol_actual_lower = 'admin';
+    }
 
     // 3. COMPARACIÓN ESTRICTA (Sin consultas a BD, solo sesión vs. requeridos)
     foreach ($roles_permitidos_lower as $permitido_lower) {
-        
         // Compara el nombre de rol de la sesión (ej. 'admin')
-        if ($rol_actual_lower !== '' && $rol_actual_lower === $permitido_lower) { 
+        if ($rol_actual_lower !== '' && $rol_actual_lower === $permitido_lower) {
             return; // ¡Permitido por nombre!
         }
-
         // Compara el ID de rol de la sesión (ej. 1) con el rol requerido (ej. '1' o 'admin')
-        if ($id_rol_actual !== null && (string)$id_rol_actual === $permitido_lower) { 
+        if ($id_rol_actual !== null && (string)$id_rol_actual === $permitido_lower) {
             return; // ¡Permitido por ID!
         }
     }

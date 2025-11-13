@@ -211,48 +211,46 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sideLinkGestion) sideLinkGestion.style.display = 'none';
     if (sideLinkAdmin) sideLinkAdmin.style.display = 'none';
 
-    if (rol) {
-        usuarioActual = { nombre: nombre, rol: rol };
-        if (loginLink) loginLink.style.display = 'none';
-        if (userInfo) userInfo.style.display = 'flex'; // Muestra el contenedor de usuario
-        if (userGreeting) userGreeting.innerHTML = `<i class="fas fa-user"></i> Hola, ${nombre}!`;
+  if (rol) {
+    // Si el rol es 'owner', lo tratamos como 'admin' para la interfaz
+    let rolUI = rol === 'owner' ? 'admin' : rol;
+    usuarioActual = { nombre: nombre, rol: rol };
+    if (loginLink) loginLink.style.display = 'none';
+    if (userInfo) userInfo.style.display = 'flex'; // Muestra el contenedor de usuario
+    if (userGreeting) userGreeting.innerHTML = `<i class="fas fa-user"></i> Hola, ${nombre}!`;
 
-        // 2. Mostrar/Ocultar basado en el ROL
-        
-        // El enlace de Gestión (Camión) es para Admin Y Empleado
-        if (rol === 'admin' || rol === 'empleado') {
-            if (linkGestion) {
-                linkGestion.classList.add('show');
-                linkGestion.style.display = 'flex'; 
-            }
-            if (sideLinkGestion) sideLinkGestion.style.display = 'block'; 
-        }
-        
-        // El enlace de Admin (Herramientas) es SOLO para Admin
-        if (rol === 'admin') {
-            if (linkAdmin) {
-                linkAdmin.classList.add('show');
-                linkAdmin.style.display = 'flex'; 
-            }
-            if (sideLinkAdmin) sideLinkAdmin.style.display = 'block'; 
-        }
-
-    } else {
-        usuarioActual = null;
-        if (userGreeting) userGreeting.textContent = '';
-        
-        // Ocultar todos los paneles si no hay sesión
-        if (linkGestion) {
-            linkGestion.classList.remove('show');
-            linkGestion.style.display = 'none';
-        }
-        if (linkAdmin) {
-            linkAdmin.classList.remove('show');
-            linkAdmin.style.display = 'none';
-        }
-        if (sideLinkGestion) sideLinkGestion.style.display = 'none';
-        if (sideLinkAdmin) sideLinkAdmin.style.display = 'none';
+    // 2. Mostrar/Ocultar basado en el ROL
+    // El enlace de Gestión (Camión) es para Admin Y Empleado (y Owner)
+    if (rolUI === 'admin' || rolUI === 'empleado') {
+      if (linkGestion) {
+        linkGestion.classList.add('show');
+        linkGestion.style.display = 'flex'; 
+      }
+      if (sideLinkGestion) sideLinkGestion.style.display = 'block'; 
     }
+    // El enlace de Admin (Herramientas) es SOLO para Admin (y Owner)
+    if (rolUI === 'admin') {
+      if (linkAdmin) {
+        linkAdmin.classList.add('show');
+        linkAdmin.style.display = 'flex'; 
+      }
+      if (sideLinkAdmin) sideLinkAdmin.style.display = 'block'; 
+    }
+  } else {
+    usuarioActual = null;
+    if (userGreeting) userGreeting.textContent = '';
+    // Ocultar todos los paneles si no hay sesión
+    if (linkGestion) {
+      linkGestion.classList.remove('show');
+      linkGestion.style.display = 'none';
+    }
+    if (linkAdmin) {
+      linkAdmin.classList.remove('show');
+      linkAdmin.style.display = 'none';
+    }
+    if (sideLinkGestion) sideLinkGestion.style.display = 'none';
+    if (sideLinkAdmin) sideLinkAdmin.style.display = 'none';
+  }
     
     // Disparar evento de cambio de sesión para otros scripts
     document.dispatchEvent(new CustomEvent('sessionChanged', { 

@@ -23,8 +23,13 @@ function verificar_rol(array $roles_permitidos) {
         exit;
     }
 
-    // 3. Normalizar el rol actual de la sesión (será 'empleado', 'admin', o 'cliente')
+    // 3. Normalizar el rol actual de la sesión (será 'empleado', 'admin', 'owner', o 'cliente')
     $rol_actual = strtolower($_SESSION['rol']);
+
+    // Si el rol es 'owner', lo tratamos como 'admin' para permisos
+    if ($rol_actual === 'owner') {
+        $rol_actual = 'admin';
+    }
 
     // 4. Verificar si el rol actual está en la lista de permitidos (en español)
     if (in_array($rol_actual, $roles_permitidos)) {

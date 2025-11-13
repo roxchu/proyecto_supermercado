@@ -57,10 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
 
     if ($usuario) {
         // --- 1. NORMALIZACIÓN DEL ROL ---
-        $rol_normalizado = strtolower($usuario['nombre_rol']); // Obtiene 'admin', 'empleado' o 'client'
+        $rol_normalizado = strtolower($usuario['nombre_rol']); // Puede ser 'admin', 'owner', 'empleado', 'client'
 
         // CORRECCIÓN CLAVE: Mapear según la tabla rol actual
-        if ($usuario['id_rol'] == 1 || $rol_normalizado === 'admin') {
+        if ($rol_normalizado === 'owner' || $usuario['id_rol'] == 99) {
+            $rol_final = 'owner';
+        } elseif ($usuario['id_rol'] == 1 || $rol_normalizado === 'admin') {
             $rol_final = 'admin';
         } elseif ($usuario['id_rol'] == 2 || $rol_normalizado === 'empleado') {
             $rol_final = 'empleado';
@@ -82,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dni'])) {
         $redirect_url = 'index.html'; // Por defecto para clientes
 
         // ¡La lógica de redirección ahora compara contra el rol normalizado!
-        if ($rol_final === 'admin') {
-            $redirect_url = 'paneles/dashboard_admin.php'; // Panel de admin
+        if ($rol_final === 'admin' || $rol_final === 'owner') {
+            $redirect_url = 'paneles/dashboard_admin.php'; // Panel de admin para owner y admin
         } elseif ($rol_final === 'empleado') {
             $redirect_url = 'paneles/dashboard_empleado.php';
         }
