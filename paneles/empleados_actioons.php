@@ -51,23 +51,19 @@ if (!$action) {
 // --- 1. GET: Obtener productos con bajo stock ---
 // ----------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_productos_sin_stock') {
-    $umbral = (int)($_GET['umbral'] ?? 5); 
-
+    $umbral = 20; // Mostrar productos con stock menor a 20
     try {
-        $sql = "SELECT id_producto, nombre_producto, stock FROM producto WHERE stock <= :umbral ORDER BY stock ASC";
+        $sql = "SELECT p.id_producto, p.nombre_producto, p.stock, c.nombre_categoria FROM producto p LEFT JOIN categoria c ON p.id_categoria = c.id_categoria WHERE p.stock < :umbral ORDER BY p.stock ASC";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':umbral', $umbral, PDO::PARAM_INT);
         $stmt->execute();
-        
         $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         sendJsonResponse(true, 'Productos con bajo stock cargados correctamente.', ['productos' => $productos]);
-
     } catch (PDOException $e) {
         error_log("Error al obtener stock: " . $e->getMessage());
         sendJsonResponse(false, 'Error interno del servidor al consultar la base de datos.', [], 500);
     }
-} 
+}
 
 // ----------------------------------------------------
 // --- 2. POST: Renovar/Actualizar Stock ---
