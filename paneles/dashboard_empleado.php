@@ -162,7 +162,7 @@ try {
 
     <div class="main-content">
         <header class="main-header">
-            <h1>Gestión de Pedidos</h1>
+            <h1>Gestión de Empleados</h1>
             <p>Bienvenido, <?php echo htmlspecialchars($nombre_usuario); ?></p>
         </header>
 
@@ -194,6 +194,69 @@ try {
                 </div>
 
         </section>
+
+
+<!-- INICIO: Bloque Lector de Códigos (insertado automáticamente) -->
+<section class="widget" id="lector-stock-widget" style="margin-top:1.5em;">
+    <h3>Incrementar Stock con Lector</h3>
+    <p>Escaneá el <strong>ID del producto</strong> con el lector (P-130)</p>
+
+    <input type="text" id="lector_id" placeholder="Escaneá el ID del producto..." autofocus
+           style="padding:10px;font-size:1.05em;width:100%;max-width:420px;border:1px solid #ccc;border-radius:5px;">
+    <div id="lector_msg" style="margin-top:10px;font-weight:bold;"></div>
+</section>
+
+<script>
+// Lector de código: escucha Enter en el input y envía al backend para incrementar stock (+1)
+(function(){
+    const input = document.getElementById('lector_id');
+    const msg = document.getElementById('lector_msg');
+    if (!input) return;
+
+    // Asegurar foco al cargar y al hacer click en la página
+    function focusInput(){ input.focus(); }
+    document.addEventListener('DOMContentLoaded', focusInput);
+    document.addEventListener('click', focusInput);
+
+    input.addEventListener('keypress', async function(e){
+        if (e.key !== 'Enter') return;
+        const id = input.value.trim();
+        if (!id) return;
+        // mostrar procesando
+        msg.style.color = '#333';
+        msg.textContent = 'Procesando...';
+        input.value = '';
+
+        try {
+            const res = await fetch('../acciones/empleados_actioons.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: 'incrementar_stock', id_producto: id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                msg.style.color = 'green';
+                // Mostrar nuevo stock si viene en la respuesta
+                const nuevo = data.nuevo_stock ? (' - Nuevo stock: ' + data.nuevo_stock) : '';
+                msg.textContent = '✅ ' + (data.message || ('Producto ' + id + ' actualizado')) + nuevo;
+            } else {
+                msg.style.color = 'red';
+                msg.textContent = '❌ ' + (data.message || 'No se pudo actualizar');
+            }
+        } catch (err) {
+            console.error(err);
+            msg.style.color = 'red';
+            msg.textContent = '❌ Error de conexión con el servidor.';
+        } finally {
+            // mantener el foco para el siguiente escaneo
+            setTimeout(()=> input.focus(), 200);
+        }
+    });
+})();
+</script>
+<!-- FIN: Bloque Lector de Códigos -->
+
+
         </div> 
 
     <script>

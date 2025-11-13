@@ -277,8 +277,41 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'cambiar_estado_ped
 }
 
 // Acción desconocida
-else {
-    sendJsonResponse(false, 'Método o acción no permitida.', [], 405);
+
+/* --- Acción: Incrementar stock por ID (lector) --- */
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'incrementar_stock') {
+    // aceptar tanto JSON como form-urlencoded
+    $raw = file_get_contents('php://input');
+    $input = json_decode($raw, true);
+    $idProducto = intval($input['id_producto'] ?? ($_POST['id_producto'] ?? 0));
+
+    if ($idProducto <= 0) {
+        sendJsonResponse(false, 'ID de producto inválido.', [], 400);
+    }
+
+    try {
+        // Obtener producto actual (opcional: para devolver nuevo stock)
+        $stmt = $pdo->prepare("SELECT nombre_producto, stock FROM producto WHERE id_producto = ?");
+        $stmt->execute([$idProducto]);
+        $producto = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$producto) {
+            sendJsonResponse(false, 'Producto no encontrado.', [], 404);
+        }
+
+        // Incrementar stock en 1
+        $stmt_upd = $pdo->prepare("UPDATE producto SET stock = stock + 1 WHERE id_producto = ?");
+        $stmt_upd->execute([$idProducto]);
+
+        // Devolver nuevo stock calculado
+        $nuevo_stock = (int)$producto['stock'] + 1;
+
+        sendJsonResponse(true, "Stock incrementado correctamente.", ['nuevo_stock' => $nuevo_stock]);
+    } catch (PDOException $e) {
+        sendJsonResponse(false, 'Error de BD: ' . $e->getMessage(), [], 500);
+    }
 }
+
+
+else { sendJsonResponse(false, 'Método o acción no permitida.', [], 405); }
 
 ?>
