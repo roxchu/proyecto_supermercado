@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-11-2025 a las 05:39:05
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.0.30
+-- Tiempo de generación: 13-11-2025 a las 20:55:43
+-- Versión del servidor: 10.4.28-MariaDB
+-- Versión de PHP: 8.1.17
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -41,7 +41,8 @@ CREATE TABLE `carrito` (
 --
 
 INSERT INTO `carrito` (`id_carrito`, `id_usuario`, `id_producto`, `precio_unitario_momento`, `cantidad`) VALUES
-(3, 3, 2, 8900.00, 1);
+(3, 3, 2, 8900.00, 1),
+(10, 6, 3, 1250.00, 2);
 
 -- --------------------------------------------------------
 
@@ -199,6 +200,31 @@ CREATE TABLE `pedido` (
 INSERT INTO `pedido` (`id_pedido`, `id_usuario`, `id_metodo_pago`, `subtotal`, `costo_envio`, `total_final`, `id_direccion`, `estado`, `fecha_pedido`, `fecha_entrega_estimada`, `fecha_envio`, `fecha_entrega`) VALUES
 (1, 2, 1, 20300.00, 0.00, 20300.00, 2, 'recibido', '2025-11-13 04:35:19', NULL, NULL, NULL);
 
+--
+-- Disparadores `pedido`
+--
+DELIMITER $$
+CREATE TRIGGER `crear_venta_al_recibir_pedido` AFTER UPDATE ON `pedido` FOR EACH ROW BEGIN
+    -- Solo si el estado cambió a 'recibido'
+    IF NEW.estado = 'recibido' AND OLD.estado != 'recibido' THEN
+        INSERT INTO venta (
+            id_usuario,
+            id_direccion,
+            fecha_venta,
+            total_venta,
+            estado
+        ) VALUES (
+            NEW.id_usuario,
+            NEW.id_direccion,
+            NOW(),
+            NEW.total_final,
+            1
+        );
+    END IF;
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -287,9 +313,9 @@ CREATE TABLE `producto` (
 --
 
 INSERT INTO `producto` (`id_producto`, `id_categoria`, `nombre_producto`, `descripcion`, `stock`, `precio_actual`, `precio_anterior`, `es_destacado`, `etiqueta_especial`, `descuento_texto`) VALUES
-(1, 1, 'Manzanas Rojas Premium', 'Manzanas rojas dulces y crujientes, importadas. Ideales para comer solas o en ensaladas.', 148, 2500.00, 3200.00, 1, 'EXCLUSIVO ONLINE', '22% OFF'),
+(1, 1, 'Manzanas Rojas ', 'Manzanas rojas dulces y crujientes, importadas. Ideales para comer solas o en ensaladas.', 148, 2500.00, 3200.00, 1, 'EXCLUSIVO ONLINE', '22% OFF'),
 (2, 2, 'Pollo Entero Fresco', 'Pollo entero de granja, sin menudos. Peso aproximado 2kg. Perfecto para asar.', 35, 8900.00, 10500.00, 1, NULL, '15% OFF'),
-(3, 3, 'Leche Entera La Serenísima 1L', 'Leche entera UAT fortificada con vitaminas A y D. Larga vida.', 187, 1250.00, NULL, 1, 'LARGA VIDA', NULL),
+(3, 3, 'Leche Entera La Serenísima 1L', 'Leche entera UAT fortificada con vitaminas A y D. Larga vida.', 185, 1250.00, NULL, 1, 'LARGA VIDA', NULL),
 (4, 5, 'Coca Cola Sabor Original 2.25L', 'Gaseosa Coca Cola sabor original en botella retornable de 2.25 litros.', 79, 1850.00, 2100.00, 1, NULL, '12% OFF'),
 (5, 6, 'Arroz Integral Gallo Oro 1kg', 'Arroz integral de grano largo tipo 00000. No se pasa ni se pega.', 120, 1680.00, NULL, 1, NULL, NULL),
 (6, 4, 'Pan Francés x6 unidades', 'Pan francés recién horneado del día, crocante por fuera, tierno por dentro.', 60, 2200.00, 2800.00, 0, 'OFERTA DEL DÍA', '21% OFF'),
@@ -324,7 +350,6 @@ CREATE TABLE `producto_imagenes` (
 --
 
 INSERT INTO `producto_imagenes` (`id_imagen`, `id_producto`, `url_imagen`, `orden`) VALUES
-(1, 1, 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400', 1),
 (2, 1, 'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=400', 2),
 (3, 1, 'https://images.unsplash.com/photo-1610399313110-89e4c198e3b0?w=400', 3),
 (4, 2, 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400', 1),
@@ -344,7 +369,8 @@ INSERT INTO `producto_imagenes` (`id_imagen`, `id_producto`, `url_imagen`, `orde
 (18, 15, 'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=400', 1),
 (19, 16, 'https://images.unsplash.com/photo-1452195100486-9cc805987862?w=400', 1),
 (20, 17, 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400', 1),
-(21, 18, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400', 1);
+(21, 18, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400', 1),
+(22, 1, 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400', 1);
 
 -- --------------------------------------------------------
 
@@ -391,7 +417,8 @@ CREATE TABLE `rol` (
 INSERT INTO `rol` (`id_rol`, `nombre_rol`, `rol_descripcion`) VALUES
 (1, 'admin', 'Superusuario'),
 (2, 'empleado', 'Empleado de Supermercado'),
-(3, 'client', 'Cliente Registrado');
+(3, 'client', 'Cliente Registrado'),
+(4, 'owner', 'Dueño del supermercado');
 
 -- --------------------------------------------------------
 
@@ -413,11 +440,11 @@ CREATE TABLE `usuario` (
 --
 
 INSERT INTO `usuario` (`id_usuario`, `dni`, `id_rol`, `nombre_usuario`, `correo`, `contrasena`) VALUES
-(1, '49.553.570', 3, 'Cliente 49.553.570', '49.553.570@temp.com', 'sin_pass_hashed'),
+(1, '49.553.570', 1, 'Cliente 49.553.570', '49.553.570@temp.com', 'sin_pass_hashed'),
 (2, '11111111', 1, 'Admin Supremo', 'admin@super.com', 'mi_pass_segura'),
 (3, '22222222', 2, 'Empleado General', 'empleado@super.com', 'otra_pass_segura'),
 (5, '12763516', 3, 'Cliente 12763516', '12763516@temp.com', 'sin_pass_hashed'),
-(6, '99999999', 3, 'Usuario De Prueba', 'prueba@test.com', ''),
+(6, '99999999', 4, 'Usuario De Prueba', 'prueba@test.com', ''),
 (7, '098765', 3, 'ahshfhahs', 'asftadt@gmail.com', ''),
 (8, '1213421', 3, 'asfanhgdha', 'hagsfdah@asghagd', ''),
 (10, '4321', 3, '4321', '4321@gmail.com', '');
@@ -586,7 +613,7 @@ ALTER TABLE `venta`
 -- AUTO_INCREMENT de la tabla `carrito`
 --
 ALTER TABLE `carrito`
-  MODIFY `id_carrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_carrito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `categoria`
@@ -652,7 +679,7 @@ ALTER TABLE `producto`
 -- AUTO_INCREMENT de la tabla `producto_imagenes`
 --
 ALTER TABLE `producto_imagenes`
-  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT de la tabla `producto_opiniones`
@@ -664,7 +691,7 @@ ALTER TABLE `producto_opiniones`
 -- AUTO_INCREMENT de la tabla `rol`
 --
 ALTER TABLE `rol`
-  MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `usuario`
@@ -683,44 +710,91 @@ ALTER TABLE `venta`
 --
 
 --
+-- Filtros para la tabla `carrito`
+--
+ALTER TABLE `carrito`
+  ADD CONSTRAINT `FK_Carrito_Producto` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Carrito_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `detalle_carrito`
+--
+ALTER TABLE `detalle_carrito`
+  ADD CONSTRAINT `FK_DetalleCarrito_Carrito` FOREIGN KEY (`id_carrito`) REFERENCES `carrito` (`id_carrito`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_DetalleCarrito_Direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `detalle_venta`
+--
+ALTER TABLE `detalle_venta`
+  ADD CONSTRAINT `FK_DetalleVenta_Producto` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_DetalleVenta_Venta` FOREIGN KEY (`id_venta`) REFERENCES `venta` (`id_venta`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `direcciones`
+--
+ALTER TABLE `direcciones`
+  ADD CONSTRAINT `FK_Direcciones_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `pedido`
+--
+ALTER TABLE `pedido`
+  ADD CONSTRAINT `FK_Pedido_Direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Pedido_MetodoPago` FOREIGN KEY (`id_metodo_pago`) REFERENCES `metodo_pago` (`id_metodo`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Pedido_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `pedido_detalle`
+--
+ALTER TABLE `pedido_detalle`
+  ADD CONSTRAINT `FK_DetallePedido_Pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedido` (`id_pedido`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_DetallePedido_Producto` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+--
 -- Filtros para la tabla `pedido_estado_log`
 --
 ALTER TABLE `pedido_estado_log`
   ADD CONSTRAINT `FK_Log_Pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedido` (`id_pedido`) ON DELETE CASCADE;
 
--- ============================================================
--- TRIGGERS
--- ============================================================
+--
+-- Filtros para la tabla `pedido_historial`
+--
+ALTER TABLE `pedido_historial`
+  ADD CONSTRAINT `FK_Historial_Pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedido` (`id_pedido`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Trigger: Crear venta cuando pedido se marca como recibido
+-- Filtros para la tabla `producto`
 --
-DELIMITER $$
+ALTER TABLE `producto`
+  ADD CONSTRAINT `FK_Producto_Categoria` FOREIGN KEY (`id_categoria`) REFERENCES `categoria` (`id_categoria`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
-CREATE TRIGGER crear_venta_al_recibir_pedido
-AFTER UPDATE ON pedido
-FOR EACH ROW
-BEGIN
-    -- Solo si el estado cambió a 'recibido'
-    IF NEW.estado = 'recibido' AND OLD.estado != 'recibido' THEN
-        INSERT INTO venta (
-            id_usuario,
-            id_direccion,
-            fecha_venta,
-            total_venta,
-            estado
-        ) VALUES (
-            NEW.id_usuario,
-            NEW.id_direccion,
-            NOW(),
-            NEW.total_final,
-            1
-        );
-    END IF;
-END$$
+--
+-- Filtros para la tabla `producto_imagenes`
+--
+ALTER TABLE `producto_imagenes`
+  ADD CONSTRAINT `FK_ProductoImagen_Producto` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-DELIMITER ;
+--
+-- Filtros para la tabla `producto_opiniones`
+--
+ALTER TABLE `producto_opiniones`
+  ADD CONSTRAINT `FK_Opinion_Producto` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Opinion_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
 
+--
+-- Filtros para la tabla `usuario`
+--
+ALTER TABLE `usuario`
+  ADD CONSTRAINT `FK_Usuario_Rol` FOREIGN KEY (`id_rol`) REFERENCES `rol` (`id_rol`) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `venta`
+--
+ALTER TABLE `venta`
+  ADD CONSTRAINT `FK_Venta_Direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Venta_Empleado` FOREIGN KEY (`id_empleado`) REFERENCES `empleado` (`id_empleado`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Venta_Usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE NO ACTION ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
