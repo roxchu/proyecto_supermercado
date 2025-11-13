@@ -623,20 +623,43 @@ include 'header.php';
 document.addEventListener('DOMContentLoaded', function() {
     const btnAgregar = document.getElementById('btn-agregar-carrito');
     const cantidadSelect = document.getElementById('cantidad');
+    
     if (btnAgregar && cantidadSelect) {
-        btnAgregar.addEventListener('click', function() {
+        btnAgregar.addEventListener('click', async function() {
             const cantidad = parseInt(cantidadSelect.value, 10) || 1;
             const productoDiv = btnAgregar.closest('.producto');
             const productoId = productoDiv ? productoDiv.getAttribute('data-id') : null;
-            if (!productoId) return;
-            const formData = new FormData();
-            formData.append('producto_id', productoId);
-            formData.append('cantidad', cantidad);
-            fetch('carrito/agregar_carrito.php', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            });
+            
+            if (!productoId) {
+                alert('❌ Error: No se pudo identificar el producto');
+                return;
+            }
+            
+            try {
+                const response = await fetch('carrito/agregar_carrito.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_producto: parseInt(productoId, 10),
+                        cantidad: cantidad
+                    }),
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    cantidadSelect.value = '1'; // Reiniciar selector
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al agregar al carrito');
+            }
         });
     }
 });

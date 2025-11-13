@@ -354,8 +354,8 @@ $id_usuario_sesion = isset($_SESSION['user_id']) ? htmlspecialchars($_SESSION['u
 
         <div class="form-row">
           <div>
-            <label for="Ciudad">Ciudad</label>
-            <input type="text" id="Ciudad" name="Ciudad" placeholder="Ej: Quilmes" required>
+            <label for="ciudad">Ciudad</label>
+            <input type="text" id="ciudad" name="ciudad" placeholder="Ej: Quilmes" required>
           </div>
           <div>
             <label for="Provincia">Provincia</label>

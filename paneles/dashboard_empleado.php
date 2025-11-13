@@ -167,44 +167,18 @@ try {
         </header>
 
         <section class="widget pedidos-pendientes">
-            <h3>Ventas Pendientes a Procesar</h3>
+            <h3><i class="fas fa-boxes"></i> Pedidos en Proceso</h3>
             
-            <?php if (isset($error_db)): ?>
-                <p class="error"><?php echo htmlspecialchars($error_db); ?></p>
-            <?php elseif (empty($ventas_pendientes)): ?>
-                <p class="success-message">¡Excelente! No hay ventas pendientes en este momento. ✅</p>
-            <?php else: ?>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID Venta</th>
-                                <th>Cliente</th>
-                                <th>Fecha</th>
-                                <th>Monto</th>
-                                <th>Estado</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($ventas_pendientes as $venta): ?>
-                            <tr id="venta-<?php echo htmlspecialchars($venta['id_venta']); ?>">
-                                <td><?php echo htmlspecialchars($venta['id_venta']); ?></td>
-                                <td><?php echo htmlspecialchars($venta['nombre_cliente']); ?></td>
-                                <td><?php echo htmlspecialchars(date('d/m/Y', strtotime($venta['fecha_venta']))); ?></td>
-                                <td>$<?php echo htmlspecialchars(number_format($venta['total_venta'], 2, ',', '.')); ?></td>
-                                <td><span class="status-tag status-<?php echo strtolower(htmlspecialchars($venta['estado'])); ?>"><?php echo htmlspecialchars($venta['Estado']); ?></span></td>
-                                <td>
-                                    <button onclick="procesarVenta(<?php echo (int)$venta['id_venta']; ?>, 'Preparando')" class="btn-primary">
-                                        Iniciar Preparación
-                                    </button>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
+            <button id="btn-cargar-pedidos" class="btn-primary">Cargar Pedidos</button>
+            
+            <div id="pedidos-loading" style="display:none; text-align: center; padding: 1rem;">
+                <i class="fas fa-spinner fa-spin"></i> Cargando pedidos...
+            </div>
+            <div id="pedidos-message" class="message"></div>
+            
+            <div id="pedidos-list-container" class="table-responsive">
+                <p style="text-align: center; color: #999;">Haz clic en "Cargar Pedidos" para ver la lista</p>
+            </div>
         </section>
 
         <section class="widget gestion-stock" id="gestion-stock">
@@ -457,6 +431,205 @@ try {
         }
 
     });
+
+        // === GESTIÓN DE PEDIDOS (NUEVO) ===
+    const btnCargarPedidos = document.getElementById('btn-cargar-pedidos');
+    const pedidosListContainer = document.getElementById('pedidos-list-container');
+    const pedidosLoading = document.getElementById('pedidos-loading');
+    const pedidosMessage = document.getElementById('pedidos-message');
+
+    btnCargarPedidos.addEventListener('click', cargarPedidos);
+
+    async function cargarPedidos() {
+        mostrarCargandoPedidos(true);
+        mostrarMensajePedidos('', 'success');
+        
+        try {
+            const response = await fetch('empleados_actioons.php?action=get_pedidos');
+            
+            if (!response.ok) {
+                const responseText = await response.text();
+                let errorMessage = `HTTP Error ${response.status}`;
+                
+                if (responseText.startsWith("<!DOCTYPE")) {
+                    errorMessage = "Sesión expirada o sin permisos.";
+                } else {
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = "Error desconocido.";
+                    }
+                }
+                throw new Error(errorMessage);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                mostrarTablaPedidos(data.pedidos);
+            } else {
+                mostrarMensajePedidos(data.message, 'error');
+            }
+
+        } catch (error) {
+            console.error('Error al cargar pedidos:', error);
+            mostrarMensajePedidos('Error de conexión: ' + error.message, 'error');
+        } finally {
+            mostrarCargandoPedidos(false);
+        }
+    }
+
+    function mostrarTablaPedidos(pedidos) {
+        pedidosListContainer.innerHTML = '';
+
+        if (pedidos.length === 0) {
+            pedidosListContainer.innerHTML = '<p class="success-message">¡Excelente! No hay pedidos pendientes. ✅</p>';
+            return;
+        }
+
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Pedido</th>
+                        <th>Cliente</th>
+                        <th>Dirección</th>
+                        <th>Fecha</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Estado Actual</th>
+                        <th>Cambiar Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        const estadosDisponibles = {
+            'pendiente': 'En Preparación',
+            'en_preparacion': 'Enviado',
+            'enviado': 'Recibido',
+            'recibido': 'Finalizado'
+        };
+
+        for (const pedido of pedidos) {
+            const tieneProximoEstado = pedido.estado !== 'recibido';
+
+            html += `
+                <tr data-id="${pedido.id_pedido}">
+                    <td><strong>#${pedido.id_pedido}</strong></td>
+                    <td>${pedido.nombre_usuario}</td>
+                    <td>${pedido.nombre_direccion} - ${pedido.calle_numero}</td>
+                    <td>${new Date(pedido.fecha_pedido).toLocaleDateString('es-AR')}</td>
+                    <td>${pedido.cantidad_items}</td>
+                    <td>$${parseFloat(pedido.total_final).toFixed(2)}</td>
+                    <td>
+                        <span class="status-tag status-${pedido.estado}">
+                            ${pedido.estado.toUpperCase().replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td>
+                        ${tieneProximoEstado ? `
+                            <button class="btn-secondary btn-cambiar-estado" data-pedido="${pedido.id_pedido}" data-estado-actual="${pedido.estado}">
+                                → ${estadosDisponibles[pedido.estado]}
+                            </button>
+                        ` : `
+                            <span style="color: #999;">Completado</span>
+                        `}
+                    </td>
+                </tr>
+            `;
+        }
+
+        html += `</tbody></table>`;
+        pedidosListContainer.innerHTML = html;
+
+        // Agregar event listeners a los botones
+        document.querySelectorAll('.btn-cambiar-estado').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const pedidoId = this.dataset.pedido;
+                const estadoActual = this.dataset.estadoActual;
+                cambiarEstadoPedido(pedidoId, estadoActual, this);
+            });
+        });
+    }
+
+    async function cambiarEstadoPedido(pedidoId, estadoActual, boton) {
+        const transiciones = {
+            'pendiente': 'en_preparacion',
+            'en_preparacion': 'enviado',
+            'enviado': 'recibido'
+        };
+
+        const nuevoEstado = transiciones[estadoActual];
+        const textoEstado = {
+            'en_preparacion': 'En Preparación',
+            'enviado': 'Enviado',
+            'recibido': 'Recibido'
+        };
+
+        const confirmar = confirm(`¿Cambiar el estado del pedido a "${textoEstado[nuevoEstado]}"?`);
+        if (!confirmar) return;
+
+        boton.disabled = true;
+        boton.textContent = '...';
+
+        try {
+            const response = await fetch('empleados_actioons.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'cambiar_estado_pedido',
+                    pedido_id: pedidoId,
+                    nuevo_estado: nuevoEstado
+                })
+            });
+
+            if (!response.ok) {
+                const responseText = await response.text();
+                throw new Error(responseText.startsWith("<!DOCTYPE") ? "Sesión expirada" : "Error del servidor");
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                mostrarMensajePedidos(
+                    `✓ Estado actualizado a ${textoEstado[nuevoEstado]}` + 
+                    (data.convertido_a_venta ? ' - Convertido a venta ✓' : ''),
+                    'success'
+                );
+                
+                // Recargar tabla
+                setTimeout(() => cargarPedidos(), 1500);
+            } else {
+                mostrarMensajePedidos('Error: ' + data.message, 'error');
+                boton.disabled = false;
+                boton.textContent = '→ ' + textoEstado[nuevoEstado];
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarMensajePedidos('Error de conexión: ' + error.message, 'error');
+            boton.disabled = false;
+            boton.textContent = '→ ' + textoEstado[nuevoEstado];
+        }
+    }
+
+    function mostrarCargandoPedidos(mostrar) {
+        pedidosLoading.style.display = mostrar ? 'block' : 'none';
+    }
+
+    function mostrarMensajePedidos(mensaje, tipo = 'success') {
+        pedidosMessage.textContent = mensaje;
+        pedidosMessage.className = `message ${tipo}`;
+        pedidosMessage.style.display = mensaje ? 'block' : 'none';
+
+        setTimeout(() => {
+            pedidosMessage.style.display = 'none';
+        }, 5000);
+    }
     </script>
     </body>
 </html>
