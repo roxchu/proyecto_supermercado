@@ -7,43 +7,19 @@ declare(strict_types=1);
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-// Verificar permisos de empleado/administrador
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['rol'])) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Debe iniciar sesión como empleado o administrador'
-    ]);
-    exit;
-}
+require_once __DIR__ . '/../carrito/db.php';
+require_once __DIR__ . '/../login/verificar_rol.php';
 
-$rolesPermitidos = ['empleado', 'administrador'];
-if (!in_array($_SESSION['rol'], $rolesPermitidos)) {
+// Verificar permisos
+try {
+    verificar_rol(['admin', 'empleado']);
+} catch (Exception $e) {
     http_response_code(403);
-    echo json_encode([
-        'success' => false,
-        'message' => 'No tiene permisos para realizar esta acción'
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
     exit;
 }
-
-// Configuración de la base de datos
-$host = 'localhost';
-$db   = 'supermercado';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE               => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE    => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES      => false,
-];
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-    
     // Obtener datos del request
     $input = json_decode(file_get_contents('php://input'), true);
     
@@ -63,36 +39,37 @@ try {
             }
             
             // Verificar que el producto existe y obtener stock actual
-            $stmt = $pdo->prepare("SELECT Nombre_Producto, Stock FROM producto WHERE Id_Producto = ?");
-            $stmt->execute([$idProducto]);
-            $producto = $stmt->fetch();
+            $stmt = $pdo->prepare("SELECT nombre_producto, stock FROM producto WHERE id_producto = :id");
+            $stmt->execute([':id' => $idProducto]);
+            $producto = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$producto) {
                 throw new Exception('Producto no encontrado');
             }
             
-            $stockAnterior = (int)$producto['Stock'];
+            $stockAnterior = (int)$producto['stock'];
             
             // Actualizar stock
-            $stmt = $pdo->prepare("UPDATE producto SET Stock = ? WHERE Id_Producto = ?");
-            $stmt->execute([$nuevaCantidad, $idProducto]);
+            $stmt = $pdo->prepare("UPDATE producto SET stock = :stock WHERE id_producto = :id");
+            $stmt->execute([
+                ':stock' => $nuevaCantidad,
+                ':id' => $idProducto
+            ]);
             
             // Log de la acción
             error_log(sprintf(
-                "[RENOVACION STOCK] Usuario: %d (%s) - Producto ID: %d (%s) - Stock anterior: %d - Stock nuevo: %d - Fecha: %s",
-                $_SESSION['user_id'],
-                $_SESSION['rol'],
+                "[RENOVACION STOCK] Usuario: %d - Producto ID: %d (%s) - Stock anterior: %d - Stock nuevo: %d",
+                $_SESSION['id_usuario'] ?? 'DESCONOCIDO',
                 $idProducto,
-                $producto['Nombre_Producto'],
+                $producto['nombre_producto'],
                 $stockAnterior,
-                $nuevaCantidad,
-                date('Y-m-d H:i:s')
+                $nuevaCantidad
             ));
             
             echo json_encode([
                 'success' => true,
-                'message' => "Stock actualizado para {$producto['Nombre_Producto']}",
-                'producto' => $producto['Nombre_Producto'],
+                'message' => "Stock actualizado para {$producto['nombre_producto']}",
+                'producto' => $producto['nombre_producto'],
                 'stock_anterior' => $stockAnterior,
                 'stock_nuevo' => $nuevaCantidad,
                 'fecha' => date('Y-m-d H:i:s')
@@ -100,7 +77,6 @@ try {
             break;
             
         case 'renovar_multiples':
-            // Renovar múltiples productos a la vez
             $productos = $input['productos'] ?? [];
             
             if (empty($productos) || !is_array($productos)) {
@@ -116,38 +92,38 @@ try {
                     $nuevaCantidad = (int)($item['cantidad'] ?? 0);
                     
                     if ($idProducto <= 0 || $nuevaCantidad < 0) {
-                        continue; // Saltar productos inválidos
+                        continue;
                     }
                     
                     // Obtener información del producto
-                    $stmt = $pdo->prepare("SELECT Nombre_Producto, Stock FROM producto WHERE Id_Producto = ?");
-                    $stmt->execute([$idProducto]);
-                    $producto = $stmt->fetch();
+                    $stmt = $pdo->prepare("SELECT nombre_producto, stock FROM producto WHERE id_producto = :id");
+                    $stmt->execute([':id' => $idProducto]);
+                    $producto = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     if (!$producto) {
-                        continue; // Saltar productos no encontrados
+                        continue;
                     }
                     
-                    $stockAnterior = (int)$producto['Stock'];
+                    $stockAnterior = (int)$producto['stock'];
                     
                     // Actualizar stock
-                    $stmt = $pdo->prepare("UPDATE producto SET Stock = ? WHERE Id_Producto = ?");
-                    $stmt->execute([$nuevaCantidad, $idProducto]);
+                    $stmt = $pdo->prepare("UPDATE producto SET stock = :stock WHERE id_producto = :id");
+                    $stmt->execute([
+                        ':stock' => $nuevaCantidad,
+                        ':id' => $idProducto
+                    ]);
                     
                     $productosActualizados[] = [
                         'id' => $idProducto,
-                        'nombre' => $producto['Nombre_Producto'],
+                        'nombre' => $producto['nombre_producto'],
                         'stock_anterior' => $stockAnterior,
                         'stock_nuevo' => $nuevaCantidad
                     ];
                     
-                    // Log individual
                     error_log(sprintf(
-                        "[RENOVACION MULTIPLE] Usuario: %d (%s) - Producto ID: %d (%s) - Stock: %d -> %d",
-                        $_SESSION['user_id'],
-                        $_SESSION['rol'],
+                        "[RENOVACION MULTIPLE] Producto ID: %d (%s) - Stock: %d -> %d",
                         $idProducto,
-                        $producto['Nombre_Producto'],
+                        $producto['nombre_producto'],
                         $stockAnterior,
                         $nuevaCantidad
                     ));

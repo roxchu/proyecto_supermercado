@@ -293,11 +293,11 @@ try {
 
             for (const prod of productos) {
                 html += `
-                    <tr data-id="${prod.Id_Producto}">
-                        <td>${prod.Nombre_Producto} (${prod.Id_Producto})</td>
+                    <tr data-id="${prod.id_producto}">
+                        <td>${prod.nombre_producto} (${prod.id_producto})</td>
                         <td>
-                            <span class="stock-actual agotado" id="stock-actual-${prod.Id_Producto}">
-                                ${prod.Stock}
+                            <span class="stock-actual agotado" id="stock-actual-${prod.id_producto}">
+                                ${prod.stock}
                             </span>
                         </td>
                         <td>
