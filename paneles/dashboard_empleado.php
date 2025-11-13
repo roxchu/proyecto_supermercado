@@ -183,7 +183,7 @@ try {
 
         <section class="widget gestion-stock" id="gestion-stock">
             <h3>Renovar Stock - Productos Agotados</h3>
-            <p>Aquí puedes renovar el stock de productos que están completamente agotados (stock = 0).</p>
+            <p>Aquí puedes renovar el stock de productos que están agotados (stock menor a 20).</p>
 
             <button id="btn-cargar-stock" class="btn-primary">Cargar Productos Sin Stock</button>
             
@@ -228,7 +228,7 @@ try {
         input.value = '';
 
         try {
-            const res = await fetch('../acciones/empleados_actioons.php', {
+            const res = await fetch('empleados_actioons.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ action: 'incrementar_stock', id_producto: id })
