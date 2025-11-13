@@ -6,12 +6,18 @@ require_once __DIR__ . '/../login/control_acceso.php';
 require_once __DIR__ . '/../carrito/db.php';
 
 
-// SOLO permite admin
+// SOLO permite admin (o owner, gracias a control_acceso)
 verificar_rol('admin');
+
+// --- MODIFICACIÓN: Identificar si el usuario es OWNER ---
+// Asumimos que el login guarda 'rol' (nombre) y 'id_usuario'
+$CURRENT_USER_ROL_NAME = strtolower($_SESSION['rol'] ?? '');
+$CURRENT_USER_ID = $_SESSION['id_usuario'] ?? 0; 
+$IS_OWNER = ($CURRENT_USER_ROL_NAME === 'owner');
+// --- FIN MODIFICACIÓN ---
 
 try {
     // --- 1. LEER DATOS PARA EL DASHBOARD (MÉTRICAS) ---
-    // NOTA: Se asume que las tablas 'usuario', 'producto', 'rol' y 'categoria' están en MINÚSCULAS
     $stmt_user_count = $pdo->query("SELECT COUNT(*) FROM usuario");
     $user_count = $stmt_user_count->fetchColumn();
 
@@ -87,7 +93,11 @@ try {
         <ul>
             <li><a href="#dashboard" class="nav-link active" data-target="section-dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
             <li><a href="#usuarios" class="nav-link" data-target="section-usuarios"><i class="fas fa-users"></i> Gestionar Usuarios</a></li>
+            
+            <?php if ($IS_OWNER): ?>
             <li><a href="#roles" class="nav-link" data-target="section-roles"><i class="fas fa-user-tag"></i> Gestionar Roles</a></li>
+            <?php endif; ?>
+            
             <li><a href="#productos" class="nav-link" data-target="section-productos"><i class="fas fa-boxes"></i> Gestionar Productos</a></li>
             <li><a href="../index.html"><i class="fas fa-store"></i> Volver a la Tienda</a></li>
         </ul>
@@ -141,6 +151,39 @@ try {
                     </thead>
                     <tbody>
                         <?php foreach ($usuarios as $usuario): ?>
+                        
+                        <?php
+                            $target_rol_lower = strtolower($usuario['nombre_rol']);
+                            $target_id = $usuario['id_usuario'];
+                            
+                            $can_edit_role = false;
+                            $can_delete = false;
+
+                            if ($IS_OWNER) {
+                                // Owner puede editar a todos
+                                $can_edit_role = true; 
+                                if ($CURRENT_USER_ID != $target_id) {
+                                    // Owner puede borrar a todos menos a sí mismo
+                                    $can_delete = true; 
+                                }
+                            } elseif ($CURRENT_USER_ID != $target_id) { 
+                                // Si SOY ADMIN (no owner) y NO soy yo mismo
+                                
+                                if ($target_rol_lower !== 'owner') {
+                                    // Admin puede editar a OTROS Admins (para degradar)
+                                    // y a Empleados/Clientes.
+                                    $can_edit_role = true;
+                                }
+
+                                if ($target_rol_lower !== 'owner' && $target_rol_lower !== 'admin') {
+                                    // Admin solo puede borrar Empleados/Clientes
+                                    $can_delete = true;
+                                }
+                            }
+                            // Si SOY ADMIN y el target es 'owner', $can_edit_role y $can_delete son false.
+                            // Si SOY ADMIN y el target soy YO, $can_edit_role y $can_delete son false.
+                        ?>
+                        
                         <tr>
                             <td><?php echo htmlspecialchars($usuario['id_usuario']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['DNI']); ?></td>
@@ -152,13 +195,17 @@ try {
                                         data-modal="modal-editar-rol"
                                         data-id="<?php echo $usuario['id_usuario']; ?>"
                                         data-nombre="<?php echo htmlspecialchars($usuario['nombre_usuario']); ?>"
-                                        data-rol-id="<?php echo $usuario['id_rol']; ?>">
+                                        data-rol-id="<?php echo $usuario['id_rol']; ?>"
+                                        <?php if (!$can_edit_role) echo 'disabled'; /* Deshabilitar botón */ ?>
+                                        >
                                     <i class="fas fa-user-tag"></i> Rol
                                 </button>
                                 <button class="btn btn-delete btn-delete-item"
                                         data-id="<?php echo $usuario['id_usuario']; ?>"
                                         data-tipo="usuario"
-                                        data-nombre="<?php echo htmlspecialchars($usuario['nombre_usuario']); ?>">
+                                        data-nombre="<?php echo htmlspecialchars($usuario['nombre_usuario']); ?>"
+                                        <?php if (!$can_delete) echo 'disabled'; /* Deshabilitar botón */ ?>
+                                        >
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -169,6 +216,7 @@ try {
             </div>
         </section>
 
+        <?php if ($IS_OWNER): ?>
         <section id="section-roles" class="content-section">
             <h2>Gestionar Roles</h2>
             <div class="table-container">
@@ -199,6 +247,7 @@ try {
                 </table>
             </div>
         </section>
+        <?php endif; ?>
 
         <section id="section-productos" class="content-section">
             <h2>Gestionar Productos</h2>
@@ -260,7 +309,15 @@ try {
                 
                 <label for="user-role">Nuevo Rol:</label>
                 <select id="user-role" name="id_rol" class="full-width-input">
-                    <?php foreach ($roles as $rol): ?>
+                    
+                    <?php foreach ($roles as $rol): 
+                        $rol_nombre_lower = strtolower($rol['nombre_rol']);
+                        
+                        // Si NO soy Owner, solo muestro roles que NO sean 'owner' o 'admin'
+                        if (!$IS_OWNER && ($rol_nombre_lower === 'owner' || $rol_nombre_lower === 'admin')) {
+                            continue; // Admin no puede ASIGNAR este rol
+                        }
+                    ?>
                         <option value="<?php echo $rol['id_rol']; ?>">
                             <?php echo htmlspecialchars($rol['nombre_rol']); ?>
                         </option>
@@ -275,6 +332,7 @@ try {
         </div>
     </div>
 
+    <?php if ($IS_OWNER): ?>
     <div id="modal-rol" class="modal-bg" style="display: none;">
         <div class="modal-content">
             <h3 id="modal-rol-titulo">Agregar Rol</h3>
@@ -292,6 +350,7 @@ try {
             </form>
         </div>
     </div>
+    <?php endif; ?>
 
     <div id="modal-producto" class="modal-bg" style="display: none;">
         <div class="modal-content large-modal">
@@ -368,6 +427,9 @@ try {
         // Abrir Modales
         modalButtons.forEach(button => {
             button.addEventListener('click', function() {
+                // No abrir modal si el botón está deshabilitado
+                if (this.disabled) return;
+                
                 const modalId = this.getAttribute('data-modal');
                 const modal = document.getElementById(modalId);
                 
@@ -506,6 +568,9 @@ try {
         // 4. Manejador para TODOS los botones de ELIMINAR (Solo Usuario y Producto)
         document.querySelectorAll('.btn-delete-item').forEach(button => {
             button.addEventListener('click', async function() {
+                // No hacer nada si está deshabilitado
+                if (this.disabled) return;
+                
                 const id = this.getAttribute('data-id');
                 const tipo = this.getAttribute('data-tipo');
                 const nombre = this.getAttribute('data-nombre');
