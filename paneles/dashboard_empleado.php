@@ -606,14 +606,14 @@ try {
             } else {
                 mostrarMensajePedidos('Error: ' + data.message, 'error');
                 boton.disabled = false;
-                cargarPedidos();
+                boton.textContent = '→ ' + textoEstado[nuevoEstado];
             }
 
         } catch (error) {
             console.error('Error:', error);
             mostrarMensajePedidos('Error de conexión: ' + error.message, 'error');
             boton.disabled = false;
-            cargarPedidos();
+            boton.textContent = '→ ' + textoEstado[nuevoEstado];
         }
     }
 
