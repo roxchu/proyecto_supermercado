@@ -360,8 +360,8 @@ try {
                     })
                 });
                 
-                console.log('📨 Response status:', response.status);
-                console.log('📨 Response headers:', response.headers.get('content-type'));
+                console.log(' Response status:', response.status);
+                console.log(' Response headers:', response.headers.get('content-type'));
                 
                 // Manejo de error POST similar al GET
                 if (!response.ok) {
@@ -506,7 +506,7 @@ try {
         `;
 
         const estadosDisponibles = {
-            'pendiente': 'En Preparación',
+            'pendiente': 'Preparandose',
             'en_preparacion': 'Enviado',
             'enviado': 'Recibido',
             'recibido': 'Finalizado'
@@ -563,7 +563,7 @@ try {
 
         const nuevoEstado = transiciones[estadoActual];
         const textoEstado = {
-            'en_preparacion': 'En Preparación',
+            'en_preparacion': 'Preparandose',
             'enviado': 'Enviado',
             'recibido': 'Recibido'
         };
@@ -606,14 +606,14 @@ try {
             } else {
                 mostrarMensajePedidos('Error: ' + data.message, 'error');
                 boton.disabled = false;
-                boton.textContent = '→ ' + textoEstado[nuevoEstado];
+                cargarPedidos();
             }
 
         } catch (error) {
             console.error('Error:', error);
             mostrarMensajePedidos('Error de conexión: ' + error.message, 'error');
             boton.disabled = false;
-            boton.textContent = '→ ' + textoEstado[nuevoEstado];
+            cargarPedidos();
         }
     }
 
