@@ -4,7 +4,7 @@ require_once '../carrito/db.php';
 
 header('Content-Type: application/json');
 
-// Verificar que el usuario esté logueado
+// Verificar usuario logueado
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Usuario no autenticado']);
     exit;
@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id'])) {
 $usuario_id = $_SESSION['user_id'];
 
 try {
-    // Verificar que hay productos en el carrito
+    // 1. Verificar que hay productos en el carrito
     $stmt = $pdo->prepare("SELECT * FROM carrito WHERE id_usuario = ?");
     $stmt->execute([$usuario_id]);
     $productos_carrito = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -23,111 +23,107 @@ try {
         exit;
     }
     
-    // Calcular total del pedido
-    $total_pedido = 0;
+    // 2. Calcular total
+    $total_venta = 0;
     foreach ($productos_carrito as $item) {
-        $stmt_precio = $pdo->prepare("SELECT precio_actual FROM producto WHERE Id_Producto = ?");
-        $stmt_precio->execute([$item['Id_Producto']]);
-        $producto = $stmt_precio->fetch(PDO::FETCH_ASSOC);
-        $total_pedido += $producto['precio_actual'] * $item['Cantidad'];
+        $total_venta += $item['precio_unitario_momento'] * $item['cantidad'];
     }
     
-    // Iniciar transacción
+    // 3. Iniciar transacción
     $pdo->beginTransaction();
     
-    // 1. Guardar método de pago
-    $tipo_metodo = $_POST['tipo_metodo'] ?? '';
-    $nombre_titular = $_POST['nombre_titular'] ?? null;
-    $numero_tarjeta = $_POST['numero_tarjeta'] ?? null;
-    $vencimiento = $_POST['vencimiento'] ?? null;
+    // 4. ✅ ARREGLADO: Usar los nombres CORRECTOS de los campos del formulario
+    $ciudad = $_POST['Ciudad'] ?? $_POST['ciudad'] ?? '';  // Intenta ambos
+    $provincia = $_POST['Provincia'] ?? $_POST['provincia'] ?? '';
+    $codigo_postal = $_POST['Codigo_postal'] ?? $_POST['codigo_postal'] ?? '';
+    $calle_numero = $_POST['calle_numero'] ?? '';
+    $piso_depto = $_POST['piso_depto'] ?? null;
+    $nombre_direccion = $_POST['nombre_direccion'] ?? 'Principal';
+    $referencia = $_POST['Referencia'] ?? $_POST['referencia'] ?? null;
     
-    // Si es tarjeta, encriptar los últimos 4 dígitos para mostrar
-    $numero_enmascarado = null;
-    if ($numero_tarjeta) {
-        $numero_enmascarado = '**** **** **** ' . substr($numero_tarjeta, -4);
+    // Validar que los campos obligatorios no estén vacíos
+    if (empty($ciudad) || empty($provincia) || empty($codigo_postal) || empty($calle_numero)) {
+        $pdo->rollBack();
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Faltan datos de dirección. Por favor completa todos los campos.'
+        ]);
+        exit;
     }
     
+    // Crear dirección completa
+    $direccion_completa = $calle_numero . 
+                         ($piso_depto ? ', ' . $piso_depto : '') . 
+                         ', ' . $ciudad . 
+                         ', ' . $provincia . 
+                         ' (' . $codigo_postal . ')';
+    
+    // Guardar dirección
     $stmt = $pdo->prepare("
-        INSERT INTO metodo_pago (usuario_id, tipo, nombre_titular, numero_enmascarado, vencimiento, activo) 
-        VALUES (?, ?, ?, ?, ?, 1)
+        INSERT INTO direcciones (id_usuario, nombre_direccion, calle_numero, piso_depto, ciudad, provincia, codigo_postal, referencia) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
     $stmt->execute([
-        $usuario_id, 
-        $tipo_metodo, 
-        $nombre_titular, 
-        $numero_enmascarado, 
-        $vencimiento
+        $usuario_id,
+        $nombre_direccion,
+        $calle_numero,
+        $piso_depto,
+        $ciudad,
+        $provincia,
+        $codigo_postal,
+        $referencia
     ]);
     
-    $metodo_pago_id = $pdo->lastInsertId();
+    $direccion_id = $pdo->lastInsertId();
     
-    // 2. Crear el pedido
-    $direccion_completa = ($_POST['calle_numero'] ?? '') . 
-                         ($_POST['piso_depto'] ? ', ' . $_POST['piso_depto'] : '') . 
-                         ', ' . ($_POST['localidad'] ?? '') . 
-                         ', ' . ($_POST['provincia'] ?? '') . 
-                         ' (' . ($_POST['codigo_postal'] ?? '') . ')';
-    
+    // 5. CREAR LA VENTA
     $stmt = $pdo->prepare("
-        INSERT INTO pedido (usuario_id, metodo_pago_id, total, direccion_envio, nombre_direccion, estado, fecha_pedido) 
-        VALUES (?, ?, ?, ?, ?, 'pendiente', NOW())
+        INSERT INTO venta (id_usuario, id_direccion, fecha_venta, total_venta, estado) 
+        VALUES (?, ?, NOW(), ?, 1)
     ");
-    $stmt->execute([
-        $usuario_id, 
-        $metodo_pago_id, 
-        $total_pedido, 
-        $direccion_completa,
-        $_POST['nombre_direccion'] ?? 'Principal'
-    ]);
+    $stmt->execute([$usuario_id, $direccion_id, $total_venta]);
     
-    $pedido_id = $pdo->lastInsertId();
+    $venta_id = $pdo->lastInsertId();
     
-    // 3. Guardar detalles del pedido
+    // 6. Guardar detalles de la venta
     foreach ($productos_carrito as $item) {
-        // Obtener precio actual del producto
-        $stmt_producto = $pdo->prepare("SELECT precio_actual FROM producto WHERE Id_Producto = ?");
-        $stmt_producto->execute([$item['Id_Producto']]);
-        $producto = $stmt_producto->fetch(PDO::FETCH_ASSOC);
-        
-        $subtotal = $producto['precio_actual'] * $item['Cantidad'];
-        
         $stmt = $pdo->prepare("
-            INSERT INTO pedido_detalle (pedido_id, producto_id, cantidad, precio_unitario, subtotal) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario_venta, iva_aplicado) 
+            VALUES (?, ?, ?, ?, 21.00)
         ");
         $stmt->execute([
-            $pedido_id, 
-            $item['Id_Producto'], 
-            $item['Cantidad'], 
-            $producto['precio_actual'], 
-            $subtotal
+            $venta_id,
+            $item['id_producto'],
+            $item['cantidad'],
+            $item['precio_unitario_momento']
         ]);
     }
     
-    // 4. Limpiar el carrito
+    // 7. Limpiar el carrito
     $stmt = $pdo->prepare("DELETE FROM carrito WHERE id_usuario = ?");
     $stmt->execute([$usuario_id]);
     
-    // Confirmar transacción
+    // 8. Confirmar transacción
     $pdo->commit();
     
-    // Guardar ID del pedido en la sesión para la página de éxito
-    $_SESSION['ultimo_pedido_id'] = $pedido_id;
+    // 9. Guardar ID de venta en sesión
+    $_SESSION['ultima_venta_id'] = $venta_id;
     
     echo json_encode([
-        'success' => true, 
+        'success' => true,
         'message' => 'Compra procesada exitosamente',
-        'pedido_id' => $pedido_id
+        'venta_id' => $venta_id
     ]);
     
 } catch (Exception $e) {
-    // Revertir transacción en caso de error
-    $pdo->rollBack();
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     
-    error_log("Error al procesar compra: " . $e->getMessage());
+    error_log("ERROR: " . $e->getMessage());
+    
     echo json_encode([
-        'success' => false, 
-        'message' => 'Error interno del servidor'
+        'success' => false,
+        'message' => 'Error al procesar la compra: ' . $e->getMessage()
     ]);
 }
-?>

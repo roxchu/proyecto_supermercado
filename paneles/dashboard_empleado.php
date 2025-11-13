@@ -192,8 +192,8 @@ try {
                                 <td><?php echo htmlspecialchars($venta['id_venta']); ?></td>
                                 <td><?php echo htmlspecialchars($venta['nombre_cliente']); ?></td>
                                 <td><?php echo htmlspecialchars(date('d/m/Y', strtotime($venta['fecha_venta']))); ?></td>
-                                <td>$<?php echo htmlspecialchars(number_format($venta['Total_Venta'], 2, ',', '.')); ?></td>
-                                <td><span class="status-tag status-<?php echo strtolower(htmlspecialchars($venta['Estado'])); ?>"><?php echo htmlspecialchars($venta['Estado']); ?></span></td>
+                                <td>$<?php echo htmlspecialchars(number_format($venta['total_venta'], 2, ',', '.')); ?></td>
+                                <td><span class="status-tag status-<?php echo strtolower(htmlspecialchars($venta['estado'])); ?>"><?php echo htmlspecialchars($venta['Estado']); ?></span></td>
                                 <td>
                                     <button onclick="procesarVenta(<?php echo (int)$venta['id_venta']; ?>, 'Preparando')" class="btn-primary">
                                         Iniciar Preparación
